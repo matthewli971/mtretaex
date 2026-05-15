@@ -1,0 +1,529 @@
+/* ============================================
+   MTR ETA Web App - Theme & Style Configuration
+   ============================================
+   Modify CSS custom properties below to change the theme easily.
+*/
+
+:root {
+    /* === Color Palette === */
+    --color-primary:          #1a2a4a;   /* Header background */
+    --color-primary-dark:     #0f1a2e;   /* Darker shade */
+    --color-primary-light:    #2c4270;   /* Lighter shade */
+    --color-accent:           #4caf50;   /* Refresh button / accent */
+    --color-accent-hover:     #388e3c;   /* Accent hover */
+    --color-text-light:       #ffffff;   /* Light text on dark bg */
+    --color-text-dark:        #222222;   /* Dark text on light bg */
+    --color-text-muted:       #888888;   /* Muted text */
+    --color-bg-page:          #ffffff;   /* Page background */
+    --color-bg-card:          #ffffff;   /* Card background */
+    --color-bg-row-even:      #c7ebfa;   /* Even row background */
+    --color-bg-row-odd:       #ffffff;   /* Odd row background */
+    --color-bg-input:         #ffffff;   /* Input background */
+    --color-border:           #cccccc;   /* General borders */
+    --color-dropdown-bg:      #ffffff;   /* Dropdown background */
+    --color-dropdown-hover:   #e8f0fe;   /* Dropdown item hover */
+    --color-station-info-bg:  #eaf2fb;   /* Station info bar bg */
+    --color-loader-bg:        #000080; /* Loader overlay */
+    --color-departing:        #d32f2f;   /* Departing badge */
+    --color-arriving:         #f57c00;   /* Arriving badge */
+
+    /* === Typography === */
+    --font-family:            'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
+    --font-size-title:        5vw;
+    --font-size-version:      2.2vw;
+    --font-size-clock:        6vw;
+    --font-size-clock-sec:    3.5vw;
+    --font-size-last-update:  2.8vw;
+    --font-size-search:       4vw;
+    --font-size-dropdown:     3.8vw;
+    --font-size-line-bar:     4.5vw;
+    --font-size-station-name: 6.5vw;
+    --font-size-eta:          6.5vw;
+    --font-size-eta-unit:     4vw;
+    --font-size-platform:     5.5vw;
+    --font-size-station-info: 3.2vw;
+
+    /* === Spacing === */
+    --spacing-xs:  4px;
+    --spacing-sm:  8px;
+    --spacing-md:  12px;
+    --spacing-lg:  16px;
+    --spacing-xl:  24px;
+
+    /* === Border Radius === */
+    --radius-sm:  4px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+
+    /* === Shadows === */
+    --shadow-card:     0 2px 8px rgba(0,0,0,0.10);
+    --shadow-dropdown: 0 4px 16px rgba(0,0,0,0.18);
+
+    /* === Layout === */
+    --header-height:  auto;
+    --max-width:      800px;
+}
+
+/* ============================================
+   Reset & Base
+   ============================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: var(--font-family);
+    background-color: var(--color-bg-page);
+    color: var(--color-text-dark);
+    overflow-x: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+#header {
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-wrap: wrap;
+}
+
+#header-left {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+#app-title {
+    font-size: var(--font-size-title);
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+#app-version {
+    font-size: var(--font-size-version);
+    opacity: 0.75;
+    white-space: nowrap;
+}
+
+#header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+#clock {
+    font-size: var(--font-size-clock);
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+#clock .clock-sec {
+    font-size: var(--font-size-clock-sec);
+    opacity: 0.8;
+}
+
+#last-update-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-last-update);
+    white-space: nowrap;
+}
+
+#last-update-label {
+    opacity: 0.7;
+}
+
+#last-update-time {
+    font-weight: bold;
+}
+
+#btn-refresh {
+    background-color: var(--color-accent);
+    color: var(--color-text-light);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-last-update);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#btn-refresh:hover {
+    background-color: var(--color-accent-hover);
+}
+
+#btn-refresh:active {
+    transform: scale(0.95);
+}
+
+/* ============================================
+   Station Selector
+   ============================================ */
+#station-selector {
+    position: relative;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--color-primary);
+}
+
+#search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#station-search {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    padding-right: 2.5em;
+    font-size: var(--font-size-search);
+    font-family: var(--font-family);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-input);
+    color: var(--color-text-dark);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#btn-clear-search {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: calc(var(--font-size-search) * 1.2);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 0 6px;
+    line-height: 1;
+}
+
+#btn-clear-search:hover {
+    color: var(--color-text-dark);
+}
+
+#station-search:focus {
+    border-color: var(--color-accent);
+}
+
+#station-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    background-color: var(--color-dropdown-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    box-shadow: var(--shadow-dropdown);
+    z-index: 200;
+}
+
+.station-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-dropdown);
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.15s;
+}
+
+.station-item:hover {
+    background-color: var(--color-dropdown-hover);
+}
+
+.station-item .station-colour-dot {
+    display: inline-block;
+    min-width: 3.5em;
+    text-align: center;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    font-weight: bold;
+    font-size: 0.85em;
+    margin-right: var(--spacing-xs);
+    vertical-align: middle;
+}
+
+.station-item .station-item-chi {
+    margin-right: var(--spacing-sm);
+}
+
+.station-item .station-item-eng {
+    color: var(--color-text-muted);
+}
+
+/* ============================================
+   Station Info Bar
+   ============================================ */
+#station-info-bar {
+    background-color: var(--color-station-info-bg);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-station-info);
+    flex-wrap: wrap;
+}
+
+#station-info-code {
+    font-weight: bold;
+    font-size: 4vw;
+}
+
+#station-info-name {
+    font-weight: bold;
+}
+
+#station-info-lines {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+}
+
+.line-badge-small {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 2.5vw;
+    font-weight: bold;
+}
+
+/* ============================================
+   ETA Container
+   ============================================ */
+#eta-container {
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+    padding-bottom: var(--spacing-xl);
+}
+
+/* Line Colour Bar */
+.line-bar {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    color: var(--color-text-light);
+    font-size: var(--font-size-line-bar);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.line-bar .line-bar-chi {
+    margin-right: var(--spacing-sm);
+}
+
+.line-bar .line-bar-eng {
+    font-size: calc(var(--font-size-line-bar) * 0.75);
+    opacity: 0.9;
+}
+
+/* ETA Row */
+.eta-row {
+    display: flex;
+    align-items: center;
+    padding: 0px var(--spacing-lg);
+    min-height: 60px;
+}
+
+.eta-row:nth-child(even) {
+    background-color: var(--color-bg-row-even);
+}
+
+.eta-row:nth-child(odd) {
+    background-color: var(--color-bg-row-odd);
+}
+
+.eta-row .eta-dest {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.eta-row .eta-dest-chi {
+    font-size: var(--font-size-station-name);
+    font-weight: bold;
+    line-height: 1.15;
+}
+
+.eta-row .eta-dest-eng {
+    font-size: calc(var(--font-size-station-name) * 0.42);
+    color: var(--color-text-muted);
+    font-weight: normal;
+}
+
+.eta-row .eta-platform-badge {
+    width: 7vw;
+    height: 7vw;
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-platform);
+    margin: 0 var(--spacing-md);
+    flex-shrink: 0;
+}
+
+.eta-row .eta-time {
+    text-align: right;
+    min-width: 100px;
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.eta-time-value {
+    font-size: var(--font-size-eta);
+    font-weight: bold;
+}
+
+.eta-time-unit {
+    font-size: var(--font-size-eta-unit);
+    color: var(--color-text-muted);
+}
+
+.eta-time-departing {
+    font-size: calc(var(--font-size-eta) * 0.8);
+    font-weight: bold;
+    color: var(--color-text-dark);
+}
+
+/* Platform Separator */
+.platform-separator {
+    height: 2px;
+    background-color: #555555;
+    margin: 0;
+}
+
+/* Train Code (7-segment display) */
+.train-code {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    margin-right: var(--spacing-sm);
+    flex-shrink: 0;
+    min-width: 11vw;
+}
+
+.seven-seg-digit {
+    width: 3.2vw;
+    height: 4.8vw;
+    min-width: 13px;
+    min-height: 20px;
+}
+
+/* Non-passenger train destination */
+.eta-dest-noop {
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+/* ============================================
+   Loader
+   ============================================ */
+#loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-loader-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.loader-spinner {
+    width: 48px;
+    height: 48px;
+    border: 5px solid rgba(255,255,255,0.3);
+    border-top-color: var(--color-text-light);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 480px) {
+    :root {
+        --font-size-title:        4.2vw;
+        --font-size-clock:        7vw;
+        --font-size-clock-sec:    4vw;
+        --font-size-station-name: 7vw;
+        --font-size-eta:          7vw;
+    }
+
+    #header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+
+    #header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (min-width: 768px) {
+    :root {
+        --font-size-title:        28px;
+        --font-size-version:      14px;
+        --font-size-clock:        36px;
+        --font-size-clock-sec:    20px;
+        --font-size-last-update:  16px;
+        --font-size-search:       20px;
+        --font-size-dropdown:     18px;
+        --font-size-line-bar:     22px;
+        --font-size-station-name: 32px;
+        --font-size-eta:          32px;
+        --font-size-eta-unit:     18px;
+        --font-size-platform:     16px;
+        --font-size-station-info: 16px;
+    }
+
+    .eta-row .eta-platform-badge {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    .seven-seg-digit {
+        width: 16px;
+        height: 24px;
+    }
+
+    .train-code {
+        min-width: 56px;
+    }
+}

@@ -1,0 +1,42 @@
+[
+    {
+        "name": "KTL",
+        "colourcode": "#00AB4E"
+    },
+    {
+        "name": "TWL",
+        "colourcode": "#ED1D24"
+    },
+    {
+        "name": "ISL",
+        "colourcode": "#007DC5"
+    },
+    {
+        "name": "SIL",
+        "colourcode": "#BAC429"
+    },
+    {
+        "name": "TKL",
+        "colourcode": "#7D499D"
+    },
+    {
+        "name": "TCL",
+        "colourcode": "#F7943E"
+    },
+    {
+        "name": "DRL",
+        "colourcode": "#F173AC"
+    },
+    {
+        "name": "EAL",
+        "colourcode": "#53B7E8"
+    },
+    {
+        "name": "TML",
+        "colourcode": "#923011"
+    },
+    {
+        "name": "AEL",
+        "colourcode": "#00888A"
+    }
+]

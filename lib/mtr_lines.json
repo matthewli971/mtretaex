@@ -1,0 +1,72 @@
+[
+  {
+    "line_code": "KTL",
+    "name_chi": "觀塘綫",
+    "name_eng": "Kwun Tong Line",
+    "colour_code": "#00AB4E",
+    "stations": ["WHA", "HOM", "YMT", "MOK", "PRE", "SKM", "KOT", "LOF", "WTS", "DIH", "CHH", "KOB", "NTK", "KWT", "LAT", "YAT", "TIK"]
+  },
+  {
+    "line_code": "TWL",
+    "name_chi": "荃灣綫",
+    "name_eng": "Tsuen Wan Line",
+    "colour_code": "#ED1D24",
+    "stations": ["CEN", "ADM", "TST", "JOR", "YMT", "MOK", "PRE", "SSP", "CSW", "LCK", "MEF", "LAK", "KWF", "KWH", "TWH", "TSW"]
+  },
+  {
+    "line_code": "ISL",
+    "name_chi": "港島綫",
+    "name_eng": "Island Line",
+    "colour_code": "#007DC5",
+    "stations": ["KET", "HKU", "SYP", "SHW", "CEN", "ADM", "WAC", "CAB", "TIH", "FOH", "NOP", "QUB", "TAK", "SWH", "SKW", "HFC", "CHW"]
+  },
+  {
+    "line_code": "TKL",
+    "name_chi": "將軍澳綫",
+    "name_eng": "Tseung Kwan O Line",
+    "colour_code": "#7D499D",
+    "stations": ["NOP", "QUB", "YAT", "TIK", "TKO", "HAH", "POA", "LHP"]
+  },
+  {
+    "line_code": "TCL",
+    "name_chi": "東涌綫",
+    "name_eng": "Tung Chung Line",
+    "colour_code": "#F7943E",
+    "stations": ["HOK", "KOW", "OLY", "NAC", "LAK", "TSY", "SUN", "TUC"]
+  },
+  {
+    "line_code": "AEL",
+    "name_chi": "機場快綫",
+    "name_eng": "Airport Express",
+    "colour_code": "#00888A",
+    "stations": ["HOK", "KOW", "TSY", "AIR", "AWE"]
+  },
+  {
+    "line_code": "DRL",
+    "name_chi": "迪士尼綫",
+    "name_eng": "Disneyland Resort Line",
+    "colour_code": "#F173AC",
+    "stations": ["SUN", "DIS"]
+  },
+  {
+    "line_code": "EAL",
+    "name_chi": "東鐵綫",
+    "name_eng": "East Rail Line",
+    "colour_code": "#53B7E8",
+    "stations": ["ADM", "EXC", "HUH", "MKK", "KOT", "TAW", "SHT", "FOT", "RAC", "UNI", "TAP", "TWO", "FAN", "SHS", "LOW", "LMC"]
+  },
+  {
+    "line_code": "TML",
+    "name_chi": "屯馬綫",
+    "name_eng": "Tuen Ma Line",
+    "colour_code": "#923011",
+    "stations": ["TUM", "SIH", "TIS", "LOP", "YUL", "KSR", "TWW", "MEF", "NAC", "AUS", "ETS", "HUH", "HOM", "TKW", "SUW", "KAT", "DIH", "HIK", "TAW", "CKT", "STW", "CIO", "SHM", "TSH", "HEO", "MOS", "WKS"]
+  },
+  {
+    "line_code": "SIL",
+    "name_chi": "南港島綫",
+    "name_eng": "South Island Line",
+    "colour_code": "#BAC429",
+    "stations": ["ADM", "OCP", "WCH", "LET", "SOH"]
+  }
+]

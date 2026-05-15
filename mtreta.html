@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>地下鐵到站時間關注組</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <div id="header">
+        <div id="header-left">
+            <span id="app-title">地下鐵到站時間關注組</span>
+            <span id="app-version"></span>
+        </div>
+        <div id="header-right">
+            <div id="clock"></div>
+            <div id="last-update-row">
+                <span id="last-update-label">Last update:</span>
+                <span id="last-update-time">--:--:--</span>
+                <button id="btn-refresh">F5</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Station Selector -->
+    <div id="station-selector">
+        <div id="search-wrapper">
+            <input type="text" id="station-search" placeholder="搜尋車站" onclick="openStationList()" oninput="filterStationList()">
+            <button id="btn-clear-search" type="button">&times;</button>
+        </div>
+        <div id="station-dropdown" class="hidden">
+            <div id="station-list"></div>
+        </div>
+    </div>
+
+    <!-- Station Info Bar -->
+    <div id="station-info-bar" class="hidden">
+        <span id="station-info-code"></span>
+        <span id="station-info-name"></span>
+        <span id="station-info-lines"></span>
+    </div>
+
+    <!-- ETA Main Content -->
+    <div id="eta-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loader" class="hidden">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
