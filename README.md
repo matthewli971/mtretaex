@@ -3,6 +3,18 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.03
+- **Station info bar — station colours**: The station info bar background and text now use the station's own `station_colour` and `station_font_colour` for visual identity.
+- **Line filter badges**: Line badges moved to a dedicated second row in the station info bar. Each badge spans equally to fill the full row width. Clicking a badge filters the ETA display to only show that line.
+- **"顯示全部" button**: Appears on the station name row (right-aligned) after a line filter is active. Clicking it restores all lines.
+- **Station name font size**: Station name in the info bar now matches the line badge font size (`--font-size-line-bar`).
+- **Train code black background**: The 7-segment train code display has a `#111111` background with rounded corners for visibility.
+- **Train code — italic tilt**: 7-segment digit SVGs are tilted with `skewX(-8deg)` to mimic real electronic displays.
+- **Train code — centre segment fix**: The middle horizontal segment (G) now has the same height/thickness as the vertical segments for clearer readability.
+- **Row colour alternation fix**: Replaced CSS `nth-child` selectors with explicit `.eta-row-even` / `.eta-row-odd` classes so line bars and platform separators no longer skew the alternation.
+- **Line sections**: Each line's ETA group is wrapped in a `.line-section[data-line]` div to support filtering and proper structure.
+- **Web page name change**: Change web app to index.html for easier access.
+
 ### v0.02
 - **Home station**: Added `HOME_STATION` variable in `data.js` (default: `ADM`). The app automatically loads ETA for the home station on startup, unless a `?station=` URL parameter is provided.
 - **Station font colours**: Added `station_font_colour` field to every station in `data.js` for correct text contrast on coloured backgrounds.

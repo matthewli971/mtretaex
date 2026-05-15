@@ -23,24 +23,23 @@
     --color-dropdown-bg:      #ffffff;   /* Dropdown background */
     --color-dropdown-hover:   #e8f0fe;   /* Dropdown item hover */
     --color-station-info-bg:  #eaf2fb;   /* Station info bar bg */
-    --color-loader-bg:        #000080; /* Loader overlay */
     --color-departing:        #d32f2f;   /* Departing badge */
     --color-arriving:         #f57c00;   /* Arriving badge */
 
     /* === Typography === */
     --font-family:            'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
-    --font-size-title:        5vw;
-    --font-size-version:      2.2vw;
+    --font-size-title:        7vw;
     --font-size-clock:        6vw;
     --font-size-clock-sec:    3.5vw;
-    --font-size-last-update:  2.8vw;
+    --font-size-last-update:  4vw;
+    --font-size-refresh:      4.8vw;
     --font-size-search:       4vw;
     --font-size-dropdown:     3.8vw;
     --font-size-line-bar:     4.5vw;
-    --font-size-station-name: 6.5vw;
-    --font-size-eta:          6.5vw;
-    --font-size-eta-unit:     4vw;
-    --font-size-platform:     5.5vw;
+    --font-size-station-name: 5vw;
+    --font-size-eta:          5vw;
+    --font-size-eta-unit:     3vw;
+    --font-size-platform:     5vw;
     --font-size-station-info: 3.2vw;
 
     /* === Spacing === */
@@ -115,7 +114,7 @@ html, body {
 }
 
 #app-version {
-    font-size: var(--font-size-version);
+    font-size: calc(var(--font-size-title) * 0.8);
     opacity: 0.75;
     white-space: nowrap;
 }
@@ -160,7 +159,7 @@ html, body {
     border: none;
     border-radius: var(--radius-sm);
     padding: var(--spacing-xs) var(--spacing-md);
-    font-size: var(--font-size-last-update);
+    font-size: var(--font-size-refresh);
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -273,37 +272,64 @@ html, body {
    Station Info Bar
    ============================================ */
 #station-info-bar {
-    background-color: var(--color-station-info-bg);
     padding: var(--spacing-sm) var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-station-info);
+}
+
+#station-info-row1 {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    font-size: var(--font-size-station-info);
     flex-wrap: wrap;
 }
 
-#station-info-code {
-    font-weight: bold;
-    font-size: 4vw;
-}
 
 #station-info-name {
     font-weight: bold;
+    font-size: var(--font-size-line-bar);
+    flex: 1;
 }
 
-#station-info-lines {
-    display: flex;
-    gap: var(--spacing-xs);
-    flex-wrap: wrap;
-}
-
-.line-badge-small {
+#btn-show-all {
     display: inline-block;
-    padding: 2px 6px;
+    padding: 2px 10px;
+    border-radius: var(--radius-sm);
+    background-color: rgba(0,0,0,0.3);
+    color: inherit;
+    font-size: var(--font-size-line-bar);
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+#btn-show-all:hover {
+    background-color: rgba(0,0,0,0.5);
+}
+
+#station-info-filter {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+.line-badge-filter {
+    flex: 1;
+    text-align: center;
+    padding: 2px 10px;
     border-radius: var(--radius-sm);
     color: #fff;
-    font-size: 2.5vw;
+    font-size: var(--font-size-line-bar);
     font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.line-badge-filter:hover {
+    opacity: 0.8;
 }
 
 /* ============================================
@@ -318,7 +344,7 @@ html, body {
 
 /* Line Colour Bar */
 .line-bar {
-    padding: var(--spacing-sm) var(--spacing-lg);
+    padding: 2px var(--spacing-lg);
     color: var(--color-text-light);
     font-size: var(--font-size-line-bar);
     font-weight: bold;
@@ -333,7 +359,7 @@ html, body {
 }
 
 .line-bar .line-bar-eng {
-    font-size: calc(var(--font-size-line-bar) * 0.75);
+    font-size: var(--font-size-line-bar);
     opacity: 0.9;
 }
 
@@ -342,14 +368,14 @@ html, body {
     display: flex;
     align-items: center;
     padding: 0px var(--spacing-lg);
-    min-height: 60px;
+    min-height: 40px;
 }
 
-.eta-row:nth-child(even) {
+.eta-row-even {
     background-color: var(--color-bg-row-even);
 }
 
-.eta-row:nth-child(odd) {
+.eta-row-odd {
     background-color: var(--color-bg-row-odd);
 }
 
@@ -362,7 +388,7 @@ html, body {
 .eta-row .eta-dest-chi {
     font-size: var(--font-size-station-name);
     font-weight: bold;
-    line-height: 1.15;
+    line-height: 1;
 }
 
 .eta-row .eta-dest-eng {
@@ -372,8 +398,8 @@ html, body {
 }
 
 .eta-row .eta-platform-badge {
-    width: 7vw;
-    height: 7vw;
+    width: 6vw;
+    height: 6vw;
     min-width: 28px;
     min-height: 28px;
     border-radius: 50%;
@@ -406,7 +432,7 @@ html, body {
 }
 
 .eta-time-departing {
-    font-size: calc(var(--font-size-eta) * 0.8);
+    font-size: calc(var(--font-size-eta) * 0.6);
     font-weight: bold;
     color: var(--color-text-dark);
 }
@@ -425,7 +451,10 @@ html, body {
     gap: 1px;
     margin-right: var(--spacing-sm);
     flex-shrink: 0;
-    min-width: 11vw;
+    min-width: 8vw;
+    background-color: #111111;
+    padding: 3px 3px;
+    border-radius: 3px;
 }
 
 .seven-seg-digit {
@@ -433,12 +462,12 @@ html, body {
     height: 4.8vw;
     min-width: 13px;
     min-height: 20px;
+    transform: skewX(-8deg);
 }
 
 /* Non-passenger train destination */
 .eta-dest-noop {
     color: var(--color-text-muted);
-    font-style: italic;
 }
 
 /* ============================================
@@ -450,7 +479,7 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--color-loader-bg);
+    background-color: var(--color-primary);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -475,16 +504,18 @@ html, body {
    ============================================ */
 @media (max-width: 480px) {
     :root {
-        --font-size-title:        4.2vw;
+        --font-size-title:        7vw;
         --font-size-clock:        7vw;
         --font-size-clock-sec:    4vw;
-        --font-size-station-name: 7vw;
-        --font-size-eta:          7vw;
+        --font-size-station-name: 6vw;
+        --font-size-eta:          6vw;
+        --font-size-line-bar:     4vw;
     }
 
     #header {
         flex-direction: column;
         align-items: flex-start;
+        padding: var(--spacing-xs) var(--spacing-md);
         gap: var(--spacing-xs);
     }
 
@@ -492,22 +523,27 @@ html, body {
         width: 100%;
         justify-content: space-between;
     }
+
+    .eta-row .eta-time {
+        min-width: 60px;
+        gap: 2px;
+    }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 800px) {
     :root {
-        --font-size-title:        28px;
-        --font-size-version:      14px;
+        --font-size-title:        40px;
         --font-size-clock:        36px;
         --font-size-clock-sec:    20px;
         --font-size-last-update:  16px;
+        --font-size-refresh:      24px;
         --font-size-search:       20px;
         --font-size-dropdown:     18px;
         --font-size-line-bar:     22px;
         --font-size-station-name: 32px;
         --font-size-eta:          32px;
         --font-size-eta-unit:     18px;
-        --font-size-platform:     16px;
+        --font-size-platform:     28px;
         --font-size-station-info: 16px;
     }
 
@@ -524,6 +560,6 @@ html, body {
     }
 
     .train-code {
-        min-width: 56px;
+        min-width: 44px;
     }
 }

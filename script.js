@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.02";
+const APP_VERSION = "v0.03";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 4;
 
@@ -20,6 +20,7 @@ let lineByCode = {};      // line_code -> line object
 let currentStationCode = null;
 let refreshTimer = null;
 let clockTimer = null;
+let activeLineFilter = null; // null = show all
 
 // ============================================
 // Initialisation
@@ -167,20 +168,46 @@ function showStationInfoBar(code) {
 
     const bar = document.getElementById("station-info-bar");
     bar.classList.remove("hidden");
+    bar.style.backgroundColor = station.station_colour || '';
+    bar.style.color = station.station_font_colour || '';
 
-    document.getElementById("station-info-code").textContent = station.station_code;
     document.getElementById("station-info-name").textContent =
         station.name_chi + " " + station.name_eng;
 
-    // Line badges
+    // Line filter badges (second row)
+    activeLineFilter = null;
+    //document.getElementById("btn-show-all").classList.add("hidden");
     let badgesHtml = "";
     station.lines.forEach(function (lineCode) {
         const colour = getLineColour(lineCode);
         const line = lineByCode[lineCode];
         const label = line ? line.name_chi : lineCode;
-        badgesHtml += '<span class="line-badge-small" style="background-color:' + colour + '">' + label + '</span>';
+        badgesHtml += '<span class="line-badge-filter" style="background-color:' + colour + '" onclick="filterByLine(\'' + lineCode + '\')">' + label + '</span>';
     });
-    document.getElementById("station-info-lines").innerHTML = badgesHtml;
+    document.getElementById("station-info-filter").innerHTML = badgesHtml;
+}
+
+function filterByLine(lineCode) {
+    activeLineFilter = lineCode;
+    //document.getElementById("btn-show-all").classList.remove("hidden");
+    // Hide/show line sections in eta-container
+    var sections = document.querySelectorAll('#eta-container .line-section');
+    sections.forEach(function (sec) {
+        if (sec.getAttribute('data-line') === lineCode) {
+            sec.style.display = '';
+        } else {
+            sec.style.display = 'none';
+        }
+    });
+}
+
+function showAllLines() {
+    activeLineFilter = null;
+    //document.getElementById("btn-show-all").classList.add("hidden");
+    var sections = document.querySelectorAll('#eta-container .line-section');
+    sections.forEach(function (sec) {
+        sec.style.display = '';
+    });
 }
 
 // ============================================
@@ -303,6 +330,7 @@ function processETAData(data) {
         const lineChi = lineInfo ? lineInfo.name_chi : lineCode;
         const lineEng = lineInfo ? lineInfo.name_eng : "";
 
+        html += '<div class="line-section" data-line="' + lineCode + '">';
         html += '<div class="line-bar" style="background-color:' + colour + '">';
         html += '<span class="line-bar-chi">' + lineChi + '</span>';
         html += '<span class="line-bar-eng">' + lineEng + '</span>';
@@ -310,6 +338,7 @@ function processETAData(data) {
 
         // Render each train
         var prevPlatform = null;
+        var rowIndex = 1;
         limitedTrains.forEach(function (train) {
             // Platform separator
             if (prevPlatform !== null && train.platform !== prevPlatform) {
@@ -328,8 +357,9 @@ function processETAData(data) {
             }
             var timeDisplay = formatTrainTime(train);
             var tdHtml = renderTrainCode(train.td);
+            var rowClass = (rowIndex % 2 === 0) ? 'eta-row-even' : 'eta-row-odd';
 
-            html += '<div class="eta-row">';
+            html += '<div class="eta-row ' + rowClass + '">';
             html += '<div class="eta-dest">';
             html += '<span class="eta-dest-chi' + (isNoop ? ' eta-dest-noop' : '') + '">' + destChi + '</span>';
             html += '</div>';
@@ -337,7 +367,10 @@ function processETAData(data) {
             html += '<div class="eta-platform-badge" style="background-color:' + colour + '">' + train.platform + '</div>';
             html += '<div class="eta-time">' + timeDisplay + '</div>';
             html += '</div>';
+            rowIndex++;
         });
+
+        html += '</div>'; // close .line-section
     });
 
     if (!html) {
@@ -345,6 +378,11 @@ function processETAData(data) {
     }
 
     document.getElementById("eta-container").innerHTML = html;
+
+    // Re-apply line filter if active
+    if (activeLineFilter) {
+        filterByLine(activeLineFilter);
+    }
 }
 
 // ============================================
@@ -427,62 +465,13 @@ function make7SegDigit(d, color) {
     var onColor = color || '#f7cc3e';
     var offColor = '#333333';
     var paths = [
-        'M2,0 L10,0 L9,1.5 L3,1.5 Z',
-        'M10.5,0.5 L10.5,8.5 L9,7.5 L9,1.5 Z',
-        'M10.5,9.5 L10.5,17.5 L9,16.5 L9,10.5 Z',
-        'M2,18 L10,18 L9,16.5 L3,16.5 Z',
-        'M1.5,9.5 L1.5,17.5 L3,16.5 L3,10.5 Z',
-        'M1.5,0.5 L1.5,8.5 L3,7.5 L3,1.5 Z',
-        'M2.5,8.5 L9.5,8.5 L9,9.5 L3,9.5 Z'
-    ];
-    var svg = '<svg viewBox="0 0 12 18" class="seven-seg-digit">';
-    for (var i = 0; i < 7; i++) {
-        svg += '<path d="' + paths[i] + '" fill="' + (s[i] ? onColor : offColor) + '"/>';
-    }
-    svg += '</svg>';
-    return svg;
-}
-
-function renderTrainCode(td) {
-    if (!td) return '<div class="train-code"></div>';
-    var nums = td.replace(/[^0-9]/g, '');
-    while (nums.length < 3) nums = '0' + nums;
-    nums = nums.slice(-3);
-    var html = '<div class="train-code">';
-    for (var i = 0; i < 3; i++) {
-        html += make7SegDigit(nums[i]);
-    }
-    html += '</div>';
-    return html;
-}
-
-// ============================================
-// 7-Segment Display for Train Code
-// ============================================
-function make7SegDigit(d, color) {
-    var segs = {
-        '0': [1,1,1,1,1,1,0],
-        '1': [0,1,1,0,0,0,0],
-        '2': [1,1,0,1,1,0,1],
-        '3': [1,1,1,1,0,0,1],
-        '4': [0,1,1,0,0,1,1],
-        '5': [1,0,1,1,0,1,1],
-        '6': [1,0,1,1,1,1,1],
-        '7': [1,1,1,0,0,0,0],
-        '8': [1,1,1,1,1,1,1],
-        '9': [1,1,1,1,0,1,1]
-    };
-    var s = segs[d] || [0,0,0,0,0,0,0];
-    var onColor = color || '#f7cc3e';
-    var offColor = '#333333';
-    var paths = [
-        'M2,0 L10,0 L9,1.5 L3,1.5 Z',
-        'M10.5,0.5 L10.5,8.5 L9,7.5 L9,1.5 Z',
-        'M10.5,9.5 L10.5,17.5 L9,16.5 L9,10.5 Z',
-        'M2,18 L10,18 L9,16.5 L3,16.5 Z',
-        'M1.5,9.5 L1.5,17.5 L3,16.5 L3,10.5 Z',
-        'M1.5,0.5 L1.5,8.5 L3,7.5 L3,1.5 Z',
-        'M2.5,8.5 L9.5,8.5 L9,9.5 L3,9.5 Z'
+        'M1.8,0 L10.2,0 L8.8,1.5 L3.2,1.5 Z', // Top
+        'M10.5,0.3 L10.5,8.6 L9,7.8 L9,1.8 Z', // Upper Right
+        'M10.5,9.4 L10.5,17.7 L9,16.2 L9,10.2 Z', // Lower Right
+        'M1.8,18 L10.2,18 L8.8,16.5 L3.2,16.5 Z', // Bottom
+        'M1.5,9.4 L1.5,17.7 L3,16.2 L3,10.2 Z', // Lower Left
+        'M1.5,0.3 L1.5,8.6 L3,7.8 L3,1.8 Z', // Upper Left
+        'M1.6,9 L3.1,8.3 L8.9,8.3 L10.3,9 L8.9,9.8 L3.1,9.8 Z' // Middle
     ];
     var svg = '<svg viewBox="0 0 12 18" class="seven-seg-digit">';
     for (var i = 0; i < 7; i++) {
