@@ -7,6 +7,32 @@
 // Home station setting (change this to set default station)
 var HOME_STATION = "ADM";
 
+// Terminus stations: when the destination equals the current station on these platforms, treat as "不載客列車"
+// Format: { station_code: [platform_numbers] }
+var TERMINUS_PLATFORMS = {
+  "CEN": [1, 2],       // TWL terminus
+  "TSW": [1],          // TWL terminus
+  "WHA": [1],          // KTL terminus
+  "HOM": [2],          // KTL terminus
+  "TIK": [1],          // KTL terminus
+  "CHW": [1, 2],       // ISL terminus
+  "KET": [1],          // ISL terminus
+  "POA": [1],          // TKL terminus
+  "LHP": [1, 2],       // TKL terminus
+  "NOP": [4],          // TKL terminus
+  "TUC": [1, 2],       // TCL terminus
+  "HOK": [1, 3, 4],    // TCL/AEL terminus
+  "AWE": [1],          // AEL terminus
+  "DIS": [1],          // DRL terminus
+  "SUN": [3],          // DRL terminus
+  "SOH": [1, 2],       // SIL terminus
+  "ADM": [5, 6, 8],    // SIL/EAL terminus
+  "LOW": [2, 3],       // EAL terminus
+  "LMC": [1, 2],       // EAL terminus
+  "TUM": [1, 2],       // TML terminus
+  "WKS": [1, 2]        // TML terminus
+};
+
 // All MTR stations
 // Fields: station_id, station_code, name_chi, name_eng, lines[], station_colour, station_font_colour
 var stationsData = [

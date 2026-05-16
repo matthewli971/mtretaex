@@ -3,6 +3,18 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.04
+- **Filter -1 min trains**: Trains with `ttnt < 0` are now excluded from the display.
+- **Terminus station handling**: Added `TERMINUS_PLATFORMS` variable in `data.js`. When the API destination equals the current station on a terminus platform, the train is shown as "不 載 客 列 車".
+- **Remember last station**: The user's last selected station is persisted in `localStorage`. On next visit, the app loads the previously used station instead of the default.
+- **Removed station-info-code**: The station code label was removed from the station info bar row1 for cleaner layout.
+- **"顯示全部" button width**: The button now has a `min-width: 25%` to align with line filter badges (consistent width when 4 lines shown).
+- **Line-coloured even rows**: Even ETA rows use an 80% lightened version of the line colour instead of a fixed colour, giving each line section its own tint.
+- **Dark mode**: Added a full dark mode theme with CSS custom property overrides. Dark mode is the default. A toggle switch (🌙/☀️) in the header allows the user to switch between dark and light mode. Preference is saved in `localStorage`.
+- **Favicon**: Added an inline SVG favicon for the web page tab.
+- **1-min countdown timer**: When `ttnt = 1`, instead of showing "1 min", a countdown timer is displayed calculating `[lastUpdateTime + 60s - now]`. When countdown reaches 0, it shows "進站中".
+- **Display order by platform**: Lines are now sorted by their smallest platform number at the current station (e.g., TWL > ISL > SIL > EAL at ADM) instead of alphabetically.
+
 ### v0.03
 - **Station info bar — station colours**: The station info bar background and text now use the station's own `station_colour` and `station_font_colour` for visual identity.
 - **Line filter badges**: Line badges moved to a dedicated second row in the station info bar. Each badge spans equally to fill the full row width. Clicking a badge filters the ETA display to only show that line.
@@ -33,8 +45,8 @@ MTR Trains ETA Web-app
 
 ## Data preparation
 - Station and line data sourced from files in `/lib/` (`mtr_stations.json`, `mtr_lines.json`, `mtr_lines_colours.json`, `mtr_lines_and_stations.csv`).
-- Data is embedded directly into `data.js` as JavaScript variables (`stationsData`, `linesData`, `HOME_STATION`) — no runtime fetch required.
+- Data is embedded directly into `data.js` as JavaScript variables (`stationsData`, `linesData`, `HOME_STATION`, `TERMINUS_PLATFORMS`) — no runtime fetch required.
 - To add or modify stations/lines, edit `data.js` directly.
 
 ## Usage
-Open `mtreta.html` directly in a browser (no server required). The app works over `file://` protocol.
+Open `index.html` directly in a browser (no server required). The app works over `file://` protocol.

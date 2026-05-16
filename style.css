@@ -24,17 +24,17 @@
     --color-dropdown-hover:   #e8f0fe;   /* Dropdown item hover */
     --color-station-info-bg:  #eaf2fb;   /* Station info bar bg */
     --color-departing:        #d32f2f;   /* Departing badge */
-    --color-arriving:         #f57c00;   /* Arriving badge */
 
     /* === Typography === */
     --font-family:            'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
-    --font-size-title:        7vw;
-    --font-size-clock:        6vw;
+    --font-size-title:        6vw;
+    --font-size-clock:        5vw;
     --font-size-clock-sec:    3.5vw;
-    --font-size-last-update:  4vw;
+    --font-size-last-update:  2.8vw;
     --font-size-refresh:      4.8vw;
     --font-size-search:       4vw;
     --font-size-dropdown:     3.8vw;
+    --font-size-curr-station: 4.7vw;
     --font-size-line-bar:     4.5vw;
     --font-size-station-name: 5vw;
     --font-size-eta:          5vw;
@@ -140,12 +140,14 @@ html, body {
 #last-update-row {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 0 var(--spacing-sm);
     font-size: var(--font-size-last-update);
     white-space: nowrap;
+    flex-wrap: wrap;
 }
 
 #last-update-label {
+    width: 100%;
     opacity: 0.7;
 }
 
@@ -289,7 +291,7 @@ html, body {
 
 #station-info-name {
     font-weight: bold;
-    font-size: var(--font-size-line-bar);
+    font-size: var(--font-size-curr-station);
     flex: 1;
 }
 
@@ -303,6 +305,8 @@ html, body {
     font-weight: bold;
     cursor: pointer;
     white-space: nowrap;
+    min-width: 25%;
+    text-align: center;
 }
 
 #btn-show-all:hover {
@@ -391,12 +395,6 @@ html, body {
     line-height: 1;
 }
 
-.eta-row .eta-dest-eng {
-    font-size: calc(var(--font-size-station-name) * 0.42);
-    color: var(--color-text-muted);
-    font-weight: normal;
-}
-
 .eta-row .eta-platform-badge {
     width: 6vw;
     height: 6vw;
@@ -408,13 +406,13 @@ html, body {
     align-items: center;
     justify-content: center;
     font-size: var(--font-size-platform);
-    margin: 0 var(--spacing-md);
+    margin: 0 var(--spacing-xs);
     flex-shrink: 0;
 }
 
 .eta-row .eta-time {
     text-align: right;
-    min-width: 100px;
+    min-width: 20%;
     display: flex;
     align-items: baseline;
     justify-content: flex-end;
@@ -432,7 +430,7 @@ html, body {
 }
 
 .eta-time-departing {
-    font-size: calc(var(--font-size-eta) * 0.6);
+    font-size: calc(var(--font-size-eta) * 0.9);
     font-weight: bold;
     color: var(--color-text-dark);
 }
@@ -453,7 +451,7 @@ html, body {
     flex-shrink: 0;
     min-width: 8vw;
     background-color: #111111;
-    padding: 3px 3px;
+    padding: 3px;
     border-radius: 3px;
 }
 
@@ -468,6 +466,89 @@ html, body {
 /* Non-passenger train destination */
 .eta-dest-noop {
     color: var(--color-text-muted);
+}
+
+/* Countdown timer */
+.eta-time-countdown {
+    font-size: calc(var(--font-size-eta) * 0.9);
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Dark mode toggle */
+.theme-switch {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: var(--spacing-md);
+}
+
+.theme-switch-icon {
+    font-size: 3.5vw;
+    line-height: 1;
+}
+
+.theme-switch input[type="checkbox"] {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #4caf50;
+    border-radius: 10px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s;
+}
+
+.theme-switch input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.theme-switch input[type="checkbox"]:checked {
+    background-color: #2196f3;
+}
+
+.theme-switch input[type="checkbox"]:checked::before {
+    transform: translateX(16px);
+}
+
+/* ============================================
+   Dark Mode
+   ============================================ */
+body.dark-mode {
+    --color-bg-page:        #1a1a2e;
+    --color-bg-card:        #16213e;
+    --color-bg-row-odd:     #1a1a2e;
+    --color-bg-row-even:    #222244;
+    --color-bg-input:       #2a2a4a;
+    --color-text-dark:      #eeeeee;
+    --color-text-muted:     #bbbbbb;
+    --color-border:         #444466;
+    --color-dropdown-bg:    #1e1e3a;
+    --color-dropdown-hover: #2a2a5a;
+}
+
+body.dark-mode .station-item {
+    border-bottom-color: #333355;
+}
+
+body.dark-mode #station-search {
+    background-color: var(--color-bg-input);
+    color: var(--color-text-dark);
+    border-color: var(--color-border);
+}
+
+body.dark-mode .eta-row-odd {
+    background-color: var(--color-bg-row-odd);
 }
 
 /* ============================================
@@ -509,6 +590,7 @@ html, body {
         --font-size-clock-sec:    4vw;
         --font-size-station-name: 6vw;
         --font-size-eta:          6vw;
+        --font-size-curr-station: 5vw;
         --font-size-line-bar:     4vw;
     }
 
@@ -524,8 +606,13 @@ html, body {
         justify-content: space-between;
     }
 
+    .eta-row {
+        padding: 0px var(--spacing-md);
+        min-height: 40px;
+    }
+
     .eta-row .eta-time {
-        min-width: 60px;
+        min-width: 20%;
         gap: 2px;
     }
 }
@@ -539,6 +626,7 @@ html, body {
         --font-size-refresh:      24px;
         --font-size-search:       20px;
         --font-size-dropdown:     18px;
+        --font-size-curr-station: 32px;
         --font-size-line-bar:     22px;
         --font-size-station-name: 32px;
         --font-size-eta:          32px;

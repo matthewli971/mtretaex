@@ -1,0 +1,71 @@
+Please help to create a web-app of MTR ETA for display
+
+Elements:
+Header box: in Dark blue, showing the title and version number at left(地下鐵到站時間關注組 v.0.01), then show the time in 24h with second(second with smaller font) like "13:17:15" while ":15" is smaller
+Station list box: Put in the header box when user click the box(onclick), show the station list of all stations by station code ascending order, then show the items in "[station code] - [Chi name] [Eng name]" (e.g. "ADM - 金鐘 Admiralty"), allow user to type in the station keyword to filter the results in the list
+Last update date: Show last updated date in HH:mm:ss get from the API
+F5 button: show a green F5 button for user to click refresh (AJAX)
+
+Main Screen: Show the ETA of next 4 trains as picture show. Please show the ETAs order by the train lines, then by platform number. Please add a colour bar to show the train line name im Chinese and English when outputting each train lines.
+
+System Design:
+mtreta.html: html element for showing the page
+script.js: All JS scripts put in this file, include the version number that will update for each version
+style.css: All CSS styles put in this file
+
+Please design the frontend css styling with more config so that i can update the css if want to change the theme more easily
+
+Source:
+https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData
+Send POST request with request body like this: {"stationcode":"ADM"}, while "ADM" is the station code
+I also prepared some json files with MTR lines and stations data and put in /lib folder. Please analyze these files and use it for displaying data. Please also analyze what functions can be added to the web-app according to these json data files
+
+Please update the app according to following requirements: (v0.02)
+1. Update the platform badge to follow the line colours
+2. Add a dark grey solid lines to different platforms in same line
+3. Change the search bar behaviour: When user click on the search bar after showing the station, select all the words and show the full station list instead of filter mode for easier search after displaying the station. Please also add a grey cross at the right of search bar to erasse the words in the search box
+4. Set home station to Admiralty so that the app shows the , and design the app for future function that allow user save home station
+5. Make the station-dropdown upper part connect on the search bar instead of the header 
+6. Add the station colour square dot at the left of the station codes to display the station colour. The colour dot should be same height as station code
+7. Add font colour in each station of stationsData stored in data.js according to attached images. Please add a variable "station_font_colour" in the array item
+8. variable LINES_COLOURS_DATA which stores the line colours is duplicated to linesData variable which also stores the line colour code. Please update the code to get lines colour codes from linesData instead of getting from LINES_COLOURS_DATA
+9. Please align the platform number circle to avoid shift because of the ETA minutes change.
+10. In the ETA API there is a variable "td", which is the train sequence code. Please trim the alphabet out and get the last 3 number digits of the code. If the trimmed numbers are less then 3-digit, add leading zeros to the code(e.g. "RA29" as "029", "L150" as 150, "JM0375" as "375"), and then show at the left of the platform number circle
+11. Please generate the 7 segment number digit as svg for numbers 0-9. Attached the number "3" image as an example. Please make the colour of the number digit #f7cc3e, and make it editable if possible
+12. Replace "NO_" in destination name to "不 載 客 列 車", note the space between the chinese chacters
+
+
+Please add a Readme.md in the project and state the updates after code change in list form. For data preparation, please put at the bottom of the change list with sub-title of "Data preparation:"
+
+Please update the app according to following requirements: (v0.03)
+1. Add background to the station-info-lines according to station colour and station font colour
+2. Please add button function for line badge box to filter the ETA of specific lines, and please put in the second row and extend to whole spaces, and of course leave some margins 
+3. Please add a "顯示全部" badge too to de-filter lines after clicking the line badge for filter, and put the button on the station name lines and align on right
+4. Please make station name font size same as the font size of line badge
+5. Please add a black background for the train code so that the codes can be shown, and make the train code size smaller
+6. some of the colours in "eta-row" is inverted, maybe because of the line bar and platform separator added. Please update the design to fix the colour bar issue
+
+Please update the app according to the following requirements: (stay at v0.03)
+1. For train code design, please update the cenmtre lines same height as other digit for a clearer view. Please also make it tilt like the electronics (as shown in attached image)
+2. For station-info-filter, please expand the line badge to fit the whole row. If there is one line, expand to whole row, if there are more than 1 lines, just split the row to equal badges to fit the whole row
+Please also help to update the readme.md for the changes in this prompt and the previous prompt (for v0.03)
+
+Please update the app according to the following requirements: (v0.04)
+1. Please filter the ETA data of -1min
+2. Some stations are terminus of the line, API will show the destination of the station rather than "NO_". Please handle this case as "不 載 客 列 車"
+3. Some terminal stations of the line may have same destination, please add new variable to store the values including the station code and platform groups 
+4. Please add function to store user last enter station in the memory and open the previous user entered station instead of default station i.e. "ADM"
+5. Please help remove station-info-code in station-info-row1
+6. Please set the width of the "show all" button to align with the line box same as when it show 4 lines like ADM (like the pasted imafge show)
+7. Please help to make a light colour (80%) lighten of each lines for eta-row-even to replace the original colours
+8. Please help add dark mode to the station list and add a switch to change (refer to image 2 and 3), please set dark mode as default, then design a moon logo and sun logo to replace "A" with moon logo, and "B" with sun logo
+9. Please also help to design an icon for the web page
+10. For ETA with ttnt = 1, Please replace the 1min to a countdown timer which calculate the [Last update time]+1min-current time, when countdown time goes to 0:00, please change to "進站中"
+11. For display order, please change the ordering sequence from by alphabet to by smallest platform number. e.g. in ADM, TWL is Platform 1,4; ISL is 2,3; SIL is 5,6; NSL is 7,8; So the order is TWL>ISL>SIL>NSL
+Please also help to update the readme.md for the changes in this prompt and the previous prompt (for v0.04)
+
+Please help to fix the issue of v0.04: (stay at the version)
+1. The version mode show too much spaces which may cause display issue for narrow screens. Please help to save some spaces by adding a line break after the Last update date text (like image show)
+2. For dark mode, the even row colour is not changed. Please add handling to the even rows in dark mode. Please make darken (80%) with line colours as the background colour
+3. Please add min-width for eta-time element (20%) to avoid shifting when ETA change from minutes to arriving texts
+4. There are pixel shift when showing the stations list in search mode, please adjust the code to make this aligned

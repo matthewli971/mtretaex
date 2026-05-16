@@ -3,14 +3,15 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.03";
+const APP_VERSION = "v0.04";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 4;
+const STORAGE_KEY_STATION = "mtreta_last_station";
 
 // ============================================
 // Data stores — defined in data.js
 // ============================================
-// stationsData, linesData, HOME_STATION are declared in data.js (loaded before this file)
+// stationsData, linesData, HOME_STATION, TERMINUS_PLATFORMS are declared in data.js
 
 // Lookup maps built after loading
 let stationByCode = {};   // station_code -> station object
@@ -21,6 +22,8 @@ let currentStationCode = null;
 let refreshTimer = null;
 let clockTimer = null;
 let activeLineFilter = null; // null = show all
+let lastUpdateTime = null;   // Date object of last API gen_time
+let countdownTimer = null;
 
 // ============================================
 // Initialisation
@@ -37,8 +40,24 @@ document.addEventListener("DOMContentLoaded", function () {
     const preStation = params.get("station");
     if (preStation && stationByCode[preStation.toUpperCase()]) {
         selectStation(preStation.toUpperCase());
-    } else if (typeof HOME_STATION !== "undefined" && stationByCode[HOME_STATION]) {
-        selectStation(HOME_STATION);
+    } else {
+        // Try localStorage for last used station
+        var savedStation = null;
+        try { savedStation = localStorage.getItem(STORAGE_KEY_STATION); } catch(e) {}
+        if (savedStation && stationByCode[savedStation]) {
+            selectStation(savedStation);
+        } else if (typeof HOME_STATION !== "undefined" && stationByCode[HOME_STATION]) {
+            selectStation(HOME_STATION);
+        }
+    }
+
+    // Dark mode: apply saved preference (default: dark)
+    var savedTheme = null;
+    try { savedTheme = localStorage.getItem("mtreta_theme"); } catch(e) {}
+    if (savedTheme === "light") {
+        document.body.classList.remove("dark-mode");
+    } else {
+        document.body.classList.add("dark-mode");
     }
 });
 
@@ -75,6 +94,26 @@ function setupEventListeners() {
         document.getElementById("station-search").focus();
         openStationList();
     });
+
+    // Dark mode toggle
+    document.getElementById("theme-toggle").addEventListener("change", function () {
+        if (this.checked) {
+            document.body.classList.remove("dark-mode");
+            try { localStorage.setItem("mtreta_theme", "light"); } catch(e) {}
+        } else {
+            document.body.classList.add("dark-mode");
+            try { localStorage.setItem("mtreta_theme", "dark"); } catch(e) {}
+        }
+        // Re-render ETA rows to update even-row inline background colours
+        if (currentStationCode) {
+            fetchETA(currentStationCode);
+        }
+    });
+
+    // Sync toggle state on load
+    var savedTheme2 = null;
+    try { savedTheme2 = localStorage.getItem("mtreta_theme"); } catch(e) {}
+    document.getElementById("theme-toggle").checked = (savedTheme2 === "light");
 
     // Close dropdown when clicking outside
     document.addEventListener("click", function (e) {
@@ -149,6 +188,7 @@ function filterStationList() {
 
 function selectStation(code) {
     currentStationCode = code;
+    try { localStorage.setItem(STORAGE_KEY_STATION, code); } catch(e) {}
     const station = stationByCode[code];
     if (station) {
         document.getElementById("station-search").value =
@@ -255,6 +295,7 @@ function processETAData(data) {
     // Update last update time
     if (data.gen_time) {
         const t = new Date(data.gen_time);
+        lastUpdateTime = t;
         const hh = String(t.getHours()).padStart(2, "0");
         const mm = String(t.getMinutes()).padStart(2, "0");
         const ss = String(t.getSeconds()).padStart(2, "0");
@@ -263,18 +304,16 @@ function processETAData(data) {
 
     if (!data.line) {
         document.getElementById("eta-container").innerHTML =
-            '<div style="padding:20px;color:#fff;text-align:center;">沒有列車資料</div>';
+            '<div style="padding:20px;text-align:center;">沒有列車資料</div>';
         return;
     }
 
     // Collect all trains grouped by line then platform
-    // Structure: { lineCode: [ { platform, destination, ttnt, tta, ttd, td, ... } ] }
     const lineGroups = {};
 
     Object.keys(data.line).forEach(function (lineCode) {
-        // Map legacy line codes
         const mappedLine = mapLineCode(lineCode);
-        if (!lineByCode[mappedLine]) return; // skip unknown
+        if (!lineByCode[mappedLine]) return;
 
         if (!lineGroups[mappedLine]) {
             lineGroups[mappedLine] = [];
@@ -285,11 +324,16 @@ function processETAData(data) {
             const trains = platforms[platformNum];
             if (!Array.isArray(trains)) return;
             trains.forEach(function (train) {
+                var ttnt = train.ttnt;
+                var ttntNum = parseInt(ttnt, 10);
+                // Filter out -1 min trains
+                if (ttntNum < 0) return;
+
                 lineGroups[mappedLine].push({
                     line: mappedLine,
                     platform: parseInt(platformNum, 10),
                     destination: train.destination || train.dest || "",
-                    ttnt: train.ttnt,
+                    ttnt: ttnt,
                     tta: train.tta,
                     ttd: train.ttd,
                     td: train.td || ""
@@ -298,8 +342,12 @@ function processETAData(data) {
         });
     });
 
-    // Sort lines alphabetically, then trains within each line by platform, then by time
-    const sortedLineKeys = Object.keys(lineGroups).sort();
+    // Sort lines by smallest platform number (not alphabetically)
+    const sortedLineKeys = Object.keys(lineGroups).sort(function (a, b) {
+        var minA = Math.min.apply(null, lineGroups[a].map(function(t){ return t.platform; }));
+        var minB = Math.min.apply(null, lineGroups[b].map(function(t){ return t.platform; }));
+        return minA - minB;
+    });
 
     let html = "";
 
@@ -348,18 +396,30 @@ function processETAData(data) {
 
             var destCode = train.destination;
             var destChi, isNoop = false;
+
+            // Check NO_ prefix
             if (destCode && destCode.indexOf("NO_") === 0) {
+                destChi = "不 載 客 列 車";
+                isNoop = true;
+            }
+            // Check terminus: destination equals current station on terminus platforms
+            else if (currentStationCode && destCode === currentStationCode && isTerminusPlatform(currentStationCode, train.platform)) {
                 destChi = "不 載 客 列 車";
                 isNoop = true;
             } else {
                 var dest = stationByCode[destCode];
                 destChi = dest ? dest.name_chi : destCode;
             }
+
             var timeDisplay = formatTrainTime(train);
             var tdHtml = renderTrainCode(train.td);
+            // Even rows get a light version of the line colour
             var rowClass = (rowIndex % 2 === 0) ? 'eta-row-even' : 'eta-row-odd';
+            var isDark = document.body.classList.contains('dark-mode');
+            var evenBg = isDark ? darkenColor(colour, 0.80) : lightenColor(colour, 0.80);
+            var evenStyle = (rowIndex % 2 === 0) ? ' style="background-color:' + evenBg + '"' : '';
 
-            html += '<div class="eta-row ' + rowClass + '">';
+            html += '<div class="eta-row ' + rowClass + '"' + evenStyle + '>';
             html += '<div class="eta-dest">';
             html += '<span class="eta-dest-chi' + (isNoop ? ' eta-dest-noop' : '') + '">' + destChi + '</span>';
             html += '</div>';
@@ -374,7 +434,7 @@ function processETAData(data) {
     });
 
     if (!html) {
-        html = '<div style="padding:20px;color:#fff;text-align:center;">沒有列車資料</div>';
+        html = '<div style="padding:20px;text-align:center;">沒有列車資料</div>';
     }
 
     document.getElementById("eta-container").innerHTML = html;
@@ -383,6 +443,9 @@ function processETAData(data) {
     if (activeLineFilter) {
         filterByLine(activeLineFilter);
     }
+
+    // Start countdown timers for ttnt=1
+    startCountdownTimers();
 }
 
 // ============================================
@@ -416,10 +479,10 @@ function formatTrainTime(train) {
     if (val === 0 || val === "0") {
         return '<span class="eta-time-departing">已到站</span>';
     }
-    // Check if arriving (1)
-    //if (val === 1 || val === "1") {
-    //    return '<span class="eta-time-departing">Arriving</span>';
-    //}
+    // Check if arriving (1) - show countdown
+    if (val === 1 || val === "1") {
+        return '<span class="eta-time-countdown" data-countdown="1">0:59</span>';
+    }
     // Otherwise show minutes
     var mins = parseInt(val, 10);
     if (isNaN(mins)) {
@@ -492,4 +555,74 @@ function renderTrainCode(td) {
     }
     html += '</div>';
     return html;
+}
+
+// ============================================
+// Helper: Check if a platform is a terminus platform
+// ============================================
+function isTerminusPlatform(stationCode, platform) {
+    if (typeof TERMINUS_PLATFORMS === "undefined") return false;
+    var platforms = TERMINUS_PLATFORMS[stationCode];
+    if (!platforms) return false;
+    return platforms.indexOf(platform) !== -1;
+}
+
+// ============================================
+// Helper: Lighten a hex colour by a percentage
+// ============================================
+function lightenColor(hex, percent) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) {
+        hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    }
+    var r = parseInt(hex.substring(0,2), 16);
+    var g = parseInt(hex.substring(2,4), 16);
+    var b = parseInt(hex.substring(4,6), 16);
+    r = Math.round(r + (255 - r) * percent);
+    g = Math.round(g + (255 - g) * percent);
+    b = Math.round(b + (255 - b) * percent);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function darkenColor(hex, percent) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) {
+        hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    }
+    var r = parseInt(hex.substring(0,2), 16);
+    var g = parseInt(hex.substring(2,4), 16);
+    var b = parseInt(hex.substring(4,6), 16);
+    r = Math.round(r * (1 - percent));
+    g = Math.round(g * (1 - percent));
+    b = Math.round(b * (1 - percent));
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+// ============================================
+// Countdown timers for ttnt=1 trains
+// ============================================
+function startCountdownTimers() {
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(updateCountdowns, 1000);
+    updateCountdowns();
+}
+
+function updateCountdowns() {
+    if (!lastUpdateTime) return;
+    var now = new Date();
+    var elems = document.querySelectorAll('.eta-time-countdown');
+    elems.forEach(function (el) {
+        // target = lastUpdateTime + 60s
+        var target = new Date(lastUpdateTime.getTime() + 60000);
+        var diff = target - now;
+        if (diff <= 0) {
+            el.textContent = '進站中';
+            el.classList.add('eta-time-departing');
+        } else {
+            var secs = Math.ceil(diff / 1000);
+            var m = Math.floor(secs / 60);
+            var s = secs % 60;
+            el.textContent = m + ':' + String(s).padStart(2, '0');
+        }
+    });
 }
