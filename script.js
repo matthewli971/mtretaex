@@ -3,15 +3,16 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.04";
+const APP_VERSION = "v0.05";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 4;
 const STORAGE_KEY_STATION = "mtreta_last_station";
+const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
 
 // ============================================
 // Data stores — defined in data.js
 // ============================================
-// stationsData, linesData, HOME_STATION, TERMINUS_PLATFORMS are declared in data.js
+// stationsData, linesData, HOME_STATION, PLATFORM_GROUP are declared in data.js
 
 // Lookup maps built after loading
 let stationByCode = {};   // station_code -> station object
@@ -20,6 +21,7 @@ let lineByCode = {};      // line_code -> line object
 // State
 let currentStationCode = null;
 let refreshTimer = null;
+let autoRefreshTimer = null;
 let clockTimer = null;
 let activeLineFilter = null; // null = show all
 let lastUpdateTime = null;   // Date object of last API gen_time
@@ -84,20 +86,14 @@ function updateClock() {
 function setupEventListeners() {
     document.getElementById("btn-refresh").addEventListener("click", function () {
         if (currentStationCode) {
-            fetchETA(currentStationCode);
+            fetchETASilent(currentStationCode);
         }
     });
 
-    // Clear button
-    document.getElementById("btn-clear-search").addEventListener("click", function () {
-        document.getElementById("station-search").value = "";
-        document.getElementById("station-search").focus();
-        openStationList();
-    });
-
-    // Dark mode toggle
-    document.getElementById("theme-toggle").addEventListener("change", function () {
-        if (this.checked) {
+    // Dark mode toggle (button)
+    document.getElementById("theme-toggle").addEventListener("click", function () {
+        var isDark = document.body.classList.contains("dark-mode");
+        if (isDark) {
             document.body.classList.remove("dark-mode");
             try { localStorage.setItem("mtreta_theme", "light"); } catch(e) {}
         } else {
@@ -106,14 +102,9 @@ function setupEventListeners() {
         }
         // Re-render ETA rows to update even-row inline background colours
         if (currentStationCode) {
-            fetchETA(currentStationCode);
+            fetchETASilent(currentStationCode);
         }
     });
-
-    // Sync toggle state on load
-    var savedTheme2 = null;
-    try { savedTheme2 = localStorage.getItem("mtreta_theme"); } catch(e) {}
-    document.getElementById("theme-toggle").checked = (savedTheme2 === "light");
 
     // Close dropdown when clicking outside
     document.addEventListener("click", function (e) {
@@ -143,29 +134,74 @@ function loadStaticData() {
 // ============================================
 function buildStationList() {
     const listEl = document.getElementById("station-list");
-    // Sort by station_code ascending
-    const sorted = stationsData.slice().sort(function (a, b) {
-        return a.station_code.localeCompare(b.station_code);
-    });
     let html = "";
-    sorted.forEach(function (s) {
-        html +=
-            '<div class="station-item" data-code="' + s.station_code + '" onclick="selectStation(\'' + s.station_code + '\')">' +
-            '<span class="station-colour-dot" style="background-color:' + s.station_colour + ';color:' + (s.station_font_colour || '#fff') + '">' + s.station_code + '</span>' + ' ' + 
-            '<span class="station-item-chi">' + s.name_chi + '</span>' +
-            '<span class="station-item-eng">' + s.name_eng + '</span>' +
-            '</div>';
+
+    // Order by line_id, then by station order in each line
+    var sortedLines = linesData.slice().sort(function (a, b) {
+        return a.line_id - b.line_id;
     });
+
+    var addedStations = {}; // track which stations already added
+
+    sortedLines.forEach(function (line) {
+        // Line header (unselectable)
+        html += '<div class="station-list-header" style="border-left: 15px solid ' + line.colour_code + ';">';
+        html += '<span class="station-list-header-chi">' + line.name_chi + '</span>';
+        html += '<span class="station-list-header-eng">' + line.name_eng + '</span>';
+        html += '</div>';
+
+        // Stations in line order
+        line.stations.forEach(function (stationCode) {
+
+            var s = stationByCode[stationCode];
+            if (!s) return;
+
+            // Build line colour circles ordered by line_id
+            var sortedStationLines = s.lines.slice().sort(function (a, b) {
+                var la = lineByCode[a], lb = lineByCode[b];
+                return (la ? la.line_id : 999) - (lb ? lb.line_id : 999);
+            });
+            var lineCircles = '';
+            sortedStationLines.forEach(function (lc) {
+                var colour = getLineColour(lc);
+                lineCircles += '<span class="station-line-dot" style="background-color:' + colour + '"></span>';
+            });
+
+            var stationItemClass = 'station-item' + (addedStations[stationCode] ? ' station-item-duplicated' : '');
+
+            html +=
+                '<div class="' + stationItemClass + '" data-code="' + s.station_code + '" onclick="selectStation(\'' + s.station_code + '\')">' +
+                '<span class="station-colour-dot" style="background-color:' + s.station_colour + ';color:' + (s.station_font_colour || '#fff') + '">' + s.station_code + '</span>' + ' ' +
+                '<span class="station-item-chi">' + s.name_chi + '</span>' +
+                '<span class="station-item-eng">' + s.name_eng + '</span>' +
+                '<span class="station-line-dots">' + lineCircles + '</span>' +
+                '</div>';
+            
+            addedStations[stationCode] = true;
+        });
+    });
+
     listEl.innerHTML = html;
+}
+
+function toggleStationList() {
+    var dropdown = document.getElementById("station-dropdown");
+    if (dropdown.classList.contains("hidden")) {
+        openStationList();
+    } else {
+        closeStationList();
+    }
 }
 
 function openStationList() {
     var input = document.getElementById("station-search");
     input.select();
     document.getElementById("station-dropdown").classList.remove("hidden");
-    // Show all items unfiltered when opening
+    // Show all items and headers unfiltered when opening
     var items = document.querySelectorAll(".station-item");
     items.forEach(function (el) { el.style.display = ""; });
+    var headers = document.querySelectorAll(".station-list-header");
+    headers.forEach(function (el) { el.style.display = ""; });
 }
 
 function closeStationList() {
@@ -174,16 +210,35 @@ function closeStationList() {
 
 function filterStationList() {
     const keyword = document.getElementById("station-search").value.trim().toLowerCase();
+    // Ensure dropdown is open when typing
+    document.getElementById("station-dropdown").classList.remove("hidden");
+
+    // Hide line dots while typing/filtering
+    document.getElementById("search-line-dots").innerHTML = '';
+
+    const headers = document.querySelectorAll(".station-list-header");
     const items = document.querySelectorAll(".station-item");
-    items.forEach(function (el) {
-        const code = el.getAttribute("data-code").toLowerCase();
-        const text = el.textContent.toLowerCase();
-        if (!keyword || code.indexOf(keyword) !== -1 || text.indexOf(keyword) !== -1) {
-            el.style.display = "";
-        } else {
-            el.style.display = "none";
-        }
-    });
+    const duplicates = document.querySelectorAll(".station-item-duplicated");
+
+    if (!keyword) {
+        // Show everything when no keyword
+        items.forEach(function (el) { el.style.display = ""; });
+        headers.forEach(function (el) { el.style.display = ""; });
+        duplicates.forEach(function (el) { el.style.display = ""; });
+    } else {
+        // Hide all headers when filtering
+        headers.forEach(function (el) { el.style.display = "none"; });
+        items.forEach(function (el) {
+            const code = el.getAttribute("data-code").toLowerCase();
+            const text = el.textContent.toLowerCase();
+            if (code.indexOf(keyword) !== -1 || text.indexOf(keyword) !== -1) {
+                el.style.display = "";
+            } else {
+                el.style.display = "none";
+            }
+        });
+        duplicates.forEach(function (el) { el.style.display = "none"; });
+    }
 }
 
 function selectStation(code) {
@@ -193,10 +248,42 @@ function selectStation(code) {
     if (station) {
         document.getElementById("station-search").value =
             code + " - " + station.name_chi + " " + station.name_eng;
+
+        // Show line circles in search bar, ordered by line_id
+        var sortedLines = station.lines.slice().sort(function (a, b) {
+            var la = lineByCode[a], lb = lineByCode[b];
+            return (la ? la.line_id : 999) - (lb ? lb.line_id : 999);
+        });
+        var dotsHtml = '';
+        sortedLines.forEach(function (lc) {
+            var colour = getLineColour(lc);
+            dotsHtml += '<span class="station-line-dot" style="background-color:' + colour + '"></span>';
+        });
+        document.getElementById("search-line-dots").innerHTML = dotsHtml;
     }
     closeStationList();
     showStationInfoBar(code);
     fetchETA(code);
+    startAutoRefresh();
+}
+
+// ============================================
+// Auto-Refresh (AJAX, no loader)
+// ============================================
+function startAutoRefresh() {
+    stopAutoRefresh();
+    autoRefreshTimer = setInterval(function () {
+        if (currentStationCode) {
+            fetchETASilent(currentStationCode);
+        }
+    }, AUTO_REFRESH_INTERVAL);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+    }
 }
 
 // ============================================
@@ -214,11 +301,17 @@ function showStationInfoBar(code) {
     document.getElementById("station-info-name").textContent =
         station.name_chi + " " + station.name_eng;
 
-    // Line filter badges (second row)
+    // Line filter badges (second row) - ordered by line_id
     activeLineFilter = null;
-    //document.getElementById("btn-show-all").classList.add("hidden");
     let badgesHtml = "";
-    station.lines.forEach(function (lineCode) {
+    var sortedLines = station.lines.slice().sort(function (a, b) {
+        var lineA = lineByCode[a];
+        var lineB = lineByCode[b];
+        var idA = lineA ? lineA.line_id : 999;
+        var idB = lineB ? lineB.line_id : 999;
+        return idA - idB;
+    });
+    sortedLines.forEach(function (lineCode) {
         const colour = getLineColour(lineCode);
         const line = lineByCode[lineCode];
         const label = line ? line.name_chi : lineCode;
@@ -274,6 +367,28 @@ function fetchETA(stationCode) {
                 console.error("API error:", xhr.status);
                 document.getElementById("eta-container").innerHTML =
                     '<div style="padding:20px;color:#fff;text-align:center;">無法取得數據 (HTTP ' + xhr.status + ')</div>';
+            }
+        }
+    };
+    xhr.send(JSON.stringify({ stationcode: stationCode }));
+}
+
+// Silent AJAX fetch (no loader)
+function fetchETASilent(stationCode) {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", API_URL, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    processETAData(data);
+                } catch (e) {
+                    console.error("Failed to parse ETA response:", e);
+                }
+            } else {
+                console.error("API error:", xhr.status);
             }
         }
     };
@@ -342,11 +457,13 @@ function processETAData(data) {
         });
     });
 
-    // Sort lines by smallest platform number (not alphabetically)
+    // Sort lines by line_id from linesData
     const sortedLineKeys = Object.keys(lineGroups).sort(function (a, b) {
-        var minA = Math.min.apply(null, lineGroups[a].map(function(t){ return t.platform; }));
-        var minB = Math.min.apply(null, lineGroups[b].map(function(t){ return t.platform; }));
-        return minA - minB;
+        var lineA = lineByCode[a];
+        var lineB = lineByCode[b];
+        var idA = lineA ? lineA.line_id : 999;
+        var idB = lineB ? lineB.line_id : 999;
+        return idA - idB;
     });
 
     let html = "";
@@ -354,25 +471,72 @@ function processETAData(data) {
     sortedLineKeys.forEach(function (lineCode) {
         const trains = lineGroups[lineCode];
 
-        // Sort by platform ascending, then by time (ttnt)
-        trains.sort(function (a, b) {
-            if (a.platform !== b.platform) return a.platform - b.platform;
-            return parseTimeValue(a) - parseTimeValue(b);
-        });
+        // Check if PLATFORM_GROUP applies for this station
+        var platformGroups = null;
+        if (typeof PLATFORM_GROUP !== "undefined" && PLATFORM_GROUP[currentStationCode]) {
+            platformGroups = PLATFORM_GROUP[currentStationCode];
+        }
 
-        // Limit to MAX_TRAINS_PER_GROUP per platform
-        const platformBuckets = {};
-        const limitedTrains = [];
-        trains.forEach(function (train) {
-            const pf = train.platform;
-            if (!platformBuckets[pf]) platformBuckets[pf] = 0;
-            if (platformBuckets[pf] < MAX_TRAINS_PER_GROUP) {
-                limitedTrains.push(train);
-                platformBuckets[pf]++;
-            }
-        });
+        if (platformGroups) {
+            // Group trains by platform group, sort by ttnt then platform
+            var groupedTrains = [];
+            var ungrouped = [];
 
-        // Line colour bar
+            trains.forEach(function (train) {
+                var assigned = false;
+                for (var gi = 0; gi < platformGroups.length; gi++) {
+                    if (platformGroups[gi].indexOf(train.platform) !== -1) {
+                        if (!groupedTrains[gi]) groupedTrains[gi] = [];
+                        groupedTrains[gi].push(train);
+                        assigned = true;
+                        break;
+                    }
+                }
+                if (!assigned) ungrouped.push(train);
+            });
+
+            // Sort within each group: by ttnt, then platform
+            var sortedTrains = [];
+            groupedTrains.forEach(function (grp) {
+                if (!grp) return;
+                grp.sort(function (a, b) {
+                    var tA = parseTimeValue(a), tB = parseTimeValue(b);
+                    if (tA !== tB) return tA - tB;
+                    return a.platform - b.platform;
+                });
+                sortedTrains = sortedTrains.concat(grp);
+            });
+            ungrouped.sort(function (a, b) {
+                if (a.platform !== b.platform) return a.platform - b.platform;
+                return parseTimeValue(a) - parseTimeValue(b);
+            });
+            sortedTrains = sortedTrains.concat(ungrouped);
+
+            renderTrainsForLine(sortedTrains, lineCode, platformGroups);
+        } else {
+            // Original logic: sort by platform ascending, then by time
+            trains.sort(function (a, b) {
+                if (a.platform !== b.platform) return a.platform - b.platform;
+                return parseTimeValue(a) - parseTimeValue(b);
+            });
+
+            // Limit to MAX_TRAINS_PER_GROUP per platform
+            const platformBuckets = {};
+            const limitedTrains = [];
+            trains.forEach(function (train) {
+                const pf = train.platform;
+                if (!platformBuckets[pf]) platformBuckets[pf] = 0;
+                if (platformBuckets[pf] < MAX_TRAINS_PER_GROUP) {
+                    limitedTrains.push(train);
+                    platformBuckets[pf]++;
+                }
+            });
+
+            renderTrainsForLine(limitedTrains, lineCode, null);
+        }
+    });
+
+    function renderTrainsForLine(limitedTrains, lineCode, platformGroups) {
         const colour = getLineColour(lineCode);
         const lineInfo = lineByCode[lineCode];
         const lineChi = lineInfo ? lineInfo.name_chi : lineCode;
@@ -384,54 +548,66 @@ function processETAData(data) {
         html += '<span class="line-bar-eng">' + lineEng + '</span>';
         html += '</div>';
 
-        // Render each train
         var prevPlatform = null;
         var rowIndex = 1;
         limitedTrains.forEach(function (train) {
-            // Platform separator
+            // Platform separator: skip if platforms are in same group
             if (prevPlatform !== null && train.platform !== prevPlatform) {
-                html += '<div class="platform-separator"></div>';
+                var sameGroup = false;
+                if (platformGroups) {
+                    for (var gi = 0; gi < platformGroups.length; gi++) {
+                        if (platformGroups[gi].indexOf(prevPlatform) !== -1 && platformGroups[gi].indexOf(train.platform) !== -1) {
+                            sameGroup = true;
+                            break;
+                        }
+                    }
+                }
+                if (!sameGroup) {
+                    html += '<div class="platform-separator"></div>';
+                }
             }
             prevPlatform = train.platform;
 
             var destCode = train.destination;
             var destChi, isNoop = false;
+            var isUnknownDest = false;
 
-            // Check NO_ prefix
             if (destCode && destCode.indexOf("NO_") === 0) {
                 destChi = "不 載 客 列 車";
                 isNoop = true;
-            }
-            // Check terminus: destination equals current station on terminus platforms
-            else if (currentStationCode && destCode === currentStationCode && isTerminusPlatform(currentStationCode, train.platform)) {
+            } else if (currentStationCode && destCode === currentStationCode) {
                 destChi = "不 載 客 列 車";
                 isNoop = true;
             } else {
                 var dest = stationByCode[destCode];
-                destChi = dest ? dest.name_chi : destCode;
+                if (dest) {
+                    destChi = dest.name_chi;
+                } else {
+                    destChi = "回 廠 (" + destCode + ")";
+                    isUnknownDest = true;
+                }
             }
 
-            var timeDisplay = formatTrainTime(train);
+            var timeDisplay = formatTrainTime(train, isNoop || isUnknownDest);
             var tdHtml = renderTrainCode(train.td);
-            // Even rows get a light version of the line colour
             var rowClass = (rowIndex % 2 === 0) ? 'eta-row-even' : 'eta-row-odd';
             var isDark = document.body.classList.contains('dark-mode');
             var evenBg = isDark ? darkenColor(colour, 0.80) : lightenColor(colour, 0.80);
-            var evenStyle = (rowIndex % 2 === 0) ? ' style="background-color:' + evenBg + '"' : '';
+            var rowStyle = (rowIndex % 2 === 0) ? ' style="background-color:' + evenBg + '"' : '';
 
-            html += '<div class="eta-row ' + rowClass + '"' + evenStyle + '>';
+            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + '>';
             html += '<div class="eta-dest">';
-            html += '<span class="eta-dest-chi' + (isNoop ? ' eta-dest-noop' : '') + '">' + destChi + '</span>';
+            html += '<span class="eta-dest-chi' + (isNoop || isUnknownDest ? ' eta-dest-noop' : '') + '">' + destChi + '</span>';
             html += '</div>';
             html += tdHtml;
             html += '<div class="eta-platform-badge" style="background-color:' + colour + '">' + train.platform + '</div>';
-            html += '<div class="eta-time">' + timeDisplay + '</div>';
+            html += '<div class="eta-time' + (isNoop || isUnknownDest ? ' eta-time-muted' : '') + '">' + timeDisplay + '</div>';
             html += '</div>';
             rowIndex++;
         });
 
-        html += '</div>'; // close .line-section
-    });
+        html += '</div>';
+    }
 
     if (!html) {
         html = '<div style="padding:20px;text-align:center;">沒有列車資料</div>';
@@ -473,22 +649,30 @@ function parseTimeValue(train) {
 // ============================================
 // Helper: Format train arrival time display
 // ============================================
-function formatTrainTime(train) {
+function formatTrainTime(train, isMuted) {
     var val = train.ttnt;
+    var mutedClass = isMuted ? ' eta-time-muted-text' : '';
     // Check if departing (0)
     if (val === 0 || val === "0") {
-        return '<span class="eta-time-departing">已到站</span>';
+        // If current time - last update time > 30s, show 已離站
+        if (lastUpdateTime) {
+            var elapsed = new Date() - lastUpdateTime;
+            if (elapsed > 30000) {
+                return '<span class="eta-time-departing' + mutedClass + '">已離站</span>';
+            }
+        }
+        return '<span class="eta-time-departing' + mutedClass + '">已到站</span>';
     }
     // Check if arriving (1) - show countdown
     if (val === 1 || val === "1") {
-        return '<span class="eta-time-countdown" data-countdown="1">0:59</span>';
+        return '<span class="eta-time-countdown' + mutedClass + '" data-countdown="1">0:59</span>';
     }
     // Otherwise show minutes
     var mins = parseInt(val, 10);
     if (isNaN(mins)) {
-        return '<span class="eta-time-departing">' + escapeHtml(String(val)) + '</span>';
+        return '<span class="eta-time-departing' + mutedClass + '">' + escapeHtml(String(val)) + '</span>';
     }
-    return '<span class="eta-time-value">' + mins + '</span><span class="eta-time-unit"> min</span>';
+    return '<span class="eta-time-value' + mutedClass + '">' + mins + '</span><span class="eta-time-unit' + mutedClass + '"> min</span>';
 }
 
 // ============================================
@@ -558,16 +742,6 @@ function renderTrainCode(td) {
 }
 
 // ============================================
-// Helper: Check if a platform is a terminus platform
-// ============================================
-function isTerminusPlatform(stationCode, platform) {
-    if (typeof TERMINUS_PLATFORMS === "undefined") return false;
-    var platforms = TERMINUS_PLATFORMS[stationCode];
-    if (!platforms) return false;
-    return platforms.indexOf(platform) !== -1;
-}
-
-// ============================================
 // Helper: Lighten a hex colour by a percentage
 // ============================================
 function lightenColor(hex, percent) {
@@ -612,8 +786,9 @@ function updateCountdowns() {
     var now = new Date();
     var elems = document.querySelectorAll('.eta-time-countdown');
     elems.forEach(function (el) {
-        // target = lastUpdateTime + 60s
-        var target = new Date(lastUpdateTime.getTime() + 60000);
+        // target = lastUpdateTime + 30s
+        // Countdown starts from 0:29 at ttnt=1, so we give it a full 30s to count down to 0:00
+        var target = new Date(lastUpdateTime.getTime() + 30000);
         var diff = target - now;
         if (diff <= 0) {
             el.textContent = '進站中';

@@ -4,6 +4,13 @@
    Modify CSS custom properties below to change the theme easily.
 */
 
+@font-face {
+    font-family: 'MyriadMM';
+    src: url('font/MYRIAD-MM.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
     /* === Color Palette === */
     --color-primary:          #1a2a4a;   /* Header background */
@@ -28,9 +35,8 @@
     /* === Typography === */
     --font-family:            'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
     --font-size-title:        6vw;
-    --font-size-clock:        5vw;
-    --font-size-clock-sec:    3.5vw;
-    --font-size-last-update:  2.8vw;
+    --font-size-clock:        5.5vw;
+    --font-size-last-update:  3.5vw;
     --font-size-refresh:      4.8vw;
     --font-size-search:       4vw;
     --font-size-dropdown:     3.8vw;
@@ -39,7 +45,7 @@
     --font-size-station-name: 5vw;
     --font-size-eta:          5vw;
     --font-size-eta-unit:     3vw;
-    --font-size-platform:     5vw;
+    --font-size-platform:     5.2vw;
     --font-size-station-info: 3.2vw;
 
     /* === Spacing === */
@@ -133,7 +139,7 @@ html, body {
 }
 
 #clock .clock-sec {
-    font-size: var(--font-size-clock-sec);
+    font-size: calc(var(--font-size-clock) * 0.7);
     opacity: 0.8;
 }
 
@@ -190,10 +196,19 @@ html, body {
     align-items: center;
 }
 
+#search-line-dots {
+    position: absolute;
+    right: 35px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    pointer-events: none;
+}
+
 #station-search {
     width: 100%;
     padding: var(--spacing-sm) var(--spacing-md);
-    padding-right: 2.5em;
+    padding-right: 5.5em;
     font-size: var(--font-size-search);
     font-family: var(--font-family);
     border: 2px solid var(--color-border);
@@ -205,18 +220,23 @@ html, body {
 }
 
 #btn-clear-search {
-    position: absolute;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: calc(var(--font-size-search) * 1.2);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    padding: 0 6px;
-    line-height: 1;
+    display: none;
 }
 
-#btn-clear-search:hover {
+#btn-dropdown-arrow {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: calc(var(--font-size-search) * 2.0);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+#btn-dropdown-arrow:hover {
     color: var(--color-text-dark);
 }
 
@@ -239,6 +259,8 @@ html, body {
 }
 
 .station-item {
+    display: flex;
+    align-items: center;
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-dropdown);
     cursor: pointer;
@@ -248,6 +270,25 @@ html, body {
 
 .station-item:hover {
     background-color: var(--color-dropdown-hover);
+}
+
+.station-list-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--font-size-dropdown);
+    font-weight: bold;
+    color: var(--color-text-dark);
+    background-color: var(--color-bg-page);
+    user-select: none;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.station-list-header-eng {
+    font-weight: normal;
 }
 
 .station-item .station-colour-dot {
@@ -263,11 +304,27 @@ html, body {
 }
 
 .station-item .station-item-chi {
+    margin-left: var(--spacing-xs);
     margin-right: var(--spacing-sm);
 }
 
 .station-item .station-item-eng {
     color: var(--color-text-muted);
+}
+
+.station-line-dots {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.station-line-dot {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
 }
 
 /* ============================================
@@ -406,7 +463,8 @@ html, body {
     align-items: center;
     justify-content: center;
     font-size: var(--font-size-platform);
-    margin: 0 var(--spacing-xs);
+    font-family: 'MyriadMM', var(--font-family);
+    margin: 0 var(--spacing-md);
     flex-shrink: 0;
 }
 
@@ -422,6 +480,7 @@ html, body {
 .eta-time-value {
     font-size: var(--font-size-eta);
     font-weight: bold;
+    font-family: 'MyriadMM', var(--font-family);
 }
 
 .eta-time-unit {
@@ -475,50 +534,46 @@ html, body {
     font-variant-numeric: tabular-nums;
 }
 
-/* Dark mode toggle */
-.theme-switch {
+/* Muted ETA time for non-passenger/unknown destinations */
+.eta-time-muted .eta-time-value,
+.eta-time-muted .eta-time-unit,
+.eta-time-muted .eta-time-departing,
+.eta-time-muted .eta-time-countdown,
+.eta-time-muted-text {
+    color: var(--color-text-muted) !important;
+}
+
+/* Dark mode toggle - Moon button */
+.theme-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: #fff;
+    color: var(--color-primary);
+    transition: all 0.3s;
     margin-left: var(--spacing-md);
 }
 
-.theme-switch-icon {
-    font-size: 3.5vw;
-    line-height: 1;
-}
-
-.theme-switch input[type="checkbox"] {
-    position: relative;
-    width: 36px;
+.theme-btn .theme-icon {
+    width: 20px;
     height: 20px;
-    appearance: none;
-    -webkit-appearance: none;
-    background-color: #4caf50;
-    border-radius: 10px;
-    cursor: pointer;
-    outline: none;
-    transition: background-color 0.3s;
 }
 
-.theme-switch input[type="checkbox"]::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    background-color: #fff;
-    border-radius: 50%;
-    transition: transform 0.3s;
+/* Light mode: white moon, no bg circle */
+body:not(.dark-mode) .theme-btn {
+    background-color: transparent;
+    color: #ffffff;
 }
 
-.theme-switch input[type="checkbox"]:checked {
-    background-color: #2196f3;
-}
-
-.theme-switch input[type="checkbox"]:checked::before {
-    transform: translateX(16px);
+/* Dark mode: white circle bg, dark moon */
+body.dark-mode .theme-btn {
+    background-color: #ffffff;
+    color: #1a1a2e;
 }
 
 /* ============================================
@@ -585,9 +640,8 @@ body.dark-mode .eta-row-odd {
    ============================================ */
 @media (max-width: 480px) {
     :root {
-        --font-size-title:        7vw;
-        --font-size-clock:        7vw;
-        --font-size-clock-sec:    4vw;
+        --font-size-title:        6vw;
+        --font-size-clock:        6vw;
         --font-size-station-name: 6vw;
         --font-size-eta:          6vw;
         --font-size-curr-station: 5vw;
@@ -597,7 +651,7 @@ body.dark-mode .eta-row-odd {
     #header {
         flex-direction: column;
         align-items: flex-start;
-        padding: var(--spacing-xs) var(--spacing-md);
+        padding: var(--spacing-sm) var(--spacing-md);
         gap: var(--spacing-xs);
     }
 
@@ -621,7 +675,6 @@ body.dark-mode .eta-row-odd {
     :root {
         --font-size-title:        40px;
         --font-size-clock:        36px;
-        --font-size-clock-sec:    20px;
         --font-size-last-update:  16px;
         --font-size-refresh:      24px;
         --font-size-search:       20px;

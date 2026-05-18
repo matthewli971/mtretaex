@@ -69,3 +69,37 @@ Please help to fix the issue of v0.04: (stay at the version)
 2. For dark mode, the even row colour is not changed. Please add handling to the even rows in dark mode. Please make darken (80%) with line colours as the background colour
 3. Please add min-width for eta-time element (20%) to avoid shifting when ETA change from minutes to arriving texts
 4. There are pixel shift when showing the stations list in search mode, please adjust the code to make this aligned
+
+Please help to fix the issue:
+1. When switching between light and dark mode, the background colour will stay as the same but not change to another mode, please adjust the code to fix this
+2. Please help to align the last updated date element next to the refresh button. And please keep the 2 lines format for all widths, even when there is wider screen (Please see attached image)
+
+Please help to update the app according to the following requirements: (v0.05)
+1. Please set call the API every 10 seconds, use AJAX instead of reload whole page
+2. When refresh app through auto update (in above requirement), please update through AJAX mode to avoid full reload of screens (the one with spinning cirle)
+3. Please change the refresh behaviour to AJAX and avoid showing loading screen when switching between 2 modes. 
+4. For light/dark mode switch button, please change to the style like attached image. Please don't use emoji as it break the UI when display in wider DPIs
+5. Please add a PLATFORM_GROUP variable to group the ETA with same destinations, then order with ttnt. Please show all records. If ttnt is the same, please order with platform number ascending. Please add variable for following cases first, I will update the remaining part. (LOW: [1,4]; LMC: [1,2]; TAP: [1,2],[3,4])
+6. For platform code and TTNT minutes, please update the display font to font/MYRIAD-MM.ttf 
+7. For ttnt = 0 cases (current: 已到站), if current time - last update time > 30 sec, then shown as "已離站"
+8. For search bar, please add behaviour to hide station list when user click the search bar again while the station list is displayed (i.e. behave like a dropdown list). Please replace the "x" on the right if able to change to dropdown list with search function
+9. For station list, please show the small line colour circle at the right of each station 
+10. Please rearrange the linesData variable to following order: (KTL>TWL>ISL>TKL>SIL>TCL>AEL>DRL>EAL>TML), and add a line_id with the order and put before line_code
+
+Please help to update the app according to the requirements: (Keep 0.05)
+1. For "不載客列車" and stations not included in the station list of the line (maybe depot code, track siding code), please grey out the ETA minutes
+2. For grouped ETA list, please remove the "platform-separator" if the ETAs are in same platform groups(check the screenshot for the issue)
+3. Another issue is some destination (e.g. HTD) is not in the ttnt order (it is at the bottom of the station info), please include in the TTNT ordering
+4. Please change the switch to a single button showing a moon SVG, and set default enabled. Please use black and white svg icons instead of an emoji. When dark mode is enable please use a big white circle as background and with dark moon logo. When it is light mode make the moon white and remove the white background (i.e. Invert)
+5. For "line-badge-filter" and ETA display, please follow the line_id ascending order in "linesData" variable
+6. Some line colours did not follow the "eta-row" background colour requirements, please help review the code and fix it
+
+Please also analyze the changes in previous prompt and update the readme.me according to the changes from 0.04 to 0.05
+
+
+Please help to update the app according to following requirements (keep v0.05)
+1. Please add line circles to the search bar after selecting the lines.
+2. Please order the line circles at the station list and search bar (after selecting station) according to line line_id
+3. Please change the behaviour of the station list: Order by lines ID, then by “station” parameter in linesData in each record. Please add an unselectable element displaying the line name, and display the line colour at the left of the row (i.e. border-left: 15px solid [line_colour];)
+
+In readme.md please help to append the above changes to 0.05 change log, then adjust the wording of existing v0.05 changelog, to hide some technical details of the update(e.g. no need to show line sequence example)  

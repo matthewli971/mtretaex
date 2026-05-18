@@ -7,32 +7,6 @@
 // Home station setting (change this to set default station)
 var HOME_STATION = "ADM";
 
-// Terminus stations: when the destination equals the current station on these platforms, treat as "不載客列車"
-// Format: { station_code: [platform_numbers] }
-var TERMINUS_PLATFORMS = {
-  "CEN": [1, 2],       // TWL terminus
-  "TSW": [1],          // TWL terminus
-  "WHA": [1],          // KTL terminus
-  "HOM": [2],          // KTL terminus
-  "TIK": [1],          // KTL terminus
-  "CHW": [1, 2],       // ISL terminus
-  "KET": [1],          // ISL terminus
-  "POA": [1],          // TKL terminus
-  "LHP": [1, 2],       // TKL terminus
-  "NOP": [4],          // TKL terminus
-  "TUC": [1, 2],       // TCL terminus
-  "HOK": [1, 3, 4],    // TCL/AEL terminus
-  "AWE": [1],          // AEL terminus
-  "DIS": [1],          // DRL terminus
-  "SUN": [3],          // DRL terminus
-  "SOH": [1, 2],       // SIL terminus
-  "ADM": [5, 6, 8],    // SIL/EAL terminus
-  "LOW": [2, 3],       // EAL terminus
-  "LMC": [1, 2],       // EAL terminus
-  "TUM": [1, 2],       // TML terminus
-  "WKS": [1, 2]        // TML terminus
-};
-
 // All MTR stations
 // Fields: station_id, station_code, name_chi, name_eng, lines[], station_colour, station_font_colour
 var stationsData = [
@@ -136,17 +110,36 @@ var stationsData = [
   { "station_id": 120, "station_code": "TUM", "name_chi": "屯門",     "name_eng": "Tuen Mun",             "lines": ["TML"],                  "station_colour": "#035F94",  "station_font_colour": "#FFFFFF" }
 ];
 
+// Platform groups: stations where platforms share same destinations
+// Format: { STATION_CODE: [[platform_group_1], [platform_group_2], ...] }
+var PLATFORM_GROUP = {
+    "LOW": [[1, 4], [2, 3]],
+    "LMC": [[1, 2]],
+    "TAP": [[1, 2], [3, 4]],
+    "FOT": [[1, 2], [3, 4]],
+    "SHT": [[1, 2], [3, 4]],
+    "MKK": [[1, 2]],
+    "WKS": [[1, 2]],
+    "TUM": [[1, 2]],
+    "CEN": [[1, 2]],
+    "CHW": [[1, 2]],
+    "LHP": [[1, 2]],
+    "HOK": [[1, 2]],
+    "TUC": [[1, 2]],
+    "CHH": [[1, 2], [3, 4]]
+};
+
 // All MTR lines with station sequence and colour
-// Fields: line_code, name_chi, name_eng, colour_code, stations[]
+// Fields: line_id, line_code, name_chi, name_eng, colour_code, stations[]
 var linesData = [
-  { "line_code": "AEL", "name_chi": "機場快綫",  "name_eng": "Airport Express",        "colour_code": "#00888A", "stations": ["HOK","KOW","TSY","AIR","AWE"] },
-  { "line_code": "DRL", "name_chi": "迪士尼綫",  "name_eng": "Disneyland Resort Line",  "colour_code": "#F173AC", "stations": ["SUN","DIS"] },
-  { "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","LOW","LMC"] },
-  { "line_code": "ISL", "name_chi": "港島綫",    "name_eng": "Island Line",             "colour_code": "#007DC5", "stations": ["KET","HKU","SYP","SHW","CEN","ADM","WAC","CAB","TIH","FOH","NOP","QUB","TAK","SWH","SKW","HFC","CHW"] },
-  { "line_code": "KTL", "name_chi": "觀塘綫",    "name_eng": "Kwun Tong Line",          "colour_code": "#00AB4E", "stations": ["WHA","HOM","YMT","MOK","PRE","SKM","KOT","LOF","WTS","DIH","CHH","KOB","NTK","KWT","LAT","YAT","TIK"] },
-  { "line_code": "SIL", "name_chi": "南港島綫",  "name_eng": "South Island Line",       "colour_code": "#BAC429", "stations": ["ADM","OCP","WCH","LET","SOH"] },
-  { "line_code": "TCL", "name_chi": "東涌綫",    "name_eng": "Tung Chung Line",         "colour_code": "#F7943E", "stations": ["HOK","KOW","OLY","NAC","LAK","TSY","SUN","TUC"] },
-  { "line_code": "TKL", "name_chi": "將軍澳綫",  "name_eng": "Tseung Kwan O Line",      "colour_code": "#7D499D", "stations": ["NOP","QUB","YAT","TIK","TKO","HAH","POA","LHP"] },
-  { "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] },
-  { "line_code": "TWL", "name_chi": "荃灣綫",    "name_eng": "Tsuen Wan Line",          "colour_code": "#ED1D24", "stations": ["CEN","ADM","TST","JOR","YMT","MOK","PRE","SSP","CSW","LCK","MEF","LAK","KWF","KWH","TWH","TSW"] }
+  { "line_id": 1,  "line_code": "KTL", "name_chi": "觀塘綫",    "name_eng": "Kwun Tong Line",          "colour_code": "#00AB4E", "stations": ["WHA","HOM","YMT","MOK","PRE","SKM","KOT","LOF","WTS","DIH","CHH","KOB","NTK","KWT","LAT","YAT","TIK"] },
+  { "line_id": 2,  "line_code": "TWL", "name_chi": "荃灣綫",    "name_eng": "Tsuen Wan Line",          "colour_code": "#ED1D24", "stations": ["CEN","ADM","TST","JOR","YMT","MOK","PRE","SSP","CSW","LCK","MEF","LAK","KWF","KWH","TWH","TSW"] },
+  { "line_id": 3,  "line_code": "ISL", "name_chi": "港島綫",    "name_eng": "Island Line",             "colour_code": "#007DC5", "stations": ["KET","HKU","SYP","SHW","CEN","ADM","WAC","CAB","TIH","FOH","NOP","QUB","TAK","SWH","SKW","HFC","CHW"] },
+  { "line_id": 4,  "line_code": "TKL", "name_chi": "將軍澳綫",  "name_eng": "Tseung Kwan O Line",      "colour_code": "#7D499D", "stations": ["NOP","QUB","YAT","TIK","TKO","HAH","POA","LHP"] },
+  { "line_id": 5,  "line_code": "SIL", "name_chi": "南港島綫",  "name_eng": "South Island Line",       "colour_code": "#BAC429", "stations": ["ADM","OCP","WCH","LET","SOH"] },
+  { "line_id": 6,  "line_code": "TCL", "name_chi": "東涌綫",    "name_eng": "Tung Chung Line",         "colour_code": "#F7943E", "stations": ["HOK","KOW","OLY","NAC","LAK","TSY","SUN","TUC"] },
+  { "line_id": 7,  "line_code": "AEL", "name_chi": "機場快綫",  "name_eng": "Airport Express",        "colour_code": "#00888A", "stations": ["HOK","KOW","TSY","AIR","AWE"] },
+  { "line_id": 8,  "line_code": "DRL", "name_chi": "迪士尼綫",  "name_eng": "Disneyland Resort Line",  "colour_code": "#F173AC", "stations": ["SUN","DIS"] },
+  { "line_id": 9,  "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","LOW","LMC"] },
+  { "line_id": 10, "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] }
 ];
