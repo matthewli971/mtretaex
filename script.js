@@ -713,11 +713,11 @@ function make7SegDigit(d, color) {
     var offColor = '#333333';
     var paths = [
         'M1.8,0 L10.2,0 L8.8,1.5 L3.2,1.5 Z', // Top
-        'M10.5,0.3 L10.5,8.6 L9,7.8 L9,1.8 Z', // Upper Right
+        'M10.5,0.3 L10.5,8.7 L9,7.9 L9,1.8 Z', // Upper Right
         'M10.5,9.4 L10.5,17.7 L9,16.2 L9,10.2 Z', // Lower Right
         'M1.8,18 L10.2,18 L8.8,16.5 L3.2,16.5 Z', // Bottom
         'M1.5,9.4 L1.5,17.7 L3,16.2 L3,10.2 Z', // Lower Left
-        'M1.5,0.3 L1.5,8.6 L3,7.8 L3,1.8 Z', // Upper Left
+        'M1.5,0.3 L1.5,8.7 L3,7.9 L3,1.8 Z', // Upper Left
         'M1.6,9 L3.1,8.3 L8.9,8.3 L10.3,9 L8.9,9.8 L3.1,9.8 Z' // Middle
     ];
     var svg = '<svg viewBox="0 0 12 18" class="seven-seg-digit">';

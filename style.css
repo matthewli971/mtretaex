@@ -35,12 +35,12 @@
     /* === Typography === */
     --font-family:            'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
     --font-size-title:        6vw;
-    --font-size-clock:        5.5vw;
+    --font-size-clock:        7.6vw;
     --font-size-last-update:  3.5vw;
     --font-size-refresh:      4.8vw;
     --font-size-search:       4vw;
     --font-size-dropdown:     3.8vw;
-    --font-size-curr-station: 4.7vw;
+    --font-size-curr-station: 5vw;
     --font-size-line-bar:     4.5vw;
     --font-size-station-name: 5vw;
     --font-size-eta:          5vw;
@@ -99,11 +99,12 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--spacing-sm) var(--spacing-lg);
     position: sticky;
     top: 0;
     z-index: 100;
     flex-wrap: wrap;
+    gap: var(--spacing-sm);
 }
 
 #header-left {
@@ -129,12 +130,15 @@ html, body {
     display: flex;
     align-items: center;
     gap: var(--spacing-lg);
+    width: 100%;
+    justify-content: space-between;
 }
 
 #clock {
     font-size: var(--font-size-clock);
     font-weight: bold;
     font-variant-numeric: tabular-nums;
+    font-family: 'MyriadMM', var(--font-family);
     white-space: nowrap;
 }
 
@@ -148,11 +152,13 @@ html, body {
     align-items: center;
     gap: 0 var(--spacing-sm);
     font-size: var(--font-size-last-update);
+    font-family: 'MyriadMM', var(--font-family);
     white-space: nowrap;
     flex-wrap: wrap;
 }
 
 #last-update-label {
+    font-size: calc(var(--font-size-last-update) * 0.75);
     width: 100%;
     opacity: 0.7;
 }
@@ -198,7 +204,7 @@ html, body {
 
 #search-line-dots {
     position: absolute;
-    right: 35px;
+    right: 50px;
     display: flex;
     align-items: center;
     gap: 3px;
@@ -349,6 +355,7 @@ html, body {
 #station-info-name {
     font-weight: bold;
     font-size: var(--font-size-curr-station);
+    font-family: 'MyriadMM', var(--font-family);
     flex: 1;
 }
 
@@ -421,7 +428,8 @@ html, body {
 
 .line-bar .line-bar-eng {
     font-size: var(--font-size-line-bar);
-    opacity: 0.9;
+    font-family: 'MyriadMM', var(--font-family);
+    padding-top: 0.1em;
 }
 
 /* ETA Row */
@@ -462,6 +470,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-top: 0.1em;
     font-size: var(--font-size-platform);
     font-family: 'MyriadMM', var(--font-family);
     margin: 0 var(--spacing-md);
@@ -486,6 +495,7 @@ html, body {
 .eta-time-unit {
     font-size: var(--font-size-eta-unit);
     color: var(--color-text-muted);
+    font-family: 'MyriadMM', var(--font-family);
 }
 
 .eta-time-departing {
@@ -508,7 +518,7 @@ html, body {
     gap: 1px;
     margin-right: var(--spacing-sm);
     flex-shrink: 0;
-    min-width: 8vw;
+    min-width: 7vw;
     background-color: #111111;
     padding: 3px;
     border-radius: 3px;
@@ -529,9 +539,10 @@ html, body {
 
 /* Countdown timer */
 .eta-time-countdown {
-    font-size: calc(var(--font-size-eta) * 0.9);
+    font-size: var(--font-size-eta);
     font-weight: bold;
     font-variant-numeric: tabular-nums;
+    font-family: 'MyriadMM', var(--font-family);
 }
 
 /* Muted ETA time for non-passenger/unknown destinations */
@@ -586,7 +597,7 @@ body.dark-mode {
     --color-bg-row-even:    #222244;
     --color-bg-input:       #2a2a4a;
     --color-text-dark:      #eeeeee;
-    --color-text-muted:     #bbbbbb;
+    --color-text-muted:     #888888;
     --color-border:         #444466;
     --color-dropdown-bg:    #1e1e3a;
     --color-dropdown-hover: #2a2a5a;
@@ -639,25 +650,9 @@ body.dark-mode .eta-row-odd {
    Responsive
    ============================================ */
 @media (max-width: 480px) {
-    :root {
-        --font-size-title:        6vw;
-        --font-size-clock:        6vw;
-        --font-size-station-name: 6vw;
-        --font-size-eta:          6vw;
-        --font-size-curr-station: 5vw;
-        --font-size-line-bar:     4vw;
-    }
-
     #header {
         flex-direction: column;
         align-items: flex-start;
-        padding: var(--spacing-sm) var(--spacing-md);
-        gap: var(--spacing-xs);
-    }
-
-    #header-right {
-        width: 100%;
-        justify-content: space-between;
     }
 
     .eta-row {
@@ -686,6 +681,10 @@ body.dark-mode .eta-row-odd {
         --font-size-eta-unit:     18px;
         --font-size-platform:     28px;
         --font-size-station-info: 16px;
+    }
+
+    #header-right {
+        width: auto;
     }
 
     .eta-row .eta-platform-badge {
