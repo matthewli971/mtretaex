@@ -154,20 +154,18 @@ var linesData = [
 // Fields:
 //   url            — Full API endpoint URL
 //   method         — HTTP method: "GET" or "POST"
-//   web_api_key    — API key for authentication (if required)
+//   x_api_key    — API key for authentication (if required)
 // ============================================
 var LINE_API_CONFIG = {
-  //            url                                                                                        method               web_api_key
-  "KTL": { url: "https://3nx7c25ob6.execute-api.ap-east-1.amazonaws.com/trainLoads",               method: "POST", web_api_key: null },
-  "TWL": { url: "https://hrbt75qk60.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       method: "POST", web_api_key: "cWEnQqRK0taxxMVCMpNHK3kqQgcTB28tv3lPJRvb" },
-  "ISL": { url: "https://sdz2h3zx17.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       method: "POST", web_api_key: "gRSyLCpSg97wxGIAhaovD4bN0fY4Z0jYa5xeoEn9" },
-  "TKL": { url: "https://ylvae4pn4e.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       method: "POST", web_api_key: "N6lAPnCJUt5nVFX1vNUHm7yGBqXtJiqP6xfndhu6" },
-  "SIL": { url: "https://az2yevl2wc.execute-api.ap-east-1.amazonaws.com/trainLoads",               method: "POST", web_api_key: null },
-  "TCL": { url: "https://mtr-tcl-trainload-api.rocteccloud.com/api/trainLoads",                    method: "POST", web_api_key: "LqKX1iHtfm3hFNCluSUlp6FoSAjjF6Nm5ZrMy5av" },
-  "AEL": { url: null,                                                                              method: null,   web_api_key: null },
-  "DRL": { url: null,                                                                              method: null,   web_api_key: null },
-  "EAL": { url: "https://d30c8uozaghdca.cloudfront.net",                                           method: "POST", web_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" },
-  "TML": { url: "https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges", method: "POST", web_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" }
+  //            url                                                                                        method            x_api_key
+  "KTL": { url: "https://3nx7c25ob6.execute-api.ap-east-1.amazonaws.com/trainLoads",               json_type: "url", x_api_key: null },
+  "TWL": { url: "https://hrbt75qk60.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       json_type: "url", x_api_key: "cWEnQqRK0taxxMVCMpNHK3kqQgcTB28tv3lPJRvb" },
+  "ISL": { url: "https://sdz2h3zx17.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       json_type: "url", x_api_key: "gRSyLCpSg97wxGIAhaovD4bN0fY4Z0jYa5xeoEn9" },
+  "TKL": { url: "https://ylvae4pn4e.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       json_type: "url", x_api_key: "N6lAPnCJUt5nVFX1vNUHm7yGBqXtJiqP6xfndhu6" },
+  "SIL": { url: "https://az2yevl2wc.execute-api.ap-east-1.amazonaws.com/trainLoads",               json_type: "sil", x_api_key: null },
+  "TCL": { url: "https://mtr-tcl-trainload-api.rocteccloud.com/api/trainLoads",                    json_type: "tcl", x_api_key: "LqKX1iHtfm3hFNCluSUlp6FoSAjjF6Nm5ZrMy5av" },
+  "EAL": { url: "https://d30c8uozaghdca.cloudfront.net",                                           json_type: "nsl", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" },
+  "TML": { url: "https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges", json_type: "tml", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" }
 };
 
 
