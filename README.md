@@ -4,6 +4,7 @@ MTR Trains ETA Web-app
 ## Changelog
 
 ### v0.05
+- **Alternative station code handling (added in v0.05.1)**: Add handling to ETA API showing station with another station code.
 - **Auto-refresh every 10 seconds**: The app automatically fetches updated ETA data every 10 seconds without reloading the page or showing the loading spinner.
 - **Silent AJAX refresh**: Both auto-refresh and manual refresh button update data in-place without the loading overlay.
 - **Dark/light mode switch redesign**: Replaced the emoji toggle switch with a single moon SVG button. In dark mode, shows a white circle background with dark moon. In light mode, shows a white moon without background.

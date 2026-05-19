@@ -110,9 +110,13 @@ var stationsData = [
   { "station_id": 120, "station_code": "TUM", "name_chi": "屯門",     "name_eng": "Tuen Mun",             "lines": ["TML"],                  "station_colour": "#035F94",  "station_font_colour": "#FFFFFF" }
 ];
 
+var alternativeNames = [
+  { "NHUH": "HUH" }
+];  
+
 // Platform groups: stations where platforms share same destinations
-// Format: { STATION_CODE: [[platform_group_1], [platform_group_2], ...] }
-var PLATFORM_GROUP = {
+// Format: { STATION_CODE: [[platformGroup_1], [platformGroup_2], ...] }
+var platformGroup = {
     "LOW": [[1, 4], [2, 3]],
     "LMC": [[1, 2]],
     "TAP": [[1, 2], [3, 4]],
@@ -140,6 +144,37 @@ var linesData = [
   { "line_id": 6,  "line_code": "TCL", "name_chi": "東涌綫",    "name_eng": "Tung Chung Line",         "colour_code": "#F7943E", "stations": ["HOK","KOW","OLY","NAC","LAK","TSY","SUN","TUC"] },
   { "line_id": 7,  "line_code": "AEL", "name_chi": "機場快綫",  "name_eng": "Airport Express",        "colour_code": "#00888A", "stations": ["HOK","KOW","TSY","AIR","AWE"] },
   { "line_id": 8,  "line_code": "DRL", "name_chi": "迪士尼綫",  "name_eng": "Disneyland Resort Line",  "colour_code": "#F173AC", "stations": ["SUN","DIS"] },
-  { "line_id": 9,  "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","NHUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","LOW","LMC"] },
-  { "line_id": 10, "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","NHUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] }
+  { "line_id": 9,  "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","LOW","LMC"] },
+  { "line_id": 10, "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] }
 ];
+
+// ============================================
+// Per-line API configuration
+// Each entry defines how to call the ETA API for a specific line.
+// Fields:
+//   url            — Full API endpoint URL
+//   method         — HTTP method: "GET" or "POST"
+//   web_api_key    — API key for authentication (if required)
+// ============================================
+var LINE_API_CONFIG = {
+  //            url                                                                                        method               web_api_key
+  "KTL": { url: "https://3nx7c25ob6.execute-api.ap-east-1.amazonaws.com/trainLoads",               method: "POST", web_api_key: null },
+  "TWL": { url: "https://hrbt75qk60.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       method: "POST", web_api_key: "cWEnQqRK0taxxMVCMpNHK3kqQgcTB28tv3lPJRvb" },
+  "ISL": { url: "https://sdz2h3zx17.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       method: "POST", web_api_key: "gRSyLCpSg97wxGIAhaovD4bN0fY4Z0jYa5xeoEn9" },
+  "TKL": { url: "https://ylvae4pn4e.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       method: "POST", web_api_key: "N6lAPnCJUt5nVFX1vNUHm7yGBqXtJiqP6xfndhu6" },
+  "SIL": { url: "https://az2yevl2wc.execute-api.ap-east-1.amazonaws.com/trainLoads",               method: "POST", web_api_key: null },
+  "TCL": { url: "https://mtr-tcl-trainload-api.rocteccloud.com/api/trainLoads",                    method: "POST", web_api_key: "LqKX1iHtfm3hFNCluSUlp6FoSAjjF6Nm5ZrMy5av" },
+  "AEL": { url: null,                                                                              method: null,   web_api_key: null },
+  "DRL": { url: null,                                                                              method: null,   web_api_key: null },
+  "EAL": { url: "https://d30c8uozaghdca.cloudfront.net",                                           method: "POST", web_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" },
+  "TML": { url: "https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges", method: "POST", web_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" }
+};
+
+
+//NSL:
+//url: 'https://d30c8uozaghdca.cloudfront.net'
+//request.setRequestHeader("x-api-key", 'QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ');
+
+//TML:
+//url: 'https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges'
+//request.setRequestHeader("x-api-key", 'QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ');

@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.05";
+const APP_VERSION = "v0.05.1";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 4;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -12,11 +12,12 @@ const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
 // ============================================
 // Data stores — defined in data.js
 // ============================================
-// stationsData, linesData, HOME_STATION, PLATFORM_GROUP are declared in data.js
+// stationsData, linesData, HOME_STATION, platformGroup are declared in data.js
 
 // Lookup maps built after loading
 let stationByCode = {};   // station_code -> station object
 let lineByCode = {};      // line_code -> line object
+let altCodeMap = {};      // alternative code -> canonical station_code
 
 // State
 let currentStationCode = null;
@@ -53,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Dark mode: apply saved preference (default: dark)
+    // Theme: apply saved preference (default: dark), then mark as loaded
     var savedTheme = null;
     try { savedTheme = localStorage.getItem("mtreta_theme"); } catch(e) {}
     if (savedTheme === "light") {
@@ -61,6 +62,8 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         document.body.classList.add("dark-mode");
     }
+    // Signal that theme has been resolved — CSS active states now apply
+    document.body.classList.add("theme-loaded");
 });
 
 // ============================================
@@ -77,7 +80,7 @@ function updateClock() {
     const mm = String(now.getMinutes()).padStart(2, "0");
     const ss = String(now.getSeconds()).padStart(2, "0");
     document.getElementById("clock").innerHTML =
-        hh + ":" + mm + '<span class="clock-sec">:' + ss + "</span>";
+        hh + " : " + mm + '<span class="clock-sec"> : ' + ss + "</span>";
 }
 
 // ============================================
@@ -90,16 +93,18 @@ function setupEventListeners() {
         }
     });
 
-    // Dark mode toggle (button)
+    // Light mode toggle (sun button)
+    document.getElementById("sun-toggle").addEventListener("click", function () {
+        document.body.classList.remove("dark-mode");
+        try { localStorage.setItem("mtreta_theme", "light"); } catch(e) {}
+        // Re-render ETA rows to update even-row inline background colours
+        if (currentStationCode) { fetchETASilent(currentStationCode); }
+    });
+
+    // Dark mode toggle (moon button)
     document.getElementById("theme-toggle").addEventListener("click", function () {
-        var isDark = document.body.classList.contains("dark-mode");
-        if (isDark) {
-            document.body.classList.remove("dark-mode");
-            try { localStorage.setItem("mtreta_theme", "light"); } catch(e) {}
-        } else {
-            document.body.classList.add("dark-mode");
-            try { localStorage.setItem("mtreta_theme", "dark"); } catch(e) {}
-        }
+        document.body.classList.add("dark-mode");
+        try { localStorage.setItem("mtreta_theme", "dark"); } catch(e) {}
         // Re-render ETA rows to update even-row inline background colours
         if (currentStationCode) {
             fetchETASilent(currentStationCode);
@@ -126,7 +131,14 @@ function loadStaticData() {
     linesData.forEach(function (l) {
         lineByCode[l.line_code] = l;
     });
-
+    // Build alternative-code map from alternativeNames array in data.js
+    if (typeof alternativeNames !== "undefined") {
+        alternativeNames.forEach(function (entry) {
+            Object.keys(entry).forEach(function (altCode) {
+                altCodeMap[altCode] = entry[altCode];
+            });
+        });
+    }
 }
 
 // ============================================
@@ -471,10 +483,10 @@ function processETAData(data) {
     sortedLineKeys.forEach(function (lineCode) {
         const trains = lineGroups[lineCode];
 
-        // Check if PLATFORM_GROUP applies for this station
+        // Check if platformGroup applies for this station
         var platformGroups = null;
-        if (typeof PLATFORM_GROUP !== "undefined" && PLATFORM_GROUP[currentStationCode]) {
-            platformGroups = PLATFORM_GROUP[currentStationCode];
+        if (typeof platformGroup !== "undefined" && platformGroup[currentStationCode]) {
+            platformGroups = platformGroup[currentStationCode];
         }
 
         if (platformGroups) {
@@ -575,11 +587,11 @@ function processETAData(data) {
             if (destCode && destCode.indexOf("NO_") === 0) {
                 destChi = "不 載 客 列 車";
                 isNoop = true;
-            } else if (currentStationCode && destCode === currentStationCode) {
+            } else if (currentStationCode && resolveStationCode(destCode) === resolveStationCode(currentStationCode)) {
                 destChi = "不 載 客 列 車";
                 isNoop = true;
             } else {
-                var dest = stationByCode[destCode];
+                var dest = stationByCode[resolveStationCode(destCode)];
                 if (dest) {
                     destChi = dest.name_chi;
                 } else {
@@ -622,6 +634,13 @@ function processETAData(data) {
 
     // Start countdown timers for ttnt=1
     startCountdownTimers();
+}
+
+// ============================================
+// Helper: Resolve alternative station codes
+// ============================================
+function resolveStationCode(code) {
+    return altCodeMap[code] || code;
 }
 
 // ============================================

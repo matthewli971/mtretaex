@@ -116,20 +116,21 @@ html, body {
 
 #app-title {
     font-size: var(--font-size-title);
+    color: var(--color-text-title);
     font-weight: bold;
     white-space: nowrap;
 }
 
 #app-version {
     font-size: calc(var(--font-size-title) * 0.8);
-    opacity: 0.75;
+    color: var(--color-text-title);
     white-space: nowrap;
 }
 
 #header-right {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-xs);
     width: 100%;
     justify-content: space-between;
 }
@@ -151,6 +152,7 @@ html, body {
     display: flex;
     align-items: center;
     gap: 0 var(--spacing-sm);
+    padding-left: var(--spacing-sm);
     font-size: var(--font-size-last-update);
     font-family: 'MyriadMM', var(--font-family);
     white-space: nowrap;
@@ -554,8 +556,8 @@ html, body {
     color: var(--color-text-muted) !important;
 }
 
-/* Dark mode toggle - Moon button */
-.theme-btn {
+/* Theme toggle buttons — shared base (all inactive by default) */
+.theme-btn, .sun-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -564,25 +566,24 @@ html, body {
     border-radius: 50%;
     border: none;
     cursor: pointer;
-    background-color: #fff;
-    color: var(--color-primary);
     transition: all 0.3s;
-    margin-left: var(--spacing-md);
-}
-
-.theme-btn .theme-icon {
-    width: 20px;
-    height: 20px;
-}
-
-/* Light mode: white moon, no bg circle */
-body:not(.dark-mode) .theme-btn {
     background-color: transparent;
     color: #ffffff;
 }
 
-/* Dark mode: white circle bg, dark moon */
-body.dark-mode .theme-btn {
+.theme-icon, .sun-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Sun active: light mode — only after theme is loaded from storage */
+body.theme-loaded:not(.dark-mode) .sun-btn {
+    background-color: #ffffff;
+    color: var(--color-primary);
+}
+
+/* Moon active: dark mode — only after theme is loaded from storage */
+body.theme-loaded.dark-mode .theme-btn {
     background-color: #ffffff;
     color: #1a1a2e;
 }
@@ -591,16 +592,21 @@ body.dark-mode .theme-btn {
    Dark Mode
    ============================================ */
 body.dark-mode {
-    --color-bg-page:        #1a1a2e;
-    --color-bg-card:        #16213e;
-    --color-bg-row-odd:     #1a1a2e;
-    --color-bg-row-even:    #222244;
-    --color-bg-input:       #2a2a4a;
-    --color-text-dark:      #eeeeee;
-    --color-text-muted:     #888888;
-    --color-border:         #444466;
-    --color-dropdown-bg:    #1e1e3a;
-    --color-dropdown-hover: #2a2a5a;
+    --color-primary:          #111;
+    --color-primary-dark:     #13162a;
+    --color-primary-light:    #2a2f4a;
+    --color-text-title:       #f0ad4e;
+    --color-bg-page:          #15171e;
+    --color-bg-card:          #1a1c27;
+    --color-bg-row-odd:       #15171e;
+    --color-bg-row-even:      #1e2030;
+    --color-bg-input:         #22253a;
+    --color-text-dark:        #e4e4e4;
+    --color-text-muted:       #888899;
+    --color-border:           #2e3044;
+    --color-dropdown-bg:      #1e2235;
+    --color-dropdown-hover:   #2d3155;
+    --color-station-info-bg:  #1e2235;
 }
 
 body.dark-mode .station-item {

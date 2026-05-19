@@ -79,7 +79,7 @@ Please help to update the app according to the following requirements: (v0.05)
 2. When refresh app through auto update (in above requirement), please update through AJAX mode to avoid full reload of screens (the one with spinning cirle)
 3. Please change the refresh behaviour to AJAX and avoid showing loading screen when switching between 2 modes. 
 4. For light/dark mode switch button, please change to the style like attached image. Please don't use emoji as it break the UI when display in wider DPIs
-5. Please add a PLATFORM_GROUP variable to group the ETA with same destinations, then order with ttnt. Please show all records. If ttnt is the same, please order with platform number ascending. Please add variable for following cases first, I will update the remaining part. (LOW: [1,4]; LMC: [1,2]; TAP: [1,2],[3,4])
+5. Please add a platformGroup variable to group the ETA with same destinations, then order with ttnt. Please show all records. If ttnt is the same, please order with platform number ascending. Please add variable for following cases first, I will update the remaining part. (LOW: [1,4]; LMC: [1,2]; TAP: [1,2],[3,4])
 6. For platform code and TTNT minutes, please update the display font to font/MYRIAD-MM.ttf 
 7. For ttnt = 0 cases (current: 已到站), if current time - last update time > 30 sec, then shown as "已離站"
 8. For search bar, please add behaviour to hide station list when user click the search bar again while the station list is displayed (i.e. behave like a dropdown list). Please replace the "x" on the right if able to change to dropdown list with search function
