@@ -156,7 +156,7 @@ var linesData = [
 //   method         — HTTP method: "GET" or "POST"
 //   x_api_key    — API key for authentication (if required)
 // ============================================
-var LINE_API_CONFIG = {
+var lineApiConfig = {
   //            url                                                                                        method            x_api_key
   "KTL": { url: "https://3nx7c25ob6.execute-api.ap-east-1.amazonaws.com/trainLoads",               json_type: "url", x_api_key: null },
   "TWL": { url: "https://hrbt75qk60.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       json_type: "url", x_api_key: "cWEnQqRK0taxxMVCMpNHK3kqQgcTB28tv3lPJRvb" },
@@ -167,6 +167,8 @@ var LINE_API_CONFIG = {
   "EAL": { url: "https://d30c8uozaghdca.cloudfront.net",                                           json_type: "nsl", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" },
   "TML": { url: "https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges", json_type: "tml", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" }
 };
+
+var openDataLines = ["DRL"];
 
 
 //NSL:

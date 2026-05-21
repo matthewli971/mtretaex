@@ -33,9 +33,9 @@
     --color-departing:        #d32f2f;   /* Departing badge */
 
     /* === Typography === */
-    --font-family:            'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
+    --font-family:            'MyriadMM', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
     --font-size-title:        6vw;
-    --font-size-clock:        7.6vw;
+    --font-size-clock:        9vw;
     --font-size-last-update:  3.5vw;
     --font-size-refresh:      4.8vw;
     --font-size-search:       4vw;
@@ -43,10 +43,11 @@
     --font-size-curr-station: 5vw;
     --font-size-line-bar:     4vw;
     --font-size-station-name: 5vw;
-    --font-size-eta:          5vw;
+    --font-size-eta:          5.5vw;
     --font-size-eta-unit:     3vw;
     --font-size-platform:     5.2vw;
     --font-size-station-info: 3.2vw;
+    --font-size-train-type:   4.5vw;
 
     /* === Spacing === */
     --spacing-xs:  4px;
@@ -110,9 +111,11 @@ html, body {
 
 #header-left {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: var(--spacing-sm);
     flex-wrap: wrap;
+    position: relative;
+    flex: 1;
 }
 
 #app-title {
@@ -123,25 +126,24 @@ html, body {
 }
 
 #app-version {
-    font-size: calc(var(--font-size-title) * 0.8);
+    font-size: calc(var(--font-size-title) * 0.7);
     color: var(--color-text-title);
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
     white-space: nowrap;
 }
 
 #header-right {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    width: 100%;
-    justify-content: space-between;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
 }
 
 #clock {
     font-size: var(--font-size-clock);
     font-weight: bold;
     font-variant-numeric: tabular-nums;
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
     white-space: nowrap;
 }
 
@@ -150,24 +152,47 @@ html, body {
     opacity: 0.8;
 }
 
-#last-update-row {
+#last-update-times {
     display: flex;
-    align-items: center;
-    gap: 0 var(--spacing-sm);
-    padding-left: var(--spacing-sm);
+    gap: var(--spacing-sm);
     font-size: var(--font-size-last-update);
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
     white-space: nowrap;
-    flex-wrap: wrap;
+    line-height: 1.2;
 }
 
-#last-update-label {
-    font-size: calc(var(--font-size-last-update) * 0.75);
-    width: 100%;
+#last-update-heading {
+    font-size: var(--font-size-last-update);
     opacity: 0.7;
+    margin-bottom: 1px;
 }
 
-#last-update-time {
+#last-update-times {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.update-time-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.update-time-col .update-time-label {
+    font-size: calc(var(--font-size-last-update) * 0.6);
+    opacity: 0.7;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 3px;
+    padding: 0 4px;
+    margin-top: 1px;
+}
+
+.update-time-trainload .update-time-label {
+    background-color: rgba(76,175,80,0.3);
+    border-color: rgba(76,175,80,0.6);
+}
+
+#last-update-time, #line-api-time {
     font-weight: bold;
 }
 
@@ -227,6 +252,41 @@ html, body {
     color: var(--color-text-dark);
     outline: none;
     transition: border-color 0.2s;
+}
+
+/* Overlay shown when a station is selected */
+#station-display {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 50px; /* leave room for dropdown arrow */
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    background-color: var(--color-bg-input);
+    border: 2px solid var(--color-border);
+    border-right: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    z-index: 1;
+    overflow: hidden;
+}
+
+
+
+#station-display-name {
+    font-size: var(--font-size-search);
+    font-family: var(--font-family);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text-dark);
+}
+
+.search-has-station {
+    color: transparent !important;
 }
 
 #btn-clear-search {
@@ -301,7 +361,7 @@ html, body {
     font-weight: normal;
 }
 
-.station-item .station-colour-dot {
+.station-colour-dot {
     display: inline-block;
     min-width: 3.5em;
     text-align: center;
@@ -311,6 +371,9 @@ html, body {
     font-size: 0.85em;
     margin-right: var(--spacing-xs);
     vertical-align: middle;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: var(--font-family);
 }
 
 .station-item .station-item-chi {
@@ -320,6 +383,7 @@ html, body {
 
 .station-item .station-item-eng {
     color: var(--color-text-muted);
+    padding-top: 0.15em;
 }
 
 .station-line-dots {
@@ -359,14 +423,14 @@ html, body {
 #station-info-name {
     font-weight: bold;
     font-size: var(--font-size-curr-station);
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
     flex: 1;
 }
 
 #btn-show-all {
     display: inline-block;
     padding: 2px 10px;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-xl);
     background-color: rgba(0,0,0,0.3);
     color: inherit;
     font-size: var(--font-size-line-bar);
@@ -432,7 +496,7 @@ html, body {
 
 .line-bar .line-bar-eng {
     font-size: var(--font-size-line-bar);
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
     padding-top: 0.1em;
 }
 
@@ -476,7 +540,7 @@ html, body {
     justify-content: center;
     padding-top: 0.1em;
     font-size: var(--font-size-platform);
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
     margin: 0 var(--spacing-md);
     flex-shrink: 0;
 }
@@ -493,17 +557,17 @@ html, body {
 .eta-time-value {
     font-size: var(--font-size-eta);
     font-weight: bold;
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
 }
 
 .eta-time-unit {
     font-size: var(--font-size-eta-unit);
     color: var(--color-text-muted);
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
 }
 
 .eta-time-departing {
-    font-size: calc(var(--font-size-eta) * 0.9);
+    font-size: var(--font-size-eta);
     font-weight: bold;
     color: var(--color-text-dark);
 }
@@ -526,6 +590,48 @@ html, body {
     border-radius: 3px;
 }
 
+/* Train Type Badge (C/Q/M) */
+.train-type-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 5vw;
+    height: 5vw;
+    min-width: 18px;
+    min-height: 18px;
+    border-radius: 3px;
+    font-size: var(--font-size-train-type);
+    font-weight: bold;
+    font-family: var(--font-family);
+    padding-top: 0.1em;
+    margin-right: 3px;
+    flex-shrink: 0;
+}
+
+.train-type-c { background-color: #2196F3; color: #fff; }
+.train-type-q { background-color: #9C27B0; color: #fff; }
+.train-type-m { background-color: #c0c0c0; color: #000; }
+.train-type-k { background-color: #999999; color: #000; }
+.train-type-sp { background-color: #d40026; border-bottom: 2px solid #092869; color: #fff; }
+.train-type-a { background-color: #666666; color: #fff; }
+
+/* Door Status Indicator */
+.door-status {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.door-status.door-open {
+    background-color: #4CAF50;
+    box-shadow: 0 0 4px #4CAF50;
+}
+.door-status.door-closed {
+    background-color: #9E9E9E;
+}
+
 .seven-seg-digit {
     width: 3.2vw;
     height: 4.8vw;
@@ -544,7 +650,7 @@ html, body {
     font-size: var(--font-size-eta);
     font-weight: bold;
     font-variant-numeric: tabular-nums;
-    font-family: 'MyriadMM', var(--font-family);
+    font-family: var(--font-family);
 }
 
 /* Muted ETA time for non-passenger/unknown destinations */
@@ -556,24 +662,57 @@ html, body {
     color: var(--color-text-muted) !important;
 }
 
+/* PWA Install Button */
+.pwa-install-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    background-color: rgba(255,255,255,0.15);
+    color: #ffffff;
+    font-size: var(--font-size-refresh);
+    transition: background-color 0.2s;
+}
+.pwa-install-btn:hover {
+    background-color: rgba(255,255,255,0.3);
+}
+
+#action-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-left: auto;
+}
+
 /* Theme toggle buttons — shared base (all inactive by default) */
 .theme-btn, .sun-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: var(--font-size-title);
+    height: var(--font-size-title);
     border-radius: 50%;
     border: none;
     cursor: pointer;
     transition: all 0.3s;
     background-color: transparent;
     color: #ffffff;
+    flex-shrink: 0;
+}
+
+#theme-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
 }
 
 .theme-icon, .sun-icon {
-    width: 20px;
-    height: 20px;
+    width: 60%;
+    height: 60%;
 }
 
 /* Sun active: light mode — only after theme is loaded from storage */
@@ -619,6 +758,15 @@ body.dark-mode #station-search {
     border-color: var(--color-border);
 }
 
+body.dark-mode #station-display {
+    background-color: var(--color-bg-input);
+    border-color: var(--color-border);
+}
+
+body.dark-mode #station-display-name {
+    color: var(--color-text-dark);
+}
+
 body.dark-mode .eta-row-odd {
     background-color: var(--color-bg-row-odd);
 }
@@ -661,6 +809,29 @@ body.dark-mode .eta-row-odd {
         align-items: flex-start;
     }
 
+    #header-left {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #theme-group {
+        margin-left: auto;
+    }
+
+    #header-right {
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #clock {
+        text-align: left;
+    }
+
+    #action-group {
+        margin-left: auto;
+    }
+
     .eta-row {
         padding: 0px var(--spacing-md);
         min-height: 40px;
@@ -691,6 +862,7 @@ body.dark-mode .eta-row-odd {
 
     #header-right {
         width: auto;
+        flex-shrink: 0;
     }
 
     .eta-row .eta-platform-badge {

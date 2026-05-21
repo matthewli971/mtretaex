@@ -103,3 +103,51 @@ Please help to update the app according to following requirements (keep v0.05)
 3. Please change the behaviour of the station list: Order by lines ID, then by “station” parameter in linesData in each record. Please add an unselectable element displaying the line name, and display the line colour at the left of the row (i.e. border-left: 15px solid [line_colour];)
 
 In readme.md please help to append the above changes to 0.05 change log, then adjust the wording of existing v0.05 changelog, to hide some technical details of the update(e.g. no need to show line sequence example)  
+
+
+Please help to update the app according to following requirements (v0.06)
+1. add support 
+
+In readme.md please help to append the above changes to 0.05 change log, then adjust the wording of existing v0.05 changelog, to hide some technical details of the update(e.g. no need to show line sequence example)  
+
+Please help to update the app according to following requirements (v0.06)
+1. Add new API support (i prepared the API link and key in data.js) Please help to analyze the API and update the code. Different lines API may have different behaviour. I have grouped the KTL, TWL, TKL, ISL as "url" group. Please refer to the lib/api-template-[xxx].json and process the data and use the data retrieved for displaying. Please map the data to screen according to the train code, show train type (C/Q/M) at the left of the train code, then prepare data for more functions like enhance door opened status, traincurrent location, etc. For these APIs, please only call the API for specific line (e.g. if selected KOT, only call the KTL and EAL API), and store the response in local memory, and only call the API every 30 seconds
+2. State other functions provided by API that can applied to the app
+
+In readme.md please help to append the above changes to change log, remember to hide technical details of the update (e.g. no need to show line sequence example)
+
+
+Please help check the following issue and fix it:
+1. For KTL data, the API doesn't need any api keys to run but it always get an error, please help to check the call issue. BEsides, SIL call method are similar, please help to check too when handling this issue
+2. Although KTL trainLoads API error there are also train type information, which may be caused by other lines trainloads API wrongly put in KTL lines. The issue occurred in SIL too. Please help to check the issue
+
+Please also add following functions to the app (keep v0.06)
+1. Please add support for train type to TCL and TML. 
+   - For TCL, jsonContent.trainId = "TCL K Vxxx-Vxxx" is "K" (use current K colour) ;jsonContent.trainId = "TCL C Vxxx-Vxxx" is "A"(with backround #666666 and #fff text)
+   - For TML, items.train_type = "SP1900" is "SP" (background #d40026 with botton margin colour #092869 with white text); items.train_type = "SP1900" is "C" (background #333333 with white text)
+2. Please help to add a button on the header-left for user to save the web-app as PWA and add to home screen
+3. Please help to add Line API update time with same appearance as last update and put on the right side of the last-update-label
+
+Please help to update readme.md for above updates in v0.06
+
+Please help to fix/update the app according to following requirements (keep v0.06):
+1. Please align the "PWA Install" to the top right of the header-left elements when it is in narrow screen, please add hover show text "Install PWA"
+2. Please update the Last update date box to show trainload ETA last update. Reset the last update time elements to default (--:--:--) if the API call not successful
+3. KTL API still not call successful, please refer to image 2 for successful from other web-app, please test for SIL one too
+4. Please analyze the API and add train type support to TML i.e. items.train_type = "SP1900" is "SP" (background #d40026 with botton margin colour #092869 with white text); items.train_type = "T1141A" is "C" (background #333333 with white text) (there is a typo in previoud prompt, sorry about that)
+5. I see the TCL trainload API is called successful but no traintype is shown, please help to check the code and apply train type function to TCL (jsonContent.trainId = "TCL K Vxxx-Vxxx" is "K" (use current K colour) ;jsonContent.trainId = "TCL C Vxxx-Vxxx" is "A"(with backround #666666 and #fff text))
+6. The last update box occupied too much spacing which cause mode switch button shape is weird (refer to image 5), please help to adjust the alignment of the header-right to make it show circle at all the times
+7. When swithcing from a line with API train code data to another line, the app will wrongly map the train type to another line(e.g. from TWL to TML). Please add checking with the line code when populating traintype code.
+8. For those lines that not yet inplemented trainload API for train (e.g. EAL, SIL), Please reset the last update time elements to default (--:--:--)
+
+Please update the readme.md if there are function updates
+
+Please help to:
+1. Move the light/dark mode switch buttons to header-left and align right, adjust the radius to same height as main title
+2. Check why TML didn't call API for train data
+
+1. Please help make the light and dark mode switch in same group so that the margin can be adjusted for buttons easily
+2. Please move the update-time-label, update-time-trainload textbox next to the time
+3. Please help to check TCL trainload API to see why the train type cannot be outputted
+4. Please help to check why KTL API call failed. Please check image 3 for successful call in other web-app
+5. Please move the "Install PWA" button to the left of F5 button, and make it visible all the time at this moment

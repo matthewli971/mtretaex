@@ -3,6 +3,18 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.06
+- **Line-specific real-time train data API**: The app now calls per-line APIs (KTL, TWL, ISL, TKL, SIL, TCL, EAL, TML) to fetch real-time train information. Only APIs for lines serving the selected station are called.
+- **Line-specific data filtering**: API responses are now filtered by line code to prevent cross-line train data contamination when multiple lines share train codes.
+- **Train type badge**: A coloured badge showing the train type is displayed at the left of the 7-segment train code (C/Q/M/K for urban lines, SP/C for TML, K/A for TCL).
+- **TCL train type support**: TCL trains are identified as K-stock (grey badge) or Adtranz/CAF stock (dark grey "A" badge) based on train ID pattern.
+- **TML train type support**: TML trains are identified as SP1900 (red "SP" badge with blue bottom border) or C-train (dark "C" badge) based on train type field.
+- **Door status indicator**: A green dot appears next to the destination name when a train's doors are currently open.
+- **Train enrichment data**: Real-time train location, speed, consist, and door status are now stored for future features (e.g. live map, crowding indicators).
+- **Line API update time display**: Shows the timestamp of the latest line API data next to the main last-update time.
+- **PWA install support**: A progressive web app manifest and install button allow adding the app to the home screen on supported devices.
+- **Available future features from API**: Train speed, car loading/weight data, train consist information, and precise positioning can be used for live train tracking maps, carriage crowding displays, and arrival predictions.
+
 ### v0.05
 - **Alternative station code handling (added in v0.05.1)**: Add handling to ETA API showing station with another station code.
 - **Auto-refresh every 10 seconds**: The app automatically fetches updated ETA data every 10 seconds without reloading the page or showing the loading spinner.
