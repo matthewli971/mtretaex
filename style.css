@@ -233,11 +233,12 @@ html, body {
 
 #search-line-dots {
     position: absolute;
-    right: 50px;
+    right: var(--spacing-md);
     display: flex;
     align-items: center;
     gap: 3px;
     pointer-events: none;
+    z-index: 2;
 }
 
 #station-search {
@@ -291,23 +292,6 @@ html, body {
 
 #btn-clear-search {
     display: none;
-}
-
-#btn-dropdown-arrow {
-    position: absolute;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: calc(var(--font-size-search) * 2.0);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    transition: transform 0.2s;
-}
-
-#btn-dropdown-arrow:hover {
-    color: var(--color-text-dark);
 }
 
 #station-search:focus {

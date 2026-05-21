@@ -4,6 +4,7 @@ MTR Trains ETA Web-app
 ## Changelog
 
 ### v0.06
+- **Update timestamps next to clock**: Removed the "Last update:" heading wrapper; ETA and Trainload timestamps are now direct flex siblings of the clock in the header.
 - **Line-specific real-time train data API**: The app now calls per-line APIs (KTL, TWL, ISL, TKL, SIL, TCL, EAL, TML) to fetch real-time train information. Only APIs for lines serving the selected station are called.
 - **Line-specific data filtering**: API responses are now filtered by line code to prevent cross-line train data contamination when multiple lines share train codes.
 - **Train type badge**: A coloured badge showing the train type is displayed at the left of the 7-segment train code (C/Q/M/K for urban lines, SP/C for TML, K/A for TCL).
