@@ -151,3 +151,23 @@ Please help to:
 3. Please help to check TCL trainload API to see why the train type cannot be outputted
 4. Please help to check why KTL API call failed. Please check image 3 for successful call in other web-app
 5. Please move the "Install PWA" button to the left of F5 button, and make it visible all the time at this moment
+
+
+Please help to update the app according to following requirements (v0.07)
+1. For some lines(e.g. DRL) the next train data is not accurate, therefore we have to use OpenData API (https://data...) to retrieve ETA instead. I added a config to store which line should use OpenData, please help to get ETA from OpenData for these lines, and add a small D logo at the line badge, with same height as the line name text, 1px grey margin, #222 background and white text
+2. The odd-even row solour issue is appeared again, please help to trace the code to fix the issue
+3. Please refer to lib/logo_converter.html and attached image to redesign the web icon. Please change the bus in the logo to a train, and slightly change the colour scheme to avoid mixing up the bus app icon. Please design the image like '🚇' emoji, but make it more like 2D material design. Please directly edit the logo_converter.html to design the logo
+
+
+Please help to adjust the app according to following:
+1. For app icon, the train emoji is showing the front instead of side, please redesign the icon to the front of the train style
+2. For the "D" logo, please align it to the right of the line bar
+3. Please hide the train code element when display using data.gov.hk mode
+
+Please help to update readme.md for above updates in v0.07
+
+
+1. Please help to update the logo as the attached image show. Please remove the yellow lights and the blue rectangle, then add a white rounded rectangle in the dark blue bar as headlights. Please also help to enlarge the window size to longer height and shift the blue bar lower. Please create a logo.svg in home directory for the new logo, and put the icon as the icon of the app. Besides, please refer to logo_converter_kmb to align the background colour with gradient blue, and the radius of the circle (keep the original colour of circle)
+2. Please add handling to support opendata mode for all lines include the disneyland resort line. Please design a switch on the line bar showing the mode. The mode should be "I"(normal mode) and "D"(opendata mode). Please add transition on display for mode switching. For those lines in var openData lines, please set default default mode to "D" mode
+3. Please change the appearance of mode switch button to a switch, and add transition when switching mode. Please add a margin like other switch did too
+4. Please move the "Door closed" indicator to the left of the eta-time-countdown element for supported lines

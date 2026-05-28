@@ -3,6 +3,16 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.07
+- **Global master mode switch (I/D)**: Removed per-line mode toggles from each line bar. A single master switch in the station info bar now controls the data source (I = Internal IDT API, D = MTR OpenData API) for all lines simultaneously. Mode selection persists across station changes via `localStorage`.
+- **OpenData sys_time as last-update time**: When fetching in D (OpenData) mode, the last-update timestamp in the header now reflects the `sys_time` field returned by the OpenData API response, instead of remaining blank.
+- **Expandable train detail row (row1 / row2)**: Each ETA row is now split into two parts. The main row (row1) shows destination, train code, platform, and ETA as before. Clicking the row expands a detail row (row2) below it showing car-level crowding data and door status. Clicking again collapses it.
+- **Car occupancy visualization in row2**: When car-load data is available from the line API (KTL / TWL / ISL / TKL), each car is shown as a colour-coded rectangle — white (empty), green (low), yellow (moderate), red (crowded) — with the raw load value displayed inside.
+- **Door status badge in row2**: The expanded detail row shows a "Door Opened" (green) or "Door Closed" (dark grey) badge sourced from real-time train data.
+- **OpenData API support ("D mode")**: Some Lines are now fetch ETA from the MTR Open Data API instead of the IDT API to get Train Schedule. Lines using D mode will display a small "D" badge aligned to the right of the line bar.
+- **App icon redesign (front view)**: The app icon in `lib/logo_converter.html` now shows the **front** of a train (windshield, doors, headlights, pantograph) in 2D material design style with a blue colour scheme, replacing the previous side-view design.
+- **Odd-even row colour fix**: Row index now resets after platform separators for consistent striping within each platform group.
+
 ### v0.06
 - **Update timestamps next to clock**: Removed the "Last update:" heading wrapper; ETA and Trainload timestamps are now direct flex siblings of the clock in the header.
 - **Line-specific real-time train data API**: The app now calls per-line APIs (KTL, TWL, ISL, TKL, SIL, TCL, EAL, TML) to fetch real-time train information. Only APIs for lines serving the selected station are called.

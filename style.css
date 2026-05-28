@@ -34,7 +34,7 @@
 
     /* === Typography === */
     --font-family:            'MyriadMM', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
-    --font-size-title:        6vw;
+    --font-size-title:        6.3vw;
     --font-size-clock:        9vw;
     --font-size-last-update:  3.5vw;
     --font-size-refresh:      4.8vw;
@@ -221,7 +221,7 @@ html, body {
    ============================================ */
 #station-selector {
     position: relative;
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: 0 var(--spacing-lg) var(--spacing-md);
     background-color: var(--color-primary);
 }
 
@@ -484,12 +484,157 @@ html, body {
     padding-top: 0.1em;
 }
 
+/* Mode Switch (I/D toggle) on line bar */
+.mode-switch-wrap {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    margin-right: var(--spacing-xs);
+    flex-shrink: 0;
+}
+.mode-switch {
+    position: relative;
+    display: inline-block;
+    width: 2.6em;
+    height: 1.6em;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.mode-switch-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+.mode-switch-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 1em;
+    transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mode-switch-slider::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 0.2em;
+    left: 0.3em;
+    height: 2.2em;
+    width: 2.2em;
+    background-color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: #333;
+    line-height: 1;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+.mode-switch-input:checked + .mode-switch-slider {
+    background-color: #222;
+}
+.mode-switch-input:checked + .mode-switch-slider::before {
+    transform: translateX(1.7em);
+    background-color: #fff;
+    color: #111;
+}
+
+/* Master mode switch in station-info-bar — enlarged */
+.master-mode-switch-wrap {
+    display: inline-flex;
+    align-items: center;
+    margin-left: var(--spacing-md);
+}
+.master-mode-switch-wrap .mode-switch {
+    width: 3.4em;
+    height: 1.9em;
+}
+.master-mode-switch-wrap .mode-switch-slider::before {
+    font-size: 0.75em;
+    height: 2em;
+    width: 2em;
+}
+.master-mode-switch-wrap .mode-switch-input:checked + .mode-switch-slider::before {
+    transform: translateX(2.1em);
+}
+
 /* ETA Row */
 .eta-row {
     display: flex;
-    align-items: center;
-    padding: 0px var(--spacing-lg);
+    flex-direction: column;
+    padding: 0;
     min-height: 40px;
+    animation: fadeIn 0.3s ease;
+}
+
+.eta-row1 {
+    display: flex;
+    align-items: center;
+    padding: 0px;
+    min-height: 40px;
+    cursor: pointer;
+}
+
+.eta-row2 {
+    padding: 4px var(--spacing-md) 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.eta-row2.hidden {
+    display: none;
+}
+
+/* Trainload car visualization */
+.trainload-cars {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+.car-rect {
+    width: 28px;
+    height: 18px;
+    border: 1px solid #888;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65em;
+    font-weight: bold;
+}
+
+/* Door status badge in row2 */
+.door-badge {
+    font-size: 0.7em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.door-badge-open {
+    background-color: #4CAF50;
+    color: #fff;
+}
+.door-badge-closed {
+    background-color: #555;
+    color: #fff;
+}
+
+.row2-no-data {
+    font-size: 0.7em;
+    color: #999;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .eta-row-even {
@@ -525,7 +670,7 @@ html, body {
     padding-top: 0.1em;
     font-size: var(--font-size-platform);
     font-family: var(--font-family);
-    margin: 0 var(--spacing-md);
+    margin: 0 var(--spacing-sm);
     flex-shrink: 0;
 }
 
@@ -588,7 +733,7 @@ html, body {
     font-weight: bold;
     font-family: var(--font-family);
     padding-top: 0.1em;
-    margin-right: 3px;
+    margin-right: var(--spacing-xs);
     flex-shrink: 0;
 }
 
@@ -605,8 +750,9 @@ html, body {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    margin-left: 6px;
+    margin-right: 6px;
     vertical-align: middle;
+    flex-shrink: 0;
 }
 .door-status.door-open {
     background-color: #4CAF50;
@@ -829,7 +975,7 @@ body.dark-mode .eta-row-odd {
 
 @media (min-width: 800px) {
     :root {
-        --font-size-title:        40px;
+        --font-size-title:        36px;
         --font-size-clock:        36px;
         --font-size-last-update:  16px;
         --font-size-refresh:      24px;

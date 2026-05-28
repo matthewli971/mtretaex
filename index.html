@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>地下鐵到站時間關注組</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a2a4a'/><text x='16' y='23' text-anchor='middle' font-size='18' font-weight='bold' fill='%23fff'>鐵</text></svg>" type="image/svg+xml">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
     <!--<link rel="manifest" href="manifest.json">-->
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
@@ -77,6 +77,12 @@
     <div id="station-info-bar" class="hidden">
         <div id="station-info-row1">
             <span id="station-info-name"></span>
+            <span class="master-mode-switch-wrap">
+                <label class="mode-switch" title="Master mode switch">
+                    <input type="checkbox" class="mode-switch-input" id="master-mode-input" onchange="toggleMasterMode()">
+                    <span class="mode-switch-slider" data-label="I"></span>
+                </label>
+            </span>
             <span id="btn-show-all" onclick="showAllLines()">顯示全部</span>
         </div>
         <div id="station-info-filter"></div>

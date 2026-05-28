@@ -60,7 +60,7 @@ var stationsData = [
   { "station_id": 51,  "station_code": "HAH", "name_chi": "坑口",     "name_eng": "Hang Hau",             "lines": ["TKL"],                  "station_colour": "#2EA9DF",  "station_font_colour": "#000000" },
   { "station_id": 52,  "station_code": "POA", "name_chi": "寶琳",     "name_eng": "Po Lam",               "lines": ["TKL"],                  "station_colour": "#F28500",  "station_font_colour": "#000000" },
   { "station_id": 53,  "station_code": "NAC", "name_chi": "南昌",     "name_eng": "Nam Cheong",           "lines": ["TCL","TML"],            "station_colour": "#F0EE86",  "station_font_colour": "#000000" },
-  { "station_id": 54,  "station_code": "SUN", "name_chi": "欣澳",     "name_eng": "Sunny Bay",            "lines": ["DRL","TCL"],            "station_colour": "#808080",  "station_font_colour": "#C0C0C0" },
+  { "station_id": 54,  "station_code": "SUN", "name_chi": "欣澳",     "name_eng": "Sunny Bay",            "lines": ["DRL","TCL"],            "station_colour": "#808080",  "station_font_colour": "#EEEEEE" },
   { "station_id": 55,  "station_code": "DIS", "name_chi": "迪士尼",   "name_eng": "Disneyland Resort",    "lines": ["DRL"],                  "station_colour": "#005533",  "station_font_colour": "#D4AF37" },
   { "station_id": 56,  "station_code": "AWE", "name_chi": "博覽館",   "name_eng": "AsiaWorld-Expo",       "lines": ["AEL"],                  "station_colour": "#FFFFFF",  "station_font_colour": "#000000" },
   { "station_id": 57,  "station_code": "LHP", "name_chi": "康城",     "name_eng": "LOHAS Park",           "lines": ["TKL"],                  "station_colour": "#826F79",  "station_font_colour": "#FFFFFF" },
@@ -169,12 +169,3 @@ var lineApiConfig = {
 };
 
 var openDataLines = ["DRL"];
-
-
-//NSL:
-//url: 'https://d30c8uozaghdca.cloudfront.net'
-//request.setRequestHeader("x-api-key", 'QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ');
-
-//TML:
-//url: 'https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges'
-//request.setRequestHeader("x-api-key", 'QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ');
