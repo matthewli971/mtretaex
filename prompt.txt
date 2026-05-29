@@ -171,3 +171,67 @@ Please help to update readme.md for above updates in v0.07
 2. Please add handling to support opendata mode for all lines include the disneyland resort line. Please design a switch on the line bar showing the mode. The mode should be "I"(normal mode) and "D"(opendata mode). Please add transition on display for mode switching. For those lines in var openData lines, please set default default mode to "D" mode
 3. Please change the appearance of mode switch button to a switch, and add transition when switching mode. Please add a margin like other switch did too
 4. Please move the "Door closed" indicator to the left of the eta-time-countdown element for supported lines
+
+
+1. Please change the behaviour: remove the mode switch by line. Please help to remove the codes of switch by line. And please save the mode for master mode instead of by line i.e. keep the mode when changing station. Please also remove codes related to force show openDataLines (#sym:openDataLines ). Please also make the mode switch of the master switch larger.
+2. When in D mode please update the ETA last update time to "sys_time" value in opendata API response
+3. Please group the eta-dest, eta-platform badge, eta-time to same div "eta-row1", and add a new div next to this div "eta-row2". In current stage, please hide the eta-row2 by default and show the eta-row2 when clicking the eta-row1 (eta-row1 onclick). 
+4. For eta-row2 currently, please create following elements:
+   - Show the trainload of train cars, please do this in URL(KTL/TWL/ISL/TKL) first. Please create some rectangles as cars, and indicate the colour by `passengerCount`(should be, please double check) (0 = white, 1 = green, 2 = yellow, 3 = red), then put the `passengerLoad` values in the rectangle, please group these rectange and align on row2 left
+   - Show the door status in `doorStatus` param : true = White "Door Opened" with green background; false = White "Door Closed" with Dark grey background 
+
+1. Please help to enlarge the passenger load boxes
+2. Please help to analyze the SIL and NSL(EAL) API response to add support of the trainload to SIL and NSL
+3. The NSL "R" and SIL "S" icon is not visible, please help to make it visible
+4. For Trainload, please add a left arrow for indicating the directing at the left of the trainload boxes
+5. Please help to analyze if more information can be retrieved and displayed in the app and add those info into row 2 enhance the functions in later version 
+
+
+1. For trainload, please round off the passengerLoad (HALF_UP) to neareat decimal and slightly decrease the width of each car for better display 
+2. In NSL, the train direction is identified by TD (Odd = up, even = down), it is used to identify which car is first class (up = 4, down = 6), please add yellow margin to this car
+3. In NSL the passengerCount cannot shown in the web app (just show 0), please analyze the API again and fix the issue
+4. In ISL, the trainLoad API for Q-train is slightly different from the ETA API (Need add 100 to TD i.e. 21->121, 42->142). Please help to implement the function to support Q-train trainLoad
+5. In SIL please add support to trainload. It is in carLoads.passengerCount(<=0 = white, 1 = green, 2 = Yellow, >=3 = Red), please show the passengerLoad number with floorRemainingAvg (please round off also)
+6. Please remove the door-status dot next to the platform badge
+7. Please keep the show-hide status of ETA row 2 when ajax refresh, currently it will automatically hide again when ETA ajax refresh
+
+1. For NSL trainload, passengerCount is indicated by listCars.passengerLoad, while the passengerCount is classified by listCars.passengerLoad calculations as below:
+   - For normal cars: <0 : white; 0<=passengerLoad<110 : Green; 110<=passengerLoad<250 : Yellow; Else : Red
+   - For first class cars: <0 : white; 0<=passengerLoad<70 : Green; 70<=passengerLoad<150 : Yellow; Else : Red
+2. Please set the  mode-switch-slider data-label larger (DON'T MAKE THE CIRCLE LARGER!!)
+
+1. For trainLoad, please move the additional train information to the upper row and put the trainload-cars to the next row
+2. Please align "Door opened"/"Door Closed" indicator on the right of the train info row, and set to only shown in the first ETA row
+3. Please add car number indicator to the buttom of each car rectangle, align at the center of each car-rect
+4. Please make the trainload rect size reflective for narrower screens, and please save the font size as a var for easier adjustment
+
+
+function mapStation(code) {
+   switch (code) {
+      case '1': return 'HUH';
+      case '2': return 'MKK';
+      case '3': return 'KOT';
+      case '4': return 'TAW';
+      case '5': return 'SHT';
+      case '6': return 'FOT';
+      case '7': return 'RAC';
+      case '8': return 'UNI';
+      case '9': return 'TAP';
+      case '10': return 'TWO';
+      case '11': return 'FAN';
+      case '12': return 'SHS';
+      case '13': return 'LOW';
+      case '14': return 'LMC';
+      case '18': return 'KTU';
+      case '21': return 'HUH';
+      case '22': return 'EXC';
+      case '23': return 'ADM';
+      case '91': return 'HTD';
+      case '92': return 'HTD';
+      case '81': return 'TEST';
+      case '82': return 'TEST';
+
+      default: return code;
+
+   }
+}

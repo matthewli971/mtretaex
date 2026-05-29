@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.07";
+const APP_VERSION = "v0.08";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -37,13 +37,6 @@ let countdownTimer = null;
 // Global mode: "I" = Internal API, "D" = OpenData
 let masterMode = 'I';
 let lastInternalETAData = null; // cached internal API response
-
-// PWA Install
-let deferredInstallPrompt = null;
-window.addEventListener("beforeinstallprompt", function (e) {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-});
 
 // ============================================
 // Initialisation
@@ -92,6 +85,15 @@ function startClock() {
     clockTimer = setInterval(updateClock, 1000);
 }
 
+// ============================================
+// Theme Toggle
+// ============================================
+function toggleTheme() {
+    var isDark = document.body.classList.toggle('dark-mode');
+    try { localStorage.setItem('mtreta_theme', isDark ? 'dark' : 'light'); } catch(e) {}
+    if (currentStationCode) { fetchETASilent(currentStationCode); }
+}
+
 function updateClock() {
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, "0");
@@ -111,40 +113,25 @@ function setupEventListeners() {
         }
     });
 
-    // Light mode toggle (sun button)
-    document.getElementById("sun-toggle").addEventListener("click", function () {
-        document.body.classList.remove("dark-mode");
-        try { localStorage.setItem("mtreta_theme", "light"); } catch(e) {}
-        // Re-render ETA rows to update even-row inline background colours
-        if (currentStationCode) { fetchETASilent(currentStationCode); }
-    });
+    // Light mode toggle (sun button) — click handler on theme-group div (toggleTheme)
+    // document.getElementById("sun-toggle").addEventListener("click", function () {
+    //     document.body.classList.remove("dark-mode");
+    //     try { localStorage.setItem("mtreta_theme", "light"); } catch(e) {}
+    //     if (currentStationCode) { fetchETASilent(currentStationCode); }
+    // });
 
-    // Dark mode toggle (moon button)
-    document.getElementById("theme-toggle").addEventListener("click", function () {
-        document.body.classList.add("dark-mode");
-        try { localStorage.setItem("mtreta_theme", "dark"); } catch(e) {}
-        // Re-render ETA rows to update even-row inline background colours
-        if (currentStationCode) {
-            fetchETASilent(currentStationCode);
-        }
-    });
+    // Dark mode toggle (moon button) — click handler on theme-group div (toggleTheme)
+    // document.getElementById("theme-toggle").addEventListener("click", function () {
+    //     document.body.classList.add("dark-mode");
+    //     try { localStorage.setItem("mtreta_theme", "dark"); } catch(e) {}
+    //     if (currentStationCode) { fetchETASilent(currentStationCode); }
+    // });
 
     // Close dropdown when clicking outside
     document.addEventListener("click", function (e) {
         const selector = document.getElementById("station-selector");
         if (!selector.contains(e.target)) {
             closeStationList();
-        }
-    });
-
-    // PWA install button
-    document.getElementById("pwa-install").addEventListener("click", function () {
-        if (deferredInstallPrompt) {
-            deferredInstallPrompt.prompt();
-            deferredInstallPrompt.userChoice.then(function () {
-                deferredInstallPrompt = null;
-                //document.getElementById("pwa-install").style.display = "none";
-            });
         }
     });
 
@@ -788,86 +775,127 @@ function fetchLineApi(lineCode, retryCount) {
 }
 
 // Normalize different API response formats into a common train array
-function normalizeLineApiResponse(raw, lineCode, jsonType) {
-    // Standard format: flat array with .line field (KTL, TWL, ISL, TKL)
-    if (jsonType === "url") {
-        if (!Array.isArray(raw)) return [];
-        return raw.filter(function (train) {
-            return train.line === lineCode;
-        });
-    }
-    // SIL format: flat array, filter by line
-    if (jsonType === "sil") {
-        if (!Array.isArray(raw)) return [];
-        return raw.filter(function (train) {
-            return train.line === lineCode || train.line === "SIL";
-        });
-    }
-    // TCL format: array with jsonContent containing trainId
-    if (jsonType === "tcl") {
-        if (!Array.isArray(raw)) return [];
-        return raw.filter(function (item) {
-            var tid = (item.jsonContent && item.jsonContent.trainId) || item.trainId || '';
-            return tid.indexOf('TCL') === 0 || tid.indexOf('V') === 0;
-        }).map(function (item) {
-            // Flatten jsonContent into top-level for uniform access
-            var jc = item.jsonContent || {};
-            // td comes from top-level td field (train distribution number matching ETA)
-            var rawTd = item.td || jc.trainDistribution || '';
-            return {
-                td: rawTd,
-                trainId: jc.trainId || item.trainId || '',
-                trainType: jc.trainType || item.trainType || '',
-                trainConsist: jc.trainConsist || item.trainConsist || '',
-                currentStationCode: jc.currentStationCode || item.currentStationCode || '',
-                nextStationCode: jc.nextStationCode || item.nextStationCode || '',
-                destinationStationCode: jc.destinationStationCode || item.destinationStationCode || '',
-                doorStatus: jc.doorStatus !== undefined ? jc.doorStatus : item.doorStatus,
-                trainSpeed: jc.trainSpeed || item.trainSpeed || 0,
-                updatedTime: item.updatedTime || jc.updatedTime,
-                line: 'TCL'
-            };
-        });
-    }
-    // EAL/NSL format
-    if (jsonType === "nsl") {
-        if (!Array.isArray(raw)) return [];
-        return raw.filter(function (train) {
-            return train.line === lineCode || train.line === "EAL";
-        });
-    }
-    // TML format: wrapped in {"Items": [...]} with train_type field
-    if (jsonType === "tml") {
-        var items = raw.Items || raw.items || (Array.isArray(raw) ? raw : []);
-        if (!Array.isArray(items)) return [];
-        return items.map(function (train) {
-            return {
-                td: train.trainId || '',
-                trainId: train.trainId || '',
-                train_type: train.train_type || '',
-                trainType: train.train_type || '',
-                trainConsist: '',
-                currentStationCode: String(train.currentStationCode || ''),
-                nextStationCode: String(train.nextStationCode || ''),
-                destinationStationCode: String(train.destinationStationCode || ''),
-                doorStatus: train.isDoorOpen || false,
-                trainSpeed: train.trainSpeed || 0,
-                updatedTime: train.receivedTime ? train.receivedTime / 1000 : null,
-                line: 'TML'
-            };
-        });
-    }
-    // Fallback: try as flat array
-    if (Array.isArray(raw)) {
-        return raw.filter(function (train) {
-            return train.line === lineCode;
-        });
-    }
-    return [];
+function normalizeUrlFormat(raw, lineCode) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(function (train) {
+        return train.line === lineCode;
+    });
 }
 
-// Lines with confirmed train type support
-var TRAINTYPE_SUPPORTED_LINES = ["KTL", "TWL", "ISL", "TKL", "TCL", "TML"];
+function normalizeSilFormat(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.map(function (train) {
+        var doorOpen = false;
+        if (train.doorOpenAction && train.doorOpenAction !== '-') doorOpen = true;
+        return {
+            td: train.trainId || '',
+            trainId: train.trainId || '',
+            trainType: '',
+            trainConsist: train.trainSet || '',
+            currentStationCode: (train.currentStationCode && train.currentStationCode !== '-') ? train.currentStationCode : '',
+            nextStationCode: (train.nextStationCode && train.nextStationCode !== '-') ? train.nextStationCode : '',
+            destinationStationCode: (train.destinationStationCode && train.destinationStationCode !== '-') ? train.destinationStationCode : '',
+            doorStatus: doorOpen,
+            trainSpeed: 0,
+            updatedTime: train.receivedTime ? Number(train.receivedTime) : null,
+            line: 'SIL',
+            carLoads: (train.carLoads || []).map(function (car) {
+                return {
+                    carNo: car.carNo || '',
+                    passengerCount: car.passengerCount >= 0 ? car.passengerCount : 0,
+                    passengerLoad: car.floorRemainingAvg >= 0 ? car.floorRemainingAvg : 0
+                };
+            })
+        };
+    });
+}
+
+function normalizeTclFormat(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(function (item) {
+        var tid = (item.jsonContent && item.jsonContent.trainId) || item.trainId || '';
+        return tid.indexOf('TCL') === 0 || tid.indexOf('V') === 0;
+    }).map(function (item) {
+        var jc = item.jsonContent || {};
+        var rawTd = item.td || jc.trainDistribution || '';
+        return {
+            td: rawTd,
+            trainId: jc.trainId || item.trainId || '',
+            trainType: jc.trainType || item.trainType || '',
+            trainConsist: jc.trainConsist || item.trainConsist || '',
+            currentStationCode: jc.currentStationCode || item.currentStationCode || '',
+            nextStationCode: jc.nextStationCode || item.nextStationCode || '',
+            destinationStationCode: jc.destinationStationCode || item.destinationStationCode || '',
+            doorStatus: jc.doorStatus !== undefined ? jc.doorStatus : item.doorStatus,
+            trainSpeed: jc.trainSpeed || item.trainSpeed || 0,
+            updatedTime: item.updatedTime || jc.updatedTime,
+            line: 'TCL'
+        };
+    });
+}
+
+function normalizeNslFormat(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.map(function (train) {
+        var doorOpen = train.doorStatus === "1" || train.doorStatus === 1;
+        var cars = (train.listCars || []).map(function (car) {
+            return {
+                carNo: car.carName || '',
+                passengerCount: car.passengerCount !== undefined ? car.passengerCount : 0
+            };
+        });
+        return {
+            td: train.td || '',
+            trainId: train.trainId || '',
+            trainType: '',
+            trainConsist: '',
+            currentStationCode: String(train.currentStationCode || ''),
+            nextStationCode: String(train.nextStationCode || ''),
+            destinationStationCode: String(train.destinationStationCode || ''),
+            doorStatus: doorOpen,
+            trainSpeed: parseFloat(train.trainSpeed) || 0,
+            updatedTime: train.receivedTime ? train.receivedTime / 1000 : null,
+            line: 'EAL',
+            carLoads: cars
+        };
+    });
+}
+
+function normalizeTmlFormat(raw) {
+    var items = raw.Items || raw.items || (Array.isArray(raw) ? raw : []);
+    if (!Array.isArray(items)) return [];
+    return items.map(function (train) {
+        return {
+            td: train.trainId || '',
+            trainId: train.trainId || '',
+            train_type: train.train_type || '',
+            trainType: train.train_type || '',
+            trainConsist: '',
+            currentStationCode: String(train.currentStationCode || ''),
+            nextStationCode: String(train.nextStationCode || ''),
+            destinationStationCode: String(train.destinationStationCode || ''),
+            doorStatus: train.isDoorOpen || false,
+            trainSpeed: train.trainSpeed || 0,
+            updatedTime: train.receivedTime ? train.receivedTime / 1000 : null,
+            line: 'TML'
+        };
+    });
+}
+
+function normalizeLineApiResponse(raw, lineCode, jsonType) {
+    switch (jsonType) {
+        case "url": return normalizeUrlFormat(raw, lineCode);
+        case "sil": return normalizeSilFormat(raw);
+        case "tcl": return normalizeTclFormat(raw);
+        case "nsl": return normalizeNslFormat(raw);
+        case "tml": return normalizeTmlFormat(raw);
+        default:
+            if (Array.isArray(raw)) {
+                return raw.filter(function (train) { return train.line === lineCode; });
+            }
+            return [];
+    }
+}
 
 // Update the "Trainload" timestamp display (only from lines with train type support)
 function updateLineApiTime() {
@@ -925,7 +953,7 @@ function getTrainInfoByTd(filterLine) {
             td = td.slice(-3);
             var key = lineCode + '_' + td;
 
-            lookup[key] = {
+            var infoObj = {
                 trainId: train.trainId || '',
                 trainType: parseTrainTypeForLine(train, lineCode),
                 trainConsist: train.trainConsist || '',
@@ -938,6 +966,20 @@ function getTrainInfoByTd(filterLine) {
                 line: train.line || lineCode,
                 carLoads: train.carLoads || null
             };
+
+            lookup[key] = infoObj;
+
+            // ISL Q-train: trainLoad API td is ETA td + 100 (e.g. 121->021, 142->042)
+            if (lineCode === 'ISL') {
+                var tdNum = parseInt(td, 10);
+                if (tdNum <= 100) {
+                    var etaTd = String(tdNum + 100);
+                    while (etaTd.length < 3) etaTd = '0' + etaTd;
+                    etaTd = etaTd.slice(-3);
+                    var altKey = lineCode + '_' + etaTd;
+                    if (!lookup[altKey]) lookup[altKey] = infoObj;
+                }
+            }
         });
     });
     return lookup;
@@ -962,7 +1004,19 @@ function parseTrainTypeForLine(train, lineCode) {
         if (tt.indexOf('T1141A') !== -1) return 'C';
         return '';
     }
-    // Default: KTL/TWL/ISL/TKL/SIL
+    // EAL/NSL: show "R" by default
+    else if (lineCode === "EAL" || lineCode === "NSL") {
+        var typeStr = train.trainType;
+        if (!typeStr) return 'R';
+        return typeStr.charAt(0).toUpperCase() || 'R';
+    }
+    // SIL: show "S" by default
+    else if (lineCode === "SIL") {
+        var typeStr = train.trainType;
+        if (!typeStr) return 'S';
+        return typeStr.charAt(0).toUpperCase() || 'S';
+    }
+    // Default: KTL/TWL/ISL/TKL
     else {
         var typeStr = train.trainType;
         if (!typeStr) return '';
@@ -973,66 +1027,62 @@ function parseTrainTypeForLine(train, lineCode) {
 // Update existing ETA rows with enrichment data (train type badge + door status)
 function updateTrainEnrichment() {
     var lookup = getTrainInfoByTd();
-    var rows = document.querySelectorAll('.eta-row');
-    rows.forEach(function (row) {
-        var row1 = row.querySelector('.eta-row1');
-        if (!row1) return;
-        var tcEl = row1.querySelector('.train-code');
-        if (!tcEl) return;
-        var td = tcEl.getAttribute('data-td');
-        if (!td) return;
+    // Track which platforms already have door status shown (per line-section)
+    var sections = document.querySelectorAll('.line-section');
+    sections.forEach(function (section) {
+        var rowLine = section.getAttribute('data-line');
+        var platformDoorShown = {}; // platform -> true
+        var rows = section.querySelectorAll('.eta-row');
+        rows.forEach(function (row) {
+            var row1 = row.querySelector('.eta-row1');
+            if (!row1) return;
+            var tcEl = row1.querySelector('.train-code');
+            if (!tcEl) return;
+            var td = tcEl.getAttribute('data-td');
+            if (!td) return;
 
-        // Determine current row's line from its parent .line-section
-        var section = row.closest('.line-section');
-        var rowLine = section ? section.getAttribute('data-line') : null;
-        var key = rowLine ? rowLine + '_' + td : null;
-        var info = key ? lookup[key] : null;
+            var key = rowLine ? rowLine + '_' + td : null;
+            var info = key ? lookup[key] : null;
 
-        // Update or create train-type badge
-        var typeEl = row1.querySelector('.train-type-badge');
-        if (info && info.trainType) {
-            if (!typeEl) {
-                typeEl = document.createElement('span');
-                typeEl.className = 'train-type-badge';
-                tcEl.parentNode.insertBefore(typeEl, tcEl);
+            // Update or create train-type badge with click handler
+            var typeEl = row1.querySelector('.train-type-badge');
+            if (info && info.trainType) {
+                if (!typeEl) {
+                    typeEl = document.createElement('span');
+                    typeEl.className = 'train-type-badge';
+                    typeEl.onclick = function() { toggleRow2(this); };
+                    tcEl.parentNode.insertBefore(typeEl, tcEl);
+                }
+                typeEl.textContent = info.trainType;
+                typeEl.className = 'train-type-badge train-type-' + info.trainType.toLowerCase();
+                if (!typeEl.onclick) typeEl.onclick = function() { toggleRow2(this); };
+            } else if (info && info.carLoads && info.carLoads.length > 0) {
+                // NSL/SIL: show default badge only once trainload data is available
+                var defType = '';
+                if (rowLine === 'EAL' || rowLine === 'NSL') defType = 'R';
+                else if (rowLine === 'SIL') defType = 'S';
+                if (defType && !typeEl) {
+                    typeEl = document.createElement('span');
+                    typeEl.className = 'train-type-badge train-type-' + defType.toLowerCase();
+                    typeEl.textContent = defType;
+                    typeEl.onclick = function() { toggleRow2(this); };
+                    tcEl.parentNode.insertBefore(typeEl, tcEl);
+                }
             }
-            typeEl.textContent = info.trainType;
-            typeEl.className = 'train-type-badge train-type-' + info.trainType.toLowerCase();
-        } else if (typeEl) {
-            typeEl.textContent = '';
-            typeEl.className = 'train-type-badge';
-        }
 
-        // Update door status indicator in row1 — place to the left of eta-time element
-        var doorEl = row1.querySelector('.door-status');
-        var timeEl = row1.querySelector('.eta-time');
-        if (info && info.doorStatus === true) {
-            if (!doorEl) {
-                doorEl = document.createElement('span');
-                doorEl.className = 'door-status door-open';
-                doorEl.title = '車門已開';
-                if (timeEl) timeEl.parentNode.insertBefore(doorEl, timeEl);
+            // Door status: only show on first row of each platform
+            var platform = row.getAttribute('data-platform');
+            var isFirstForPlatform = platform && !platformDoorShown[platform];
+            if (isFirstForPlatform && info) {
+                platformDoorShown[platform] = true;
             }
-            doorEl.classList.add('door-open');
-            doorEl.classList.remove('door-closed');
-        } else if (info && info.doorStatus === false) {
-            if (!doorEl) {
-                doorEl = document.createElement('span');
-                doorEl.className = 'door-status door-closed';
-                doorEl.title = '車門已關';
-                if (timeEl) timeEl.parentNode.insertBefore(doorEl, timeEl);
-            }
-            doorEl.classList.remove('door-open');
-            doorEl.classList.add('door-closed');
-        } else if (doorEl) {
-            doorEl.remove();
-        }
 
-        // If row2 is expanded, refresh its content
-        var row2 = row.querySelector('.eta-row2');
-        if (row2 && !row2.classList.contains('hidden')) {
-            populateRow2(row2);
-        }
+            // If row2 is expanded, refresh its content
+            var row2 = row.querySelector('.eta-row2');
+            if (row2 && !row2.classList.contains('hidden')) {
+                populateRow2(row2);
+            }
+        });
     });
 }
 
@@ -1231,8 +1281,8 @@ function processETAData(data) {
             var evenBg = isDark ? darkenColor(colour, 0.80) : lightenColor(colour, 0.80);
             var rowStyle = (rowIndex % 2 === 0) ? ' style="background-color:' + evenBg + '"' : '';
 
-            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '">';
-            html += '<div class="eta-row1" onclick="toggleRow2(this)">';
+            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '">';
+            html += '<div class="eta-row1">';
             html += '<div class="eta-dest">';
             html += '<span class="eta-dest-chi' + (isNoop || isUnknownDest ? ' eta-dest-noop' : '') + '">' + destChi + '</span>';
             html += '</div>';
@@ -1252,7 +1302,38 @@ function processETAData(data) {
         html = '<div style="padding:20px;text-align:center;">沒有列車資料</div>';
     }
 
+    // Save expanded row2 state before replacing DOM
+    var expandedKeys = [];
+    var expandedStation = document.getElementById("eta-container").getAttribute('data-station');
+    if (expandedStation && expandedStation === currentStationCode) {
+        document.querySelectorAll('.eta-row2:not(.hidden)').forEach(function(r) {
+            var etaRow = r.closest('.eta-row');
+            if (etaRow) {
+                var td = etaRow.getAttribute('data-td');
+                var line = etaRow.getAttribute('data-line');
+                if (td && line) expandedKeys.push(line + '_' + td);
+            }
+        });
+    }
+
     document.getElementById("eta-container").innerHTML = html;
+    document.getElementById("eta-container").setAttribute('data-station', currentStationCode);
+
+    // Restore expanded row2 state
+    if (expandedKeys.length) {
+        document.querySelectorAll('.eta-row').forEach(function(etaRow) {
+            var td = etaRow.getAttribute('data-td');
+            var line = etaRow.getAttribute('data-line');
+            if (td && line && expandedKeys.indexOf(line + '_' + td) !== -1) {
+                var row2 = etaRow.querySelector('.eta-row2');
+                var row1 = etaRow.querySelector('.eta-row1');
+                if (row2) {
+                    row2.classList.remove('hidden');
+                    if (row1) row1.classList.add('eta-row1-expanded');
+                }
+            }
+        });
+    }
 
     // Re-apply line filter if active
     if (activeLineFilter) {
@@ -1264,22 +1345,32 @@ function processETAData(data) {
 
     // Re-apply train enrichment from cached line API data
     updateTrainEnrichment();
+
+    // Populate row2 content for restored expanded rows
+    if (expandedKeys.length) {
+        document.querySelectorAll('.eta-row2:not(.hidden)').forEach(function(row2) {
+            populateRow2(row2);
+        });
+    }
 }
 
 // ============================================
 // Toggle row2 (expand/collapse train detail)
 // ============================================
-function toggleRow2(row1El) {
-    var row2 = row1El.nextElementSibling;
-    if (!row2 || !row2.classList.contains('eta-row2')) return;
+function toggleRow2(badgeEl) {
+    var etaRow = badgeEl.closest('.eta-row');
+    if (!etaRow) return;
+    var row2 = etaRow.querySelector('.eta-row2');
+    var row1 = etaRow.querySelector('.eta-row1');
+    if (!row2) return;
     var isHidden = row2.classList.contains('hidden');
     if (isHidden) {
         row2.classList.remove('hidden');
-        row1El.classList.add('eta-row1-expanded');
+        if (row1) row1.classList.add('eta-row1-expanded');
         populateRow2(row2);
     } else {
         row2.classList.add('hidden');
-        row1El.classList.remove('eta-row1-expanded');
+        if (row1) row1.classList.remove('eta-row1-expanded');
     }
 }
 
@@ -1311,24 +1402,111 @@ function populateRow2(row2El) {
         return;
     }
 
-    var html = '<div class="trainload-cars">';
-    info.carLoads.forEach(function (car) {
-        var pCount = car.passengerCount || 0;
-        var colorMap = { 0: '#ffffff', 1: '#4CAF50', 2: '#FFC107', 3: '#F44336' };
-        var bgColor = colorMap[pCount] || '#ffffff';
-        var textColor = (pCount === 0 || pCount === 2) ? '#333' : '#fff';
-        html += '<div class="car-rect" style="background-color:' + bgColor + ';color:' + textColor + '">';
-        html += '<span class="car-load-val">' + (car.passengerLoad !== undefined ? car.passengerLoad : '') + '</span>';
-        html += '</div>';
-    });
-    html += '</div>';
+    // Determine if this is the first ETA row for its platform (for door status display)
+    var isFirstRow = false;
+    var platform = etaRow.getAttribute('data-platform');
+    if (platform) {
+        var section = etaRow.closest('.line-section');
+        if (section) {
+            var allRows = section.querySelectorAll('.eta-row[data-platform="' + platform + '"]');
+            isFirstRow = (allRows.length > 0 && allRows[0] === etaRow);
+        }
+    }
 
-    // Door status badge
-    if (info.doorStatus !== undefined && info.doorStatus !== null) {
+    var html = '';
+
+    // Train info row (upper) with door badge on right
+    html += '<div class="row2-info-row">';
+    html += '<div class="row2-info">';
+    if (info.trainSpeed && info.trainSpeed > 0) {
+        html += '<span class="row2-info-item">' + info.trainSpeed + ' km/h</span>';
+    }
+    // NSL: show currentStation > nextStation
+    if ((lineCode === 'EAL' || lineCode === 'NSL') && info.currentStation) {
+        var curSta = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.currentStation]) || info.currentStation;
+        var nextSta = '';
+        if (info.nextStation) {
+            nextSta = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.nextStation]) || info.nextStation;
+        }
+        var locText = curSta + (nextSta ? ' > ' + nextSta : '');
+        html += '<span class="row2-info-item">' + locText + '</span>';
+    }
+    if (info.trainConsist) {
+        html += '<span class="row2-info-item">Consist: ' + info.trainConsist + '</span>';
+    }
+    html += '</div>';
+    // Door status badge (only on first row per platform)
+    if (isFirstRow && info.doorStatus !== undefined && info.doorStatus !== null) {
         var doorClass = info.doorStatus ? 'door-badge-open' : 'door-badge-closed';
         var doorText = info.doorStatus ? 'Door Opened' : 'Door Closed';
         html += '<span class="door-badge ' + doorClass + '">' + doorText + '</span>';
     }
+    html += '</div>';
+
+    // Trainload cars row (lower)
+    html += '<div class="trainload-cars">';
+    html += '<span class="trainload-direction">&larr;</span>';
+
+    // Determine NSL first-class car position based on td direction
+    var firstClassCarNo = -1;
+    if (lineCode === 'EAL' || lineCode === 'NSL') {
+        var tdNums = td.replace(/[^0-9]/g, '');
+        var lastDigit = tdNums.length > 0 ? parseInt(tdNums[tdNums.length - 1]) : 0;
+        var isUp = (lastDigit % 2 === 1); // Odd = up, Even = down
+        firstClassCarNo = isUp ? 4 : 6; // up=car4, down=car6
+    }
+
+    info.carLoads.forEach(function (car, idx) {
+        // Check if this is the first-class car for NSL
+        var carNoNum = parseInt(car.carNo) || (idx + 1);
+        var isFirstClass = (firstClassCarNo > 0 && carNoNum === firstClassCarNo);
+
+        // Round passengerLoad to nearest integer (HALF_UP)
+        //var loadVal = car.passengerLoad;
+        //if (loadVal !== undefined && loadVal !== null && loadVal >= 0) {
+        //    loadVal = Math.round(loadVal);
+        //} else {
+        //    loadVal = '?';
+        //}
+
+        // Determine color class
+        var colorClass;
+        var loadVal;
+        if (lineCode === 'EAL' || lineCode === 'NSL') {
+            // NSL: classify by passengerLoad thresholds
+            loadVal = car.passengerCount >= 0 ? car.passengerCount : 0;
+            if (loadVal === undefined || loadVal === null || loadVal < 0) {
+                colorClass = 'car-rect-empty';
+            } else if (isFirstClass) {
+                colorClass = loadVal < 70 ? 'car-rect-low' : (loadVal < 150 ? 'car-rect-mid' : 'car-rect-high');
+            } else {
+                colorClass = loadVal < 110 ? 'car-rect-low' : (loadVal < 250 ? 'car-rect-mid' : 'car-rect-high');
+            }
+        } else {
+            // Other lines: use passengerCount as color indicator
+            loadVal = car.passengerLoad;
+            if (loadVal !== undefined && loadVal !== null && loadVal >= 0) {
+                loadVal = Math.round(loadVal);
+            } else {
+                loadVal = '?';
+            }
+
+            var pCount = car.passengerCount !== undefined ? car.passengerCount : 0;
+            if (pCount < 0) pCount = 0;
+            if      (pCount <= 0)  colorClass = 'car-rect-empty';
+            else if (pCount === 1) colorClass = 'car-rect-low';
+            else if (pCount === 2) colorClass = 'car-rect-mid';
+            else                   colorClass = 'car-rect-high';
+        }
+
+        html += '<div class="car-rect-wrapper">';
+        html += '<div class="car-rect ' + colorClass + (isFirstClass ? ' first-class' : '') + '">';
+        html += '<span class="car-load-val">' + loadVal + '</span>';
+        html += '</div>';
+        html += '<span class="car-num-label">' + carNoNum + '</span>';
+        html += '</div>';
+    });
+    html += '</div>';
 
     row2El.innerHTML = html;
 }
@@ -1455,7 +1633,7 @@ function renderTrainCode(td, lineCode) {
     var info = key ? lookup[key] : null;
     var typeBadge = '';
     if (info && info.trainType) {
-        typeBadge = '<span class="train-type-badge train-type-' + info.trainType.toLowerCase() + '">' + info.trainType + '</span>';
+        typeBadge = '<span class="train-type-badge train-type-' + info.trainType.toLowerCase() + '" onclick="toggleRow2(this)">' + info.trainType + '</span>';
     }
     var html = typeBadge + '<div class="train-code" data-td="' + nums + '">';
     for (var i = 0; i < 3; i++) {

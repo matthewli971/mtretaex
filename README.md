@@ -3,6 +3,16 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.08
+- **Train type badge click to expand row2**: Clicking the train type badge (instead of the entire ETA row) now expands/collapses the detail row showing car occupancy and door status.
+- **EAL/NSL default "R" badge**: East Rail Line trains show an "R" badge by default (grey background, same style as K-stock).
+- **SIL default "S" badge**: South Island Line trains show an "S" badge by default (light blue background, white text).
+- **Door status limited to first row per platform**: The door status indicator now only appears on the first ETA row of each platform within a line section. For stations with platform groups (e.g. Central), each platform's first row shows its own door status independently.
+- **EAL/NSL trainload support**: The NSL (EAL) API response (`listCars` with `passengerCount`, `passengerLoad`) is now properly parsed and displayed as coloured car rectangles in row2 (9 cars per train).
+- **SIL trainload support**: The SIL API response (`carLoads` with `passengerCount`, `floorRemainingAvg`) is now properly parsed and displayed (3 cars per train).
+- **Direction arrow in trainload**: A left arrow (`←`) is shown at the left of the car rectangles to indicate the train's heading direction.
+- **Train info in row2**: Expanded row2 now displays additional information when available: train speed (km/h), train consist/set, and train ID.
+
 ### v0.07
 - **Global master mode switch (I/D)**: Removed per-line mode toggles from each line bar. A single master switch in the station info bar now controls the data source (I = Internal IDT API, D = MTR OpenData API) for all lines simultaneously. Mode selection persists across station changes via `localStorage`.
 - **OpenData sys_time as last-update time**: When fetching in D (OpenData) mode, the last-update timestamp in the header now reflects the `sys_time` field returned by the OpenData API response, instead of remaining blank.

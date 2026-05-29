@@ -49,6 +49,13 @@
     --font-size-station-info: 3.2vw;
     --font-size-train-type:   4.5vw;
 
+    /* Trainload car visualization */
+    --car-rect-width: 8.4vw;
+    --car-rect-height: 5.2vw;
+    --car-rect-font-size: 3.8vw;
+    --car-num-font-size: 3.2vw;
+    --trainload-info-font-size: 3.2vw;
+
     /* === Spacing === */
     --spacing-xs:  4px;
     --spacing-sm:  8px;
@@ -95,6 +102,12 @@ html, body {
 /* ============================================
    Header
    ============================================ */
+#sticky-header-group {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
 #header {
     background-color: var(--color-primary);
     color: var(--color-text-light);
@@ -102,9 +115,6 @@ html, body {
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-sm) var(--spacing-lg);
-    position: sticky;
-    top: 0;
-    z-index: 100;
     flex-wrap: wrap;
     gap: var(--spacing-sm);
 }
@@ -399,7 +409,7 @@ html, body {
 #station-info-row1 {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
     flex-wrap: wrap;
 }
 
@@ -528,7 +538,6 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7em;
     font-weight: bold;
     color: #333;
     line-height: 1;
@@ -578,45 +587,96 @@ html, body {
     align-items: center;
     padding: 0px;
     min-height: 40px;
-    cursor: pointer;
 }
 
 .eta-row2 {
-    padding: 4px var(--spacing-md) 4px;
+    padding: 4px var(--spacing-xs) 4px;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 4px;
 }
 .eta-row2.hidden {
     display: none;
 }
 
-/* Trainload car visualization */
+.row2-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: var(--trainload-info-font-size);
+    color: var(--color-text-light);
+}
+
 .trainload-cars {
     display: flex;
     gap: 2px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.car-rect-wrapper {
+    display: flex;
+    flex-direction: column;
     align-items: center;
 }
+
 .car-rect {
-    width: 28px;
-    height: 18px;
-    border: 1px solid #888;
+    width: var(--car-rect-width);
+    height: var(--car-rect-height);
     border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.65em;
+    font-size: var(--car-rect-font-size);
     font-weight: bold;
+}
+.car-rect.first-class {
+    border: 3px solid #FFD700;
+}
+.car-rect-empty  { background-color: #ffffff; color: #333; }
+.car-rect-low    { background-color: #4CAF50; color: #fff; }
+.car-rect-mid    { background-color: #FFC107; color: #333; }
+.car-rect-high   { background-color: #F44336; color: #fff; }
+
+.car-num-label {
+    font-size: var(--car-num-font-size);
+    font-weight: bold;
+    color: var(--color-text-light);
+    margin-top: 1px;
+    line-height: 1;
+}
+
+.trainload-direction {
+    font-size: 1.2em;
+    color: var(--color-text-light);
+    margin-right: 4px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.row2-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--trainload-info-font-size);
+    color: var(--color-text-light);
+    flex-wrap: wrap;
+}
+
+.row2-info-item {
+    white-space: nowrap;
 }
 
 /* Door status badge in row2 */
 .door-badge {
-    font-size: 0.7em;
+    font-size: var(--trainload-info-font-size);
     padding: 2px 8px;
     border-radius: 3px;
     font-weight: bold;
     white-space: nowrap;
+    margin-left: auto;
 }
 .door-badge-open {
     background-color: #4CAF50;
@@ -735,12 +795,15 @@ html, body {
     padding-top: 0.1em;
     margin-right: var(--spacing-xs);
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 .train-type-c { background-color: #2196F3; color: #fff; }
 .train-type-q { background-color: #9C27B0; color: #fff; }
 .train-type-m { background-color: #c0c0c0; color: #000; }
 .train-type-k { background-color: #999999; color: #000; }
+.train-type-r { background-color: #999999; color: #000; }
+.train-type-s { background-color: #5bc0de; color: #fff; }
 .train-type-sp { background-color: #d40026; border-bottom: 2px solid #092869; color: #fff; }
 .train-type-a { background-color: #666666; color: #fff; }
 
@@ -792,24 +855,6 @@ html, body {
     color: var(--color-text-muted) !important;
 }
 
-/* PWA Install Button */
-.pwa-install-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    border: none;
-    cursor: pointer;
-    background-color: rgba(255,255,255,0.15);
-    color: #ffffff;
-    font-size: var(--font-size-refresh);
-    transition: background-color 0.2s;
-}
-.pwa-install-btn:hover {
-    background-color: rgba(255,255,255,0.3);
-}
-
 #action-group {
     display: flex;
     align-items: center;
@@ -838,6 +883,7 @@ html, body {
     align-items: center;
     gap: 2px;
     margin-left: auto;
+    cursor: pointer;
 }
 
 .theme-icon, .sun-icon {
@@ -933,7 +979,7 @@ body.dark-mode .eta-row-odd {
 /* ============================================
    Responsive
    ============================================ */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     #header {
         flex-direction: column;
         align-items: flex-start;
@@ -1009,5 +1055,13 @@ body.dark-mode .eta-row-odd {
 
     .train-code {
         min-width: 44px;
+    }
+
+    :root {
+        --car-rect-width: 36px;
+        --car-rect-height: 24px;
+        --car-rect-font-size: 12px;
+        --car-num-font-size: 10px;
+        --trainload-info-font-size: 12px;
     }
 }

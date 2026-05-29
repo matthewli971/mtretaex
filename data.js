@@ -112,7 +112,34 @@ var stationsData = [
 
 var alternativeNames = [
   { "NHUH": "HUH" }
-];  
+];
+
+// NSL (EAL) numeric station code mapping
+var nslStationCodeMap = {
+  '1': 'HUH',
+  '2': 'MKK',
+  '3': 'KOT',
+  '4': 'TAW',
+  '5': 'SHT',
+  '6': 'FOT',
+  '7': 'RAC',
+  '8': 'UNI',
+  '9': 'TAP',
+  '10': 'TWO',
+  '11': 'FAN',
+  '12': 'SHS',
+  '13': 'LOW',
+  '14': 'LMC',
+  '18': 'KTU',
+  '21': 'HUH',
+  '22': 'EXC',
+  '23': 'ADM',
+  '24': 'ADM Siding',
+  '91': 'HTD',
+  '92': 'HTD',
+  '81': 'TEST',
+  '82': 'TEST'
+};  
 
 // Platform groups: stations where platforms share same destinations
 // Format: { STATION_CODE: [[platformGroup_1], [platformGroup_2], ...] }
@@ -167,5 +194,8 @@ var lineApiConfig = {
   "EAL": { url: "https://d30c8uozaghdca.cloudfront.net",                                           json_type: "nsl", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" },
   "TML": { url: "https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges", json_type: "tml", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" }
 };
+
+// Lines with confirmed train type support
+var TRAINTYPE_SUPPORTED_LINES = ["KTL", "TWL", "ISL", "TKL", "TCL", "TML", "EAL", "SIL"];
 
 var openDataLines = ["DRL"];

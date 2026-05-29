@@ -9,13 +9,15 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+    <div id="sticky-header-group">
     <!-- Header -->
     <div id="header">
         <div id="header-left">
             <span id="app-title">地下鐵到站時間關注組</span>
             <span id="app-version"></span>
-            <div id="theme-group">
+            <div id="theme-group" onclick="toggleTheme()">
                 <button id="sun-toggle" class="sun-btn" type="button" aria-label="Light mode">
+                <!-- onclick handler moved to theme-group div -->
                     <svg class="sun-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
                         <line x1="12" y1="5.5" x2="12" y2="2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -29,6 +31,7 @@
                     </svg>
                 </button>
                 <button id="theme-toggle" class="theme-btn" type="button" aria-label="Toggle dark mode">
+                <!-- onclick handler moved to theme-group div -->
                     <svg class="theme-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z" fill="currentColor"/>
                     </svg>
@@ -48,11 +51,12 @@
                 </div>
             </div>
             <div id="action-group">
-                <button id="pwa-install" class="pwa-install-btn" type="button" title="Install PWA" aria-label="Install PWA">
-                    <svg viewBox="0 0 24 24" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
-                    </svg>
-                </button>
+                <span class="master-mode-switch-wrap">
+                    <label class="mode-switch" title="Master mode switch">
+                        <input type="checkbox" class="mode-switch-input" id="master-mode-input" onchange="toggleMasterMode()">
+                        <span class="mode-switch-slider" data-label="I"></span>
+                    </label>
+                </span>
                 <button id="btn-refresh">F5</button>
             </div>
         </div>
@@ -77,16 +81,11 @@
     <div id="station-info-bar" class="hidden">
         <div id="station-info-row1">
             <span id="station-info-name"></span>
-            <span class="master-mode-switch-wrap">
-                <label class="mode-switch" title="Master mode switch">
-                    <input type="checkbox" class="mode-switch-input" id="master-mode-input" onchange="toggleMasterMode()">
-                    <span class="mode-switch-slider" data-label="I"></span>
-                </label>
-            </span>
             <span id="btn-show-all" onclick="showAllLines()">顯示全部</span>
         </div>
         <div id="station-info-filter"></div>
     </div>
+    </div><!-- /sticky-header-group -->
 
     <!-- CORS Warning Banner (shown only when loaded via file://) -->
     <div id="cors-warning" class="hidden">
