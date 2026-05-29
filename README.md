@@ -5,8 +5,6 @@ MTR Trains ETA Web-app
 
 ### v0.08
 - **Train type badge click to expand row2**: Clicking the train type badge (instead of the entire ETA row) now expands/collapses the detail row showing car occupancy and door status.
-- **EAL/NSL default "R" badge**: East Rail Line trains show an "R" badge by default (grey background, same style as K-stock).
-- **SIL default "S" badge**: South Island Line trains show an "S" badge by default (light blue background, white text).
 - **Door status limited to first row per platform**: The door status indicator now only appears on the first ETA row of each platform within a line section. For stations with platform groups (e.g. Central), each platform's first row shows its own door status independently.
 - **EAL/NSL trainload support**: The NSL (EAL) API response (`listCars` with `passengerCount`, `passengerLoad`) is now properly parsed and displayed as coloured car rectangles in row2 (9 cars per train).
 - **SIL trainload support**: The SIL API response (`carLoads` with `passengerCount`, `floorRemainingAvg`) is now properly parsed and displayed (3 cars per train).

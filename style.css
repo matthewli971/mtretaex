@@ -529,16 +529,16 @@ html, body {
 .mode-switch-slider::before {
     content: attr(data-label);
     position: absolute;
-    top: 0.2em;
-    left: 0.3em;
-    height: 2.2em;
-    width: 2.2em;
+    font-size: 1.2em;
+    top: 0.15em;
+    left: 0.23em;
+    height: 1.225em;
+    width: 1.225em;
     background-color: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
     color: #333;
     line-height: 1;
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -546,10 +546,9 @@ html, body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.35);
 }
 .mode-switch-input:checked + .mode-switch-slider {
-    background-color: #222;
+    background-color: #b0d7fc;
 }
 .mode-switch-input:checked + .mode-switch-slider::before {
-    transform: translateX(1.7em);
     background-color: #fff;
     color: #111;
 }
@@ -559,18 +558,20 @@ html, body {
     display: inline-flex;
     align-items: center;
     margin-left: var(--spacing-md);
+    margin-right: var(--spacing-md);
 }
 .master-mode-switch-wrap .mode-switch {
     width: 3.4em;
     height: 1.9em;
 }
 .master-mode-switch-wrap .mode-switch-slider::before {
-    font-size: 0.75em;
-    height: 2em;
-    width: 2em;
+    font-size: 1.2em;
+    height: 1.225em;
+    width: 1.225em;
+    padding-top: 0.1em;
 }
 .master-mode-switch-wrap .mode-switch-input:checked + .mode-switch-slider::before {
-    transform: translateX(2.1em);
+    transform: translateX(1.16em);
 }
 
 /* ETA Row */

@@ -191,11 +191,12 @@ var lineApiConfig = {
   "TKL": { url: "https://ylvae4pn4e.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       json_type: "url", x_api_key: "N6lAPnCJUt5nVFX1vNUHm7yGBqXtJiqP6xfndhu6" },
   "SIL": { url: "https://az2yevl2wc.execute-api.ap-east-1.amazonaws.com/trainLoads",               json_type: "sil", x_api_key: null },
   "TCL": { url: "https://mtr-tcl-trainload-api.rocteccloud.com/api/trainLoads",                    json_type: "tcl", x_api_key: "LqKX1iHtfm3hFNCluSUlp6FoSAjjF6Nm5ZrMy5av" },
+  "AEL": { url: "https://8adi7ufxzb.execute-api.ap-east-1.amazonaws.com/default/trainLoads",       json_type: "ael", x_api_key: "Tn6aIZQGBq2k0ts2kWOAG9AZz2j6L8JQ7KFL2BN9" },
   "EAL": { url: "https://d30c8uozaghdca.cloudfront.net",                                           json_type: "nsl", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" },
   "TML": { url: "https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges", json_type: "tml", x_api_key: "QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ" }
 };
 
 // Lines with confirmed train type support
-var TRAINTYPE_SUPPORTED_LINES = ["KTL", "TWL", "ISL", "TKL", "TCL", "TML", "EAL", "SIL"];
+var TRAINTYPE_SUPPORTED_LINES = ["KTL", "TWL", "ISL", "TKL", "TCL", "TML", "EAL", "SIL", "AEL"];
 
 var openDataLines = ["DRL"];

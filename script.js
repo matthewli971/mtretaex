@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.08";
+const APP_VERSION = "v0.08.1";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1037,8 +1037,16 @@ function updateTrainEnrichment() {
             var row1 = row.querySelector('.eta-row1');
             if (!row1) return;
             var tcEl = row1.querySelector('.train-code');
-            if (!tcEl) return;
-            var td = tcEl.getAttribute('data-td');
+
+            // Get td from .train-code if present; otherwise normalise from .eta-row's raw data-td
+            var td = tcEl ? tcEl.getAttribute('data-td') : null;
+            if (!td) {
+                var rawTd = row.getAttribute('data-td') || '';
+                var normTd = rawTd.replace(/[^0-9]/g, '');
+                while (normTd.length < 3) normTd = '0' + normTd;
+                normTd = normTd.slice(-3);
+                td = (normTd && normTd !== '000') ? normTd : null;
+            }
             if (!td) return;
 
             var key = rowLine ? rowLine + '_' + td : null;
@@ -1051,7 +1059,8 @@ function updateTrainEnrichment() {
                     typeEl = document.createElement('span');
                     typeEl.className = 'train-type-badge';
                     typeEl.onclick = function() { toggleRow2(this); };
-                    tcEl.parentNode.insertBefore(typeEl, tcEl);
+                    if (tcEl) { tcEl.parentNode.insertBefore(typeEl, tcEl); }
+                    else { row1.insertBefore(typeEl, row1.firstChild); }
                 }
                 typeEl.textContent = info.trainType;
                 typeEl.className = 'train-type-badge train-type-' + info.trainType.toLowerCase();
@@ -1066,7 +1075,8 @@ function updateTrainEnrichment() {
                     typeEl.className = 'train-type-badge train-type-' + defType.toLowerCase();
                     typeEl.textContent = defType;
                     typeEl.onclick = function() { toggleRow2(this); };
-                    tcEl.parentNode.insertBefore(typeEl, tcEl);
+                    if (tcEl) { tcEl.parentNode.insertBefore(typeEl, tcEl); }
+                    else { row1.insertBefore(typeEl, row1.firstChild); }
                 }
             }
 
@@ -1431,6 +1441,11 @@ function populateRow2(row2El) {
         var locText = curSta + (nextSta ? ' > ' + nextSta : '');
         html += '<span class="row2-info-item">' + locText + '</span>';
     }
+    // KTL: show currentStationCode > nextStationCode
+    if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL') && info.currentStation && info.nextStation) {
+        var locText = info.currentStation + ' > ' + info.nextStation;
+        html += '<span class="row2-info-item">' + locText + '</span>';
+    }
     if (info.trainConsist) {
         html += '<span class="row2-info-item">Consist: ' + info.trainConsist + '</span>';
     }
@@ -1449,16 +1464,28 @@ function populateRow2(row2El) {
 
     // Determine NSL first-class car position based on td direction
     var firstClassCarNo = -1;
+    var carLoadsOrdered = info.carLoads;
     if (lineCode === 'EAL' || lineCode === 'NSL') {
         var tdNums = td.replace(/[^0-9]/g, '');
         var lastDigit = tdNums.length > 0 ? parseInt(tdNums[tdNums.length - 1]) : 0;
         var isUp = (lastDigit % 2 === 1); // Odd = up, Even = down
         firstClassCarNo = isUp ? 4 : 6; // up=car4, down=car6
+        // Down line: carLoads[0]=car9, carLoads[8]=car1 — reverse for correct display order
+        if (!isUp) {
+            carLoadsOrdered = info.carLoads.slice().reverse();
+        }
     }
 
-    info.carLoads.forEach(function (car, idx) {
+    carLoadsOrdered.forEach(function (car, idx) {
         // Check if this is the first-class car for NSL
-        var carNoNum = parseInt(car.carNo) || (idx + 1);
+        var parsedCarNo = parseInt(car.carNo);
+        var carNoNum;
+        if (!isNaN(parsedCarNo)) {
+            // KTL C-Train: carNo is 0-indexed — shift to 1-indexed for display
+            carNoNum = (lineCode === 'KTL') ? parsedCarNo + 1 : (parsedCarNo || (idx + 1));
+        } else {
+            carNoNum = idx + 1;
+        }
         var isFirstClass = (firstClassCarNo > 0 && carNoNum === firstClassCarNo);
 
         // Round passengerLoad to nearest integer (HALF_UP)
