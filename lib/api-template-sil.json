@@ -1,462 +1,462 @@
 [
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A516",
-        "ttl": "1779213027",
-        "destinationStationCode": "-",
-        "trainSet": "TS08",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1779212967",
-        "startDistance": "-",
-        "lambdaDateTime": 1779212984,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 1,
-                "floorRemainingA2": 1,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 1,
-                "floorRemainingAvg": 1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A508",
-        "ttl": "1779213035",
-        "destinationStationCode": "-",
-        "trainSet": "TS04",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1779212975",
-        "startDistance": "-",
-        "lambdaDateTime": 1779212985,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 1,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 2,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 3,
-                "floorRemainingAvg": 2.5
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A520",
-        "ttl": "1733073830",
-        "destinationStationCode": "-",
-        "trainSet": "TS10",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1733073770",
-        "startDistance": "-",
-        "lambdaDateTime": 1733073793,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 1,
-                "floorRemainingA2": 2,
-                "floorRemainingA1": 2,
-                "floorRemainingB2": 2,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": 2
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A502",
-        "ttl": "1779213030",
-        "destinationStationCode": "-",
-        "trainSet": "TS01",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1779212970",
-        "startDistance": "-",
-        "lambdaDateTime": 1779212982,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 1,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 1,
-                "floorRemainingB2": 2,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": 1.5
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 1,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 1,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": 1
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A504",
-        "ttl": "0",
-        "destinationStationCode": "-",
-        "trainSet": "TS02",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1726044975",
-        "startDistance": "-",
-        "lambdaDateTime": 1779206993,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": -1,
-                "floorRemainingA2": -1,
-                "floorRemainingA1": -1,
-                "floorRemainingB2": -1,
-                "floorRemainingB1": -1,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": -1,
-                "floorRemainingA2": -1,
-                "floorRemainingA1": -1,
-                "floorRemainingB2": -1,
-                "floorRemainingB1": -1,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "3",
-                "passengerCount": -1,
-                "floorRemainingA2": -1,
-                "floorRemainingA1": -1,
-                "floorRemainingB2": -1,
-                "floorRemainingB1": -1,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A506",
-        "ttl": "1735751046",
-        "destinationStationCode": "-",
-        "trainSet": "TS03",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1735750986",
-        "startDistance": "-",
-        "lambdaDateTime": 1735750999,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 1,
-                "floorRemainingA2": 1,
-                "floorRemainingA1": 2,
-                "floorRemainingB2": 1,
-                "floorRemainingB1": 1,
-                "floorRemainingAvg": 1.25
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 1,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 3,
-                "floorRemainingB2": 1,
-                "floorRemainingB1": 1,
-                "floorRemainingAvg": 1.67
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 1,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 2,
-                "floorRemainingB2": 3,
-                "floorRemainingB1": 3,
-                "floorRemainingAvg": 2.67
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A512",
-        "ttl": "1779212025",
-        "destinationStationCode": "-",
-        "trainSet": "TS06",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1779211965",
-        "startDistance": "-",
-        "lambdaDateTime": 1779211976,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 1,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 1,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": 1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 1,
-                "floorRemainingA2": 1,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": 1
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A518",
-        "ttl": "1779213029",
-        "destinationStationCode": "-",
-        "trainSet": "TS09",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1779212969",
-        "startDistance": "-",
-        "lambdaDateTime": 1779212983,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 1,
-                "floorRemainingA2": 3,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": 3
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A510",
-        "ttl": "1772389566",
-        "destinationStationCode": "-",
-        "trainSet": "TS05",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1772389506",
-        "startDistance": "-",
-        "lambdaDateTime": 1772389522,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": 1,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 1,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": 1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "3",
-                "passengerCount": 0,
-                "floorRemainingA2": 0,
-                "floorRemainingA1": 0,
-                "floorRemainingB2": 0,
-                "floorRemainingB1": 0,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    },
-    {
-        "targetDistance": "-",
-        "panStatus": "UP",
-        "nextStationCode": "-",
-        "doorLastStatus": "-",
-        "trainId": "A514",
-        "ttl": "0",
-        "destinationStationCode": "-",
-        "trainSet": "TS07",
-        "doorCloseAction": "-",
-        "doorOpenAction": "-",
-        "receivedTime": "1774840796",
-        "startDistance": "-",
-        "lambdaDateTime": 1779212985,
-        "EIDSReceivedTime": "0",
-        "carLoads": [
-            {
-                "carNo": "1",
-                "passengerCount": -1,
-                "floorRemainingA2": -1,
-                "floorRemainingA1": -1,
-                "floorRemainingB2": -1,
-                "floorRemainingB1": -1,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "2",
-                "passengerCount": -1,
-                "floorRemainingA2": -1,
-                "floorRemainingA1": -1,
-                "floorRemainingB2": -1,
-                "floorRemainingB1": -1,
-                "floorRemainingAvg": -1
-            },
-            {
-                "carNo": "3",
-                "passengerCount": -1,
-                "floorRemainingA2": -1,
-                "floorRemainingA1": -1,
-                "floorRemainingB2": -1,
-                "floorRemainingB1": -1,
-                "floorRemainingAvg": -1
-            }
-        ],
-        "currentStationCode": "-"
-    }
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A516",
+    "ttl": "1780032457",
+    "destinationStationCode": "-",
+    "trainSet": "TS08",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1780032397",
+    "startDistance": "-",
+    "lambdaDateTime": 1780032415,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 1,
+        "floorRemainingA2": 23,
+        "floorRemainingA1": 41,
+        "floorRemainingB2": 38,
+        "floorRemainingB1": 25,
+        "floorRemainingAvg": 31.75
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 1,
+        "floorRemainingA2": 54,
+        "floorRemainingA1": 49,
+        "floorRemainingB2": 49,
+        "floorRemainingB1": 52,
+        "floorRemainingAvg": 51
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 1,
+        "floorRemainingA2": 61,
+        "floorRemainingA1": 50,
+        "floorRemainingB2": 54,
+        "floorRemainingB1": 49,
+        "floorRemainingAvg": 53.5
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "35",
+    "doorLastStatus": "DO",
+    "trainId": "A508",
+    "ttl": "1780032455",
+    "destinationStationCode": "35",
+    "trainSet": "TS04",
+    "doorCloseAction": "0",
+    "doorOpenAction": "1",
+    "receivedTime": "1780032395",
+    "startDistance": "-",
+    "lambdaDateTime": 1780032419,
+    "EIDSReceivedTime": "1780032418",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 1,
+        "floorRemainingA2": 28,
+        "floorRemainingA1": 14,
+        "floorRemainingB2": 42,
+        "floorRemainingB1": 27,
+        "floorRemainingAvg": 27.75
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 1,
+        "floorRemainingA2": 22,
+        "floorRemainingA1": 31,
+        "floorRemainingB2": 34,
+        "floorRemainingB1": 35,
+        "floorRemainingAvg": 30.5
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 1,
+        "floorRemainingA2": 30,
+        "floorRemainingA1": 46,
+        "floorRemainingB2": 68,
+        "floorRemainingB1": 60,
+        "floorRemainingAvg": 51
+      }
+    ],
+    "currentStationCode": "33"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A520",
+    "ttl": "1733073830",
+    "destinationStationCode": "-",
+    "trainSet": "TS10",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1733073770",
+    "startDistance": "-",
+    "lambdaDateTime": 1733073793,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 0,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 0,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": -1
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 1,
+        "floorRemainingA2": 2,
+        "floorRemainingA1": 2,
+        "floorRemainingB2": 2,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": 2
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 0,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 0,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": -1
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A502",
+    "ttl": "1780032468",
+    "destinationStationCode": "-",
+    "trainSet": "TS01",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1780032408",
+    "startDistance": "-",
+    "lambdaDateTime": 1780032418,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 1,
+        "floorRemainingA2": 29,
+        "floorRemainingA1": 42,
+        "floorRemainingB2": 26,
+        "floorRemainingB1": 43,
+        "floorRemainingAvg": 35
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 1,
+        "floorRemainingA2": 35,
+        "floorRemainingA1": 30,
+        "floorRemainingB2": 14,
+        "floorRemainingB1": 21,
+        "floorRemainingAvg": 25
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 1,
+        "floorRemainingA2": 38,
+        "floorRemainingA1": 34,
+        "floorRemainingB2": 24,
+        "floorRemainingB1": 18,
+        "floorRemainingAvg": 28.5
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A504",
+    "ttl": "0",
+    "destinationStationCode": "-",
+    "trainSet": "TS02",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1726044975",
+    "startDistance": "-",
+    "lambdaDateTime": 1780032419,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": -1,
+        "floorRemainingA2": -1,
+        "floorRemainingA1": -1,
+        "floorRemainingB2": -1,
+        "floorRemainingB1": -1,
+        "floorRemainingAvg": -1
+      },
+      {
+        "carNo": "2",
+        "passengerCount": -1,
+        "floorRemainingA2": -1,
+        "floorRemainingA1": -1,
+        "floorRemainingB2": -1,
+        "floorRemainingB1": -1,
+        "floorRemainingAvg": -1
+      },
+      {
+        "carNo": "3",
+        "passengerCount": -1,
+        "floorRemainingA2": -1,
+        "floorRemainingA1": -1,
+        "floorRemainingB2": -1,
+        "floorRemainingB1": -1,
+        "floorRemainingAvg": -1
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A506",
+    "ttl": "1735751046",
+    "destinationStationCode": "-",
+    "trainSet": "TS03",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1735750986",
+    "startDistance": "-",
+    "lambdaDateTime": 1735750999,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 1,
+        "floorRemainingA2": 1,
+        "floorRemainingA1": 2,
+        "floorRemainingB2": 1,
+        "floorRemainingB1": 1,
+        "floorRemainingAvg": 1.25
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 1,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 3,
+        "floorRemainingB2": 1,
+        "floorRemainingB1": 1,
+        "floorRemainingAvg": 1.67
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 1,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 2,
+        "floorRemainingB2": 3,
+        "floorRemainingB1": 3,
+        "floorRemainingAvg": 2.67
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A512",
+    "ttl": "1779606988",
+    "destinationStationCode": "-",
+    "trainSet": "TS06",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1779606928",
+    "startDistance": "-",
+    "lambdaDateTime": 1779606944,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 1,
+        "floorRemainingA2": 14,
+        "floorRemainingA1": 11,
+        "floorRemainingB2": 13,
+        "floorRemainingB1": 8,
+        "floorRemainingAvg": 11.5
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 1,
+        "floorRemainingA2": 10,
+        "floorRemainingA1": 15,
+        "floorRemainingB2": 14,
+        "floorRemainingB1": 9,
+        "floorRemainingAvg": 12
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 1,
+        "floorRemainingA2": 27,
+        "floorRemainingA1": 32,
+        "floorRemainingB2": 12,
+        "floorRemainingB1": 15,
+        "floorRemainingAvg": 21.5
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A518",
+    "ttl": "1780032459",
+    "destinationStationCode": "-",
+    "trainSet": "TS09",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1780032399",
+    "startDistance": "-",
+    "lambdaDateTime": 1780032417,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 0,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 0,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": -1
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 1,
+        "floorRemainingA2": 1,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 0,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": 1
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 0,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 0,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": -1
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A510",
+    "ttl": "1772389566",
+    "destinationStationCode": "-",
+    "trainSet": "TS05",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1772389506",
+    "startDistance": "-",
+    "lambdaDateTime": 1772389522,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": 1,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 1,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": 1
+      },
+      {
+        "carNo": "2",
+        "passengerCount": 0,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 0,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": -1
+      },
+      {
+        "carNo": "3",
+        "passengerCount": 0,
+        "floorRemainingA2": 0,
+        "floorRemainingA1": 0,
+        "floorRemainingB2": 0,
+        "floorRemainingB1": 0,
+        "floorRemainingAvg": -1
+      }
+    ],
+    "currentStationCode": "-"
+  },
+  {
+    "targetDistance": "-",
+    "panStatus": "UP",
+    "nextStationCode": "-",
+    "doorLastStatus": "-",
+    "trainId": "A514",
+    "ttl": "0",
+    "destinationStationCode": "-",
+    "trainSet": "TS07",
+    "doorCloseAction": "-",
+    "doorOpenAction": "-",
+    "receivedTime": "1774840796",
+    "startDistance": "-",
+    "lambdaDateTime": 1780032419,
+    "EIDSReceivedTime": "0",
+    "carLoads": [
+      {
+        "carNo": "1",
+        "passengerCount": -1,
+        "floorRemainingA2": -1,
+        "floorRemainingA1": -1,
+        "floorRemainingB2": -1,
+        "floorRemainingB1": -1,
+        "floorRemainingAvg": -1
+      },
+      {
+        "carNo": "2",
+        "passengerCount": -1,
+        "floorRemainingA2": -1,
+        "floorRemainingA1": -1,
+        "floorRemainingB2": -1,
+        "floorRemainingB1": -1,
+        "floorRemainingAvg": -1
+      },
+      {
+        "carNo": "3",
+        "passengerCount": -1,
+        "floorRemainingA2": -1,
+        "floorRemainingA1": -1,
+        "floorRemainingB2": -1,
+        "floorRemainingB1": -1,
+        "floorRemainingAvg": -1
+      }
+    ],
+    "currentStationCode": "-"
+  }
 ]

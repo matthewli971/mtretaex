@@ -1,0 +1,1056 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.3.1/lumen/bootstrap.min.css">
+   <link href='https://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+    <title>TML Train Load Viewer</title>
+
+    <!-- INCLUDING JQUERY-->
+    <script src=
+"https://code.jquery.com/jquery-3.5.1.js">
+    </script>
+
+    <!-- CSS FOR STYLING THE PAGE -->
+    <style>
+       table {
+           margin: 0 auto;
+           font-size: medium;
+           border: 1px solid black;
+           width: 100%;
+           max-width: 1200px;
+       }
+
+       h1 {
+           text-align: center;
+           color: #006600;
+           font-size: xx-large;
+           font-family: 'Gill Sans',
+               'Gill Sans MT', ' Calibri',
+               'Trebuchet MS', 'sans-serif';
+       }
+       h2 {
+           text-align: right;
+           color: #006600;
+           font-size: large;
+           font-family: 'Gill Sans',
+               'Gill Sans MT', ' Calibri',
+               'Trebuchet MS', 'sans-serif';
+       }
+
+       td {
+           background-color: #E4F5D4;
+           border: 1px solid black;
+       }
+
+       th,
+       td {
+           font-weight: bold;
+           border: 1px solid black;
+           padding: 10px;
+           text-align: center;
+       }
+
+       td {
+           font-weight: lighter;
+       }
+
+       .slider {
+        -webkit-appearance: none;
+        width: 60%;
+        height: 10px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 1;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+      }
+
+
+      .slider:hover {
+        opacity: 1;
+      }
+
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico.png');
+        cursor: pointer;
+      }
+
+      .slider::-moz-range-thumb {
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico.png');
+        cursor: pointer;
+      }
+
+      .slider_back {
+        -webkit-appearance: none;
+        width: 60%;
+        height: 10px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 1;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+      }
+
+
+      .slider_back:hover {
+        opacity: 1;
+      }
+
+      .slider_back::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico_back.png');
+        cursor: pointer;
+      }
+
+      .slider_back::-moz-range-thumb {
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico_back.png');
+        cursor: pointer;
+      }
+
+      .numberCircle {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        padding-top: 10px;
+
+        background: #fff;
+        border: 3px solid #666;
+        color: #000;
+        text-align: center;
+
+        font: 13px Arial, sans-serif;
+        font-weight: bold;
+        }
+
+        .numberCircleYellow {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        padding-top: 10px;
+
+        background: #fff;
+        border: 3px solid #dddd00;
+        color: #000;
+        text-align: center;
+
+        font: 13px Arial, sans-serif;
+        font-weight: bold;
+        }
+
+        #stationFilter option {
+            padding: 5px;
+        }
+
+        #stationFilter {
+            min-width: 200px;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            justify-content: center;
+        }
+
+        .control-item {
+            flex: 1;
+            min-width: 250px;
+            margin: 5px;
+        }
+
+        .train-container {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .car-loads {
+            display: flex;
+            gap: 2px;
+            margin-top: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .car-load-indicator {
+            position: relative;
+            padding: 15px 10px;
+            min-width: 80px;
+            text-align: center;
+            font-weight: 500;
+            color: #333;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Train car connectors */
+        .car-load-indicator:not(:first-child)::before {
+            content: "";
+            position: absolute;
+            left: -6px;
+            top: 50%;
+            width: 10px;
+            height: 4px;
+            background: #666;
+            transform: translateY(-50%);
+        }
+
+        /* Train head (first car) */
+        .car-load-indicator:first-child {
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+            padding-left: 20px;
+        }
+
+        .car-load-indicator:first-child::after {
+            content: "";
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 8px solid #333;
+        }
+
+        /* Train tail (last car) */
+        .car-load-indicator:last-child {
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+
+        /* Train windows */
+        .car-load-indicator::after {
+            content: "";
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 4px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 2px;
+        }
+
+        /* Train wheels */
+        .car-load-indicator::before {
+            content: "• •";
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 12px;
+            letter-spacing: 8px;
+        }
+
+        /* Load level indicators */
+        .load-level {
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 5px auto;
+            width: fit-content;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Train movement animation */
+        @keyframes trainMove {
+            0% { transform: translateX(-2px); }
+            50% { transform: translateX(2px); }
+            100% { transform: translateX(-2px); }
+        }
+
+        .car-loads {
+            animation: trainMove 2s infinite ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: x-large;
+            }
+
+            .train-container {
+                font-size: 14px;
+            }
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 5px;
+            white-space: nowrap;
+        }
+
+        #stationFilter {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        /* Modern styling for the entire page */
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Header styling */
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: xx-large;
+            font-family: 'Orbitron', sans-serif;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Control panel styling */
+        .control-row {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        /* Train container styling */
+        .train-container {
+            background: white;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .train-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Table styling */
+        .table-responsive {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Section headers */
+        .section-header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        /* Control elements */
+        .control-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+        }
+
+        #stationFilter {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Train info styling */
+        .train-info {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .train-id {
+            font-size: 1.2em;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .train-status {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Checkbox styling */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .control-row {
+                padding: 10px;
+            }
+
+            .train-container {
+                padding: 12px;
+            }
+
+            .car-load-indicator {
+                min-width: 70px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Load level icons styling */
+        .load-icons {
+            margin-top: 5px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 10px;
+            width: fit-content;
+            margin: 5px auto;
+        }
+
+        .load-icons i {
+            margin: 0 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Optional: Add color to the icons */
+        .light-load i {
+            color: #4CAF50;
+        }
+
+        .moderate-load i {
+            color: #FFC107;
+        }
+
+        .heavy-load i {
+            color: #F44336;
+        }
+
+        /* Passenger count styling */
+        .load-level {
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            margin: 5px auto;
+            width: fit-content;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        /* Car load indicator updates */
+        .car-load-indicator {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px 10px;
+            gap: 5px;
+        }
+
+        .car-number {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: rgba(0, 0, 0, 0.7);
+            text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.3);
+        }
+    </style>
+    <script type="text/javascript">
+
+    /* ON PAGE LOAD */
+    window.addEventListener("DOMContentLoaded", () => {
+    
+      
+    while(true){
+      let login = prompt("Password:");
+      if (window.btoa(login) == "MjgxMTk4OTg=") {
+        break;
+      } else {
+        continue;
+      }
+    }
+    
+
+    // renderTable(); //create the table 
+    // renderBadge();
+    //alert("TEST");
+    
+    reload();
+    
+  });
+        
+        function comparer(index) {
+            return function(a, b) {
+                var valA = getCellValue(a, index), valB = getCellValue(b, index);
+                return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.toString().localeCompare(valB);
+            }
+        }
+        function getCellValue(row, index){
+            return $(row).children('td').eq(index).text();
+        }
+
+
+        function reload() {
+            $.ajax({
+                beforeSend: function(request) {
+                    request.setRequestHeader("x-api-key", 'QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ');
+                },
+                dataType: "json",
+                url: 'https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges',
+                success: function(data) {
+                    // Define station sequence
+                    const stationSequence = [
+                        49, // TUM
+                        48, // SIH
+                        47, // TIS
+                        46, // LOP
+                        45, // YUL
+                        44, // KSR
+                        43, // TWW
+                        42, // MEF
+                        41, // NAC
+                        50, // AUS
+                        14, // ETS
+                        1,  // HUH
+                        61, // HOM
+                        62, // TKW
+                        63, // SUW
+                        64, // KAT
+                        65, // DIH
+                        66, // HIK
+                        21, // TAW
+                        22, // CKT
+                        23, // STW
+                        24, // CIO
+                        25, // SHM
+                        26, // TSH
+                        27, // HEO
+                        28, // MOS
+                        29  // WKS
+                    ];
+
+                    // Get selected stations
+                    const selectedStations = Array.from($('#stationFilter').val() || []);
+                    
+                    // Filter station sequence based on selection
+                    const filteredStations = selectedStations.includes('all') ? 
+                        stationSequence : 
+                        stationSequence.filter(code => selectedStations.includes(code.toString()));
+
+                    // Create separate maps for upline and downline trains
+                    let uplineMap = new Map();
+                    let downlineMap = new Map();
+                    
+                    // Initialize all stations for both directions
+                    filteredStations.forEach(code => {
+                        uplineMap.set(code, []);
+                        downlineMap.set(code, []);
+                    });
+                    
+                    // Calculate timestamp threshold (2 minutes ago)
+                    const twoMinutesAgo = Date.now() - (2 * 60 * 1000);
+                    
+                    // Group trains by their next station and direction
+                    $.each(data.Items, function (key, value) {
+                        // Check if train data is recent enough (within last 2 minutes)
+                        const trainTimestamp = parseInt(value.receivedTime);
+                        if (isNaN(trainTimestamp) || trainTimestamp < twoMinutesAgo) {
+                            return; // Skip outdated trains
+                        }
+
+                        if (value.isInService || $('#hideUnknown')[0].checked == false) {
+                            let direction = covertStationOrder(value.currentStationCode) < covertStationOrder(value.destinationStationCode) ? "up" : "down";
+                            
+                            if ((direction == "up" && !$('#up_dir')[0].checked) || (direction == "down" && !$('#dn_dir')[0].checked)) {
+                                return;
+                            }
+                            
+                            let nextStation = value.nextStationCode;
+                            if (direction === "up" && uplineMap.has(nextStation)) {
+                                uplineMap.get(nextStation).push(value);
+                            } else if (direction === "down" && downlineMap.has(nextStation)) {
+                                downlineMap.get(nextStation).push(value);
+                            }
+                        }
+                    });
+                    
+                    // Build table HTML
+                    let tableContent = '';
+                    
+                    // Upline Section (reversed order)
+                    if ($('#up_dir')[0].checked) {
+                        tableContent += `
+                            <tr>
+                                <td colspan="2" style="background-color: #f0f0f0; text-align: center;">
+                                    <h3>Upline Trains</h3>
+                                </td>
+                            </tr>`;
+                        
+                        // Show filtered stations in reversed sequence for upline
+                        [...filteredStations].reverse().forEach(stationCode => {
+                            const trains = uplineMap.get(stationCode);
+                            tableContent += `<tr>
+                                <td><strong>${mapStation(stationCode)}</strong></td>
+                                <td>${trains && trains.length > 0 ? buildTrainList(trains) : 'No trains'}</td>
+                            </tr>`;
+                        });
+                    }
+                    
+                    // Downline Section (original order)
+                    if ($('#dn_dir')[0].checked) {
+                        tableContent += `
+                            <tr>
+                                <td colspan="2" style="background-color: #f0f0f0; text-align: center;">
+                                    <h3>Downline Trains</h3>
+                                </td>
+                            </tr>`;
+                        
+                        // Show filtered stations in original sequence for downline
+                        filteredStations.forEach(stationCode => {
+                            const trains = downlineMap.get(stationCode);
+                            tableContent += `<tr>
+                                <td><strong>${mapStation(stationCode)}</strong></td>
+                                <td>${trains && trains.length > 0 ? buildTrainList(trains) : 'No trains'}</td>
+                            </tr>`;
+                        });
+                    }
+                    
+                    $('#trainContent').empty().append(tableContent);
+                }
+            });
+        }
+
+        // Helper function to build train list HTML
+        function buildTrainList(trains) {
+            let trainHtml = '';
+            trains.forEach(train => {
+                let lastUpdated = 'Unknown';
+                try {
+                    const timestamp = parseInt(train.receivedTime);
+                    if (!isNaN(timestamp)) {
+                        lastUpdated = new Date(timestamp).toLocaleString();
+                    }
+                } catch (error) {
+                    console.error('Error parsing timestamp:', error);
+                }
+                
+                // Determine direction based on current and destination stations
+                const isDownline = covertStationOrder(train.currentStationCode) > covertStationOrder(train.destinationStationCode);
+                
+                trainHtml += `
+                    <div class="train-container">
+                        <div class="train-info">
+                            <div class="train-id">Train ${train.trainId} (${train.train_type})</div>
+                            <div class="train-status">
+                                <div class="status-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    From: ${mapStation(train.currentStationCode)} → To: ${mapStation(train.destinationStationCode)}
+                                </div>
+                                <div class="status-item">
+                                    <i class="fas fa-arrow-right"></i>
+                                    Next: ${mapStation(train.nextStationCode)}
+                                </div>
+                            </div>
+                            <div class="train-status">
+                                <div class="status-item">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    Speed: ${train.trainSpeed}km/h
+                                </div>
+                                <div class="status-item">
+                                    <i class="fas fa-door-${train.isDoorOpen ? 'open' : 'closed'}"></i>
+                                    Doors: ${train.isDoorOpen ? "Open" : "Closed"}
+                                </div>
+                                <div class="status-item">
+                                    <i class="fas fa-clock"></i>
+                                    Updated: ${lastUpdated}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="car-loads">`;
+                
+                // Get cars array and reverse it for downline trains
+                let cars = [...train.listCars];
+                if (isDownline) {
+                    cars.reverse();
+                }
+                
+                cars.forEach((car, idx) => {
+                    let loadLevel = parseInt(car.passengerCount);
+                    let color = loadLevel < 120 ? '#4CAF50' : 
+                               loadLevel < 230 ? '#FFC107' : '#F44336';
+                    
+                    // Determine load icons and class
+                    let loadIcons = '';
+                    let loadClass = '';
+                    if (loadLevel < 120) {
+                        loadIcons = '<i class="fas fa-user"></i>';
+                        loadClass = 'light-load';
+                    } else if (loadLevel < 230) {
+                        loadIcons = '<i class="fas fa-user"></i><i class="fas fa-user"></i>';
+                        loadClass = 'moderate-load';
+                    } else {
+                        loadIcons = '<i class="fas fa-user"></i><i class="fas fa-user"></i><i class="fas fa-user"></i>';
+                        loadClass = 'heavy-load';
+                    }
+                    
+                    let carNumber = isDownline ? 8 - idx : idx + 1;
+                    
+                    trainHtml += `
+                        <div class="car-load-indicator" style="background-color: ${color};">
+                            <div class="car-number">Car ${carNumber}</div>
+                            <div class="load-level">${car.passengerCount}</div>
+                            <div class="load-icons ${loadClass}">${loadIcons}</div>
+                        </div>`;
+                });
+                
+                trainHtml += `</div></div>`;
+            });
+            return trainHtml;
+        }
+
+        function filter() {
+            table_search($('#searchInput').val(),$('#table tbody tr'),'0');
+        }
+
+        function ToInteger(x) {
+            x = Number(x);
+            return x < 0 ? Math.ceil(x) : Math.floor(x);
+        }
+
+        function modulo(a, b) {
+            return a - Math.floor(a/b)*b;
+        }
+        function ToUint8(x) {
+            return modulo(ToInteger(x), Math.pow(2, 8));
+        }
+
+        function decimalToHexString(number)
+        {
+          if (number < 0)
+          {
+            number = 0xFF + number + 1;
+          }
+
+          return number.toString(16).toUpperCase();
+        }
+
+        function toBinary(a) { //: String
+            var r = '';
+            var binCounter = 0;
+            while (a > 0) {
+                r = a%2 + r;
+                a = Math.floor(a/2);
+            }
+            return r;
+        }
+
+
+        function twoscompl(a) { //: int
+            var l = toBinaryFill(a).length;
+            var msb = a >>> (l-1);
+
+            if (msb == 0) {
+                return a;
+            }
+
+            a = a-1;
+            var str = toBinary(a);
+            var nstr = '';
+            for (var i = 0; i < str.length; i++) {
+                nstr += str.charAt(i) == '1' ? '0' : '1';
+            }
+            return (-1)*parseInt(nstr);
+        }
+
+        function mapStation(code) {
+            switch (code) {
+                case 1: return 'HUH';
+                case 14: return 'ETS';
+                case 21: return 'TAW';
+                case 22: return 'CKT';
+                case 23: return 'STW';
+                case 24: return 'CIO';
+                case 25: return 'SHM';
+                case 26: return 'TSH';
+                case 27: return 'HEO';
+                case 28: return 'MOS';
+                case 29: return 'WKS';
+                case 41: return 'NAC';
+                case 42: return 'MEF';
+                case 43: return 'TWW';
+                case 44: return 'KSR';
+                case 45: return 'YUL';
+                case 46: return 'LOP';
+                case 47: return 'TIS';
+                case 48: return 'SIH';
+                case 49: return 'TUM';
+                case 50: return 'AUS';
+                case 61: return 'HOM';
+                case 62: return 'TKW';
+                case 63: return 'SUW';
+                case 64: return 'KAT';
+                case 65: return 'DIH';
+                case 66: return 'HIK';
+                case 91: return 'DEP';
+                case 92: return 'OUT';
+                case 93: return 'SPC';
+                case 94: return 'TES';
+                case 95: return 'WR';
+                case 97: return 'MOL';
+
+                default: return 'Unknown(' + code + ')';
+
+            }
+        }
+
+        function covertStationOrder(code) {
+            switch (code) {
+                case 1: return 16;
+                case 14: return 17;
+                case 21: return 9;
+                case 22: return 8;
+                case 23: return 7;
+                case 24: return 6;
+                case 25: return 5;
+                case 26: return 4;
+                case 27: return 3;
+                case 28: return 2;
+                case 29: return 1;
+                case 41: return 19;
+                case 42: return 20;
+                case 43: return 21;
+                case 44: return 22;
+                case 45: return 23;
+                case 46: return 24;
+                case 47: return 25;
+                case 48: return 26;
+                case 49: return 27;
+                case 50: return 18;
+                case 61: return 15;
+                case 62: return 14;
+                case 63: return 13;
+                case 64: return 12;
+                case 65: return 11;
+                case 66: return 10;
+                default: return 0;
+            }
+        }
+    </script>
+
+    <!-- Latest Font Awesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <section>
+        <h1 class="text-center"><img src="roctec.jpeg" style="width: 80px;height: 80px" /></h1>
+        <h1>TML Train Load Viewer</h1>
+        
+        <div class="control-row">
+            <div class="control-item">
+                <input type="text" id="searchInput" placeholder="Filter by Car Number" class="form-control"/>
+            </div>
+            
+            <div class="control-item">
+                <select id="stationFilter" class="form-control" multiple size="8">
+                    <option value="all" selected>All Stations</option>
+                    <option value="49">TUM</option>
+                    <option value="48">SIH</option>
+                    <option value="47">TIS</option>
+                    <option value="46">LOP</option>
+                    <option value="45">YUL</option>
+                    <option value="44">KSR</option>
+                    <option value="43">TWW</option>
+                    <option value="42">MEF</option>
+                    <option value="41">NAC</option>
+                    <option value="50">AUS</option>
+                    <option value="14">ETS</option>
+                    <option value="1">HUH</option>
+                    <option value="61">HOM</option>
+                    <option value="62">TKW</option>
+                    <option value="63">SUW</option>
+                    <option value="64">KAT</option>
+                    <option value="65">DIH</option>
+                    <option value="66">HIK</option>
+                    <option value="21">TAW</option>
+                    <option value="22">CKT</option>
+                    <option value="23">STW</option>
+                    <option value="24">CIO</option>
+                    <option value="25">SHM</option>
+                    <option value="26">TSH</option>
+                    <option value="27">HEO</option>
+                    <option value="28">MOS</option>
+                    <option value="29">WKS</option>
+                </select>
+            </div>
+            
+            <div class="control-item">
+                <div class="checkbox-group">
+                    <button type="button" id="reload" class="btn btn-primary" onClick="reload();">Reload</button>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" checked id="hideUnknown" name="hide_unknown"/>
+                    <label for="hideUnknown">Hide Not in Service Trains</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" checked id="up_dir" name="up_dir"/>
+                    <label for="up_dir">Show Up Direction</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" checked id="dn_dir" name="dn_dir"/>
+                    <label for="dn_dir">Show Down Direction</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wrap table in responsive container -->
+        <div class="table-responsive">
+            <table id='table' class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Station</th>
+                        <th>Trains</th>
+                    </tr>
+                </thead>
+                <tbody id="trainContent">
+                </tbody>
+            </table>
+        </div>
+
+        <script src="table_search.js"></script>
+
+        <script>
+
+            $(document).ready(function () {
+
+                reload();
+
+                $('th').click(function(){
+                    var table = $(this).parents('table').eq(0)
+                    var rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()))
+                    this.asc = !this.asc
+                    if (!this.asc){rows = rows.reverse()}
+                    for (var i = 0; i < rows.length; i++){table.append(rows[i])}
+                })
+
+                $('#searchInput').keyup(function () {
+
+                  table_search($('#searchInput').val(),$('#table tbody tr'),'0');
+
+                });
+
+                // Handle "All Stations" selection
+                $('#stationFilter').change(function() {
+                    const selectedOptions = $(this).val() || [];
+                    if (selectedOptions.includes('all')) {
+                        // If "All Stations" is selected, deselect other options
+                        $(this).find('option:not([value="all"])').prop('selected', false);
+                    } else if (selectedOptions.length === 0) {
+                        // If nothing is selected, select "All Stations"
+                        $(this).find('option[value="all"]').prop('selected', true);
+                    } else {
+                        // If other stations are selected, deselect "All Stations"
+                        $(this).find('option[value="all"]').prop('selected', false);
+                    }
+                    reload();
+                });
+
+            });
+
+            window.setInterval("reload()",6000);
+
+        </script>
+    </section>
+</body>
+
+</html>
