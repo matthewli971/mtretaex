@@ -3,12 +3,13 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.08.1";
+const APP_VERSION = "v0.09";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
 const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
-const LINE_API_REFRESH_INTERVAL = 30000; // 30 seconds
+const LINE_API_REFRESH_INTERVAL = 20000; // 20 seconds\
+const TRAIN_LOAD_TIME_FILTER_MS = 10 * 60 * 1000; // 10 minutes // Trainload TTL filter: discard records older than this (milliseconds)
 
 // ============================================
 // Data stores — defined in data.js
@@ -374,6 +375,19 @@ function showStationInfoBar(code) {
 
     document.getElementById("station-info-name").textContent =
         station.name_chi + " " + station.name_eng;
+
+    // Station call button
+    var callBtn = document.getElementById("station-call-btn");
+    if (callBtn) {
+        if (station.hotline) {
+            var telNum = station.hotline.replace(/\s/g, '');
+            callBtn.href = 'tel:' + telNum;
+            callBtn.title = station.hotline;
+            callBtn.classList.remove('hidden');
+        } else {
+            callBtn.classList.add('hidden');
+        }
+    }
 
     // Line filter badges (second row) - ordered by line_id
     activeLineFilter = null;
@@ -777,14 +791,24 @@ function fetchLineApi(lineCode, retryCount) {
 // Normalize different API response formats into a common train array
 function normalizeUrlFormat(raw, lineCode) {
     if (!Array.isArray(raw)) return [];
+    var nowSec = Math.floor(Date.now() / 1000);
+    var filterSec = TRAIN_LOAD_TIME_FILTER_MS / 1000;
     return raw.filter(function (train) {
-        return train.line === lineCode;
+        if (train.line !== lineCode) return false;
+        if (train.ttl && Math.abs(train.ttl - nowSec) > filterSec) return false;
+        return true;
     });
 }
 
 function normalizeSilFormat(raw) {
     if (!Array.isArray(raw)) return [];
-    return raw.map(function (train) {
+    var nowSec = Math.floor(Date.now() / 1000);
+    var filterSec = TRAIN_LOAD_TIME_FILTER_MS / 1000;
+    return raw.filter(function (train) {
+        var ttl = parseInt(train.ttl) || 0;
+        if (!ttl || Math.abs(ttl - nowSec) > filterSec) return false;
+        return true;
+    }).map(function (train) {
         var doorOpen = false;
         if (train.doorOpenAction && train.doorOpenAction !== '-') doorOpen = true;
         return {
@@ -812,31 +836,55 @@ function normalizeSilFormat(raw) {
 
 function normalizeTclFormat(raw) {
     if (!Array.isArray(raw)) return [];
+    var nowSec = Math.floor(Date.now() / 1000);
+    var filterSec = TRAIN_LOAD_TIME_FILTER_MS / 1000;
     return raw.filter(function (item) {
         var tid = (item.jsonContent && item.jsonContent.trainId) || item.trainId || '';
-        return tid.indexOf('TCL') === 0 || tid.indexOf('V') === 0;
+        if (tid.indexOf('TCL') !== 0 && tid.indexOf('V') !== 0) return false;
+        var ttl = parseInt(item.ttl) || 0;
+        if (!ttl || Math.abs(ttl - nowSec) > filterSec) return false;
+        return true;
     }).map(function (item) {
         var jc = item.jsonContent || {};
         var rawTd = item.td || jc.trainDistribution || '';
+        var curSta = jc.curStn || item.currentStationCode || '';
+        var nextSta = jc.nextStn || item.nextStationCode || '';
+        var destSta = jc.destStn || item.destinationStationCode || '';
+        // Treat '---' as unknown
+        if (curSta === '---') curSta = '';
+        if (nextSta === '---') nextSta = '';
+        if (destSta === '---') destSta = '';
         return {
             td: rawTd,
             trainId: jc.trainId || item.trainId || '',
             trainType: jc.trainType || item.trainType || '',
-            trainConsist: jc.trainConsist || item.trainConsist || '',
-            currentStationCode: jc.currentStationCode || item.currentStationCode || '',
-            nextStationCode: jc.nextStationCode || item.nextStationCode || '',
-            destinationStationCode: jc.destinationStationCode || item.destinationStationCode || '',
+            trainConsist: item.trainConsist || '',
+            currentStationCode: curSta,
+            nextStationCode: nextSta,
+            destinationStationCode: destSta,
             doorStatus: jc.doorStatus !== undefined ? jc.doorStatus : item.doorStatus,
             trainSpeed: jc.trainSpeed || item.trainSpeed || 0,
             updatedTime: item.updatedTime || jc.updatedTime,
-            line: 'TCL'
+            line: 'TCL',
+            carLoads: (item.carLoads || []).map(function (car) {
+                return {
+                    carNo: car.carNo || '',
+                    passengerCount: car.passengerCount !== undefined ? car.passengerCount : 0,
+                    passengerLoad: car.passengerLoad !== undefined ? parseFloat(car.passengerLoad) : -1
+                };
+            })
         };
     });
 }
 
 function normalizeNslFormat(raw) {
     if (!Array.isArray(raw)) return [];
-    return raw.map(function (train) {
+    var nowMs = Date.now();
+    return raw.filter(function (train) {
+        var ttl = parseInt(train.ttl) || 0;
+        if (!ttl || Math.abs(ttl - nowMs) > TRAIN_LOAD_TIME_FILTER_MS) return false;
+        return true;
+    }).map(function (train) {
         var doorOpen = train.doorStatus === "1" || train.doorStatus === 1;
         var cars = (train.listCars || []).map(function (car) {
             return {
@@ -864,7 +912,49 @@ function normalizeNslFormat(raw) {
 function normalizeTmlFormat(raw) {
     var items = raw.Items || raw.items || (Array.isArray(raw) ? raw : []);
     if (!Array.isArray(items)) return [];
-    return items.map(function (train) {
+
+    // Filter: only in-service trains with recent data (within 2 minutes)
+    var twoMinutesAgo = Date.now() - (2 * 60 * 1000);
+    var filtered = items.filter(function (train) {
+        if (!train.isInService) return false;
+        var ts = parseInt(train.receivedTime);
+        if (isNaN(ts) || ts < twoMinutesAgo) return false;
+        if (!train.trainId || train.trainId === '000' || train.trainId === '999') return false;
+        return true;
+    });
+
+    // Deduplicate: group by (currentStationCode, nextStationCode, destinationStationCode)
+    // Keep only the one with the smallest trainId (numeric)
+    var groups = {};
+    filtered.forEach(function (train) {
+        var key = String(train.currentStationCode) + '_' + String(train.nextStationCode) + '_' + String(train.destinationStationCode);
+        if (!groups[key]) {
+            groups[key] = train;
+        } else {
+            var existing = parseInt(groups[key].trainId) || 9999;
+            var current = parseInt(train.trainId) || 9999;
+            if (current < existing) {
+                groups[key] = train;
+            }
+        }
+    });
+
+    var deduped = Object.keys(groups).map(function (k) { return groups[k]; });
+
+    return deduped.map(function (train) {
+        // Determine direction using tmlStationOrder
+        var curOrder = (typeof tmlStationOrder !== 'undefined') ? (tmlStationOrder[String(train.currentStationCode)] || 0) : 0;
+        var destOrder = (typeof tmlStationOrder !== 'undefined') ? (tmlStationOrder[String(train.destinationStationCode)] || 0) : 0;
+        var isUpline = curOrder < destOrder; // toward TUM = upline
+
+        // Extract car loads from listCars
+        var cars = (train.listCars || []).map(function (car) {
+            return {
+                carNo: car.carName || car.carNo || '',
+                passengerCount: (car.passengerCount !== undefined && car.passengerCount !== null) ? car.passengerCount : -1
+            };
+        });
+
         return {
             td: train.trainId || '',
             trainId: train.trainId || '',
@@ -877,7 +967,9 @@ function normalizeTmlFormat(raw) {
             doorStatus: train.isDoorOpen || false,
             trainSpeed: train.trainSpeed || 0,
             updatedTime: train.receivedTime ? train.receivedTime / 1000 : null,
-            line: 'TML'
+            line: 'TML',
+            isUpline: isUpline,
+            carLoads: cars
         };
     });
 }
@@ -967,22 +1059,275 @@ function getTrainInfoByTd(filterLine) {
                 carLoads: train.carLoads || null
             };
 
-            lookup[key] = infoObj;
+            // On td collision, prefer the entry with valid currentStation (not "NA"/"-"/"")
+            if (lookup[key]) {
+                var existingCur = lookup[key].currentStation || '';
+                var newCur = infoObj.currentStation || '';
+                var existingValid = existingCur && existingCur !== 'NA' && existingCur !== '-';
+                var newValid = newCur && newCur !== 'NA' && newCur !== '-';
+                if (existingValid && !newValid) return; // keep existing
+                if (!existingValid && newValid) { lookup[key] = infoObj; } // overwrite with better
+                else { return; } // both valid or both invalid — keep first
+            } else {
+                lookup[key] = infoObj;
+            }
 
-            // ISL Q-train: trainLoad API td is ETA td + 100 (e.g. 121->021, 142->042)
-            if (lineCode === 'ISL') {
-                var tdNum = parseInt(td, 10);
-                if (tdNum <= 100) {
-                    var etaTd = String(tdNum + 100);
-                    while (etaTd.length < 3) etaTd = '0' + etaTd;
-                    etaTd = etaTd.slice(-3);
-                    var altKey = lineCode + '_' + etaTd;
+            // SIL: trainload trainId (e.g. "A516"→"516") may differ in leading digit from ETA td.
+            // Register under all leading-digit variants of the last 2-digit suffix.
+            if (lineCode === 'SIL') {
+                var suffix = td.slice(-2);
+                for (var pfx = 0; pfx <= 9; pfx++) {
+                    var altKey = lineCode + '_' + String(pfx) + suffix;
                     if (!lookup[altKey]) lookup[altKey] = infoObj;
                 }
             }
         });
     });
     return lookup;
+}
+
+// ISL fallback: when exact 3-digit td has no match, try matching by last 2 digits
+function lookupWithIslFallback(lookup, lineCode, normTd) {
+    var key = lineCode + '_' + normTd;
+    var info = lookup[key] || null;
+    if (!info && lineCode === 'ISL') {
+        var suffix = normTd.slice(-2);
+        for (var pfx = 0; pfx <= 9; pfx++) {
+            var altKey = 'ISL_' + String(pfx) + suffix;
+            if (lookup[altKey]) { info = lookup[altKey]; break; }
+        }
+    }
+    return info;
+}
+
+// TML position-based matching: builds a lookup keyed by nextStation abbreviation + direction
+// Returns: { "stationAbbr_up": [info1, info2, ...], "stationAbbr_down": [...] }
+// Each array is sorted by proximity (closest to station first, based on linesData order)
+function getTmlPositionLookup() {
+    var cache = trainInfoCache['TML'];
+    if (!cache || !cache.data) return {};
+
+    // Get TML station order from linesData for sorting
+    var tmlLine = null;
+    for (var i = 0; i < linesData.length; i++) {
+        if (linesData[i].line_code === 'TML') { tmlLine = linesData[i]; break; }
+    }
+    if (!tmlLine) return {};
+    var stationList = tmlLine.stations; // TUM(idx0) → WKS(idx26), idx increases = downline direction
+
+    // Build reverse map: abbreviation → index in linesData stations array
+    var stationIndex = {};
+    stationList.forEach(function (s, idx) { stationIndex[s] = idx; });
+
+    var posLookup = {};
+
+    cache.data.forEach(function (train) {
+        if (!train.nextStationCode && !train.currentStationCode) return;
+
+        // Resolve station codes to abbreviations
+        var nextStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.nextStationCode] : null;
+        var currStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.currentStationCode] : null;
+        var destStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.destinationStationCode] : null;
+
+        // Direction: use precomputed isUpline
+        var direction = train.isUpline ? 'up' : 'down';
+
+        var infoObj = {
+            trainId: train.trainId || '',
+            trainType: parseTrainTypeForLine(train, 'TML'),
+            trainConsist: '',
+            currentStation: train.currentStationCode || '',
+            nextStation: train.nextStationCode || '',
+            destination: train.destinationStationCode || '',
+            destinationAbbr: destStaAbbr || '',
+            doorStatus: train.doorStatus,
+            trainSpeed: train.trainSpeed,
+            updatedTime: train.updatedTime ? new Date(train.updatedTime * 1000) : null,
+            line: 'TML',
+            isUpline: train.isUpline,
+            carLoads: train.carLoads || null,
+            currIdx: currStaAbbr ? (stationIndex[currStaAbbr] !== undefined ? stationIndex[currStaAbbr] : -1) : -1,
+            nextIdx: nextStaAbbr ? (stationIndex[nextStaAbbr] !== undefined ? stationIndex[nextStaAbbr] : -1) : -1
+        };
+
+        // Register under nextStationAbbr + direction (train is heading to this station)
+        if (nextStaAbbr) {
+            var posKey = nextStaAbbr + '_' + direction;
+            if (!posLookup[posKey]) posLookup[posKey] = [];
+            posLookup[posKey].push(infoObj);
+        }
+
+        // Also register under currentStationAbbr + direction (train is AT this station, e.g. door open)
+        if (currStaAbbr && currStaAbbr !== nextStaAbbr) {
+            var posKey2 = currStaAbbr + '_' + direction;
+            if (!posLookup[posKey2]) posLookup[posKey2] = [];
+            posLookup[posKey2].push(infoObj);
+        }
+    });
+
+    // Sort each position group by proximity to the target station
+    Object.keys(posLookup).forEach(function (key) {
+        var parts = key.split('_');
+        var targetAbbr = parts[0];
+        var targetIdx = stationIndex[targetAbbr] !== undefined ? stationIndex[targetAbbr] : -1;
+        posLookup[key].sort(function (a, b) {
+            var distA = Math.abs(a.currIdx - targetIdx);
+            var distB = Math.abs(b.currIdx - targetIdx);
+            return distA - distB;
+        });
+    });
+
+    return posLookup;
+}
+
+// Build a reverse map from station abbreviation to its TML numeric code
+function getTmlReverseCodeMap() {
+    if (typeof tmlStationCodeMap === 'undefined') return {};
+    var rev = {};
+    Object.keys(tmlStationCodeMap).forEach(function (numCode) {
+        var abbr = tmlStationCodeMap[numCode];
+        // Only store first (main) mapping for each abbreviation
+        if (!rev[abbr]) rev[abbr] = numCode;
+    });
+    return rev;
+}
+
+// Get TML trains for a station+direction, searching backwards along the line if none found at target
+// Returns an array of infoObj sorted by arrival order (closest first)
+// etaDests: array of ETA destination codes (abbreviations) for verification
+function getTmlTrainsForStation(stationAbbr, direction, etaDests, etaTtnts) {
+    var posLookup = getTmlPositionLookup();
+
+    // Get TML station list for traversal
+    var tmlLine = null;
+    for (var i = 0; i < linesData.length; i++) {
+        if (linesData[i].line_code === 'TML') { tmlLine = linesData[i]; break; }
+    }
+    if (!tmlLine) return [];
+    var stationList = tmlLine.stations;
+    var stationIndex = {};
+    stationList.forEach(function (s, idx) { stationIndex[s] = idx; });
+
+    var targetIdx = stationIndex[stationAbbr];
+    if (targetIdx === undefined) return [];
+
+    // Collect trains: start at target station, then search backwards (where trains come from)
+    // Upline (toward TUM = decreasing idx): trains come from higher indices
+    // Downline (toward WKS = increasing idx): trains come from lower indices
+    var collected = [];
+    var usedTrainIds = {}; // prevent duplicates
+
+    // Search range: target station and up to 10 stations back
+    var maxSearch = 10;
+    for (var step = 0; step <= maxSearch; step++) {
+        var searchIdx;
+        if (direction === 'up') {
+            // Upline: trains come from higher indices (WKS side)
+            searchIdx = targetIdx + step;
+        } else {
+            // Downline: trains come from lower indices (TUM side)
+            searchIdx = targetIdx - step;
+        }
+        if (searchIdx < 0 || searchIdx >= stationList.length) break;
+
+        var searchStation = stationList[searchIdx];
+        var posKey = searchStation + '_' + direction;
+        var entries = posLookup[posKey];
+        if (!entries) continue;
+
+        entries.forEach(function (info) {
+            if (usedTrainIds[info.trainId]) return;
+            usedTrainIds[info.trainId] = true;
+            collected.push(info);
+        });
+    }
+
+    // Sort collected trains by distance to target station (closest first)
+    collected.sort(function (a, b) {
+        var distA = Math.abs(a.currIdx - targetIdx);
+        var distB = Math.abs(b.currIdx - targetIdx);
+        return distA - distB;
+    });
+
+    // Match against ETA destinations: verify and stop on mismatch
+    if (!etaDests || etaDests.length === 0) return collected;
+
+    var matched = [];
+    var reverseCodeMap = getTmlReverseCodeMap();
+
+    for (var ei = 0; ei < etaDests.length; ei++) {
+        var etaDest = etaDests[ei];
+        var etaTtnt = (etaTtnts && etaTtnts[ei] !== undefined) ? parseInt(etaTtnts[ei], 10) : NaN;
+        // Skip not-in-service departures
+        if (!etaDest || etaDest.indexOf('NO_') === 0) {
+            matched.push(null);
+            continue;
+        }
+        // Check if ETA destination matches current station (not-in-service)
+        if (resolveStationCode(etaDest) === resolveStationCode(stationAbbr)) {
+            matched.push(null);
+            continue;
+        }
+
+        // Find the next unmatched train whose destination matches this ETA departure
+        var found = false;
+        var etaDestResolved = resolveStationCode(etaDest);
+        for (var ci = 0; ci < collected.length; ci++) {
+            var trainInfo = collected[ci];
+            // Compare resolved destination abbreviations
+            var trainDestResolved = resolveStationCode(trainInfo.destinationAbbr || '');
+
+            if (trainDestResolved === etaDestResolved) {
+                // Check if train's nextStation is PAST the target station
+                // If so, only allow match when ETA ttnt <= 0 (train already at/departed station)
+                var nextStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[trainInfo.nextStation] : null;
+                var nextStaIdx = nextStaAbbr ? stationIndex[nextStaAbbr] : undefined;
+                if (nextStaIdx !== undefined && !isNaN(etaTtnt) && etaTtnt >= 1) {
+                    var isPast = false;
+                    if (direction === 'up') {
+                        // Upline: toward TUM (decreasing idx). "Past" = nextStation idx < targetIdx
+                        isPast = (nextStaIdx < targetIdx);
+                    } else {
+                        // Downline: toward WKS (increasing idx). "Past" = nextStation idx > targetIdx
+                        isPast = (nextStaIdx > targetIdx);
+                    }
+                    if (isPast) {
+                        // Train has passed the station but ETA >= 1min — skip this train
+                        continue;
+                    }
+                }
+                matched.push(trainInfo);
+                collected.splice(ci, 1); // remove from pool
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // Destination mismatch — stop trying to process further
+            matched.push(null);
+            break;
+        }
+    }
+
+    // Fill remaining with null
+    while (matched.length < etaDests.length) {
+        matched.push(null);
+    }
+
+    return matched;
+}
+
+// Get TML train info for a specific ETA row by position matching
+// stationAbbr: current viewing station, platformNum: platform number (odd=up, even=down)
+// orderIdx: 0-based index among same-platform rows, or -1 to return full matched array
+// etaDests: array of destination codes for all rows on this platform (for verification)
+// etaTtnts: array of ttnt values for all rows on this platform
+function getTmlTrainByPosition(stationAbbr, platformNum, orderIdx, etaDests, etaTtnts) {
+    var direction = (platformNum % 2 === 1) ? 'up' : 'down';
+    var matched = getTmlTrainsForStation(stationAbbr, direction, etaDests, etaTtnts);
+    if (orderIdx === -1) return matched; // return full array
+    if (!matched || orderIdx >= matched.length) return null;
+    return matched[orderIdx];
 }
 
 function parseTrainTypeForLine(train, lineCode) {
@@ -1027,11 +1372,37 @@ function parseTrainTypeForLine(train, lineCode) {
 // Update existing ETA rows with enrichment data (train type badge + door status)
 function updateTrainEnrichment() {
     var lookup = getTrainInfoByTd();
+    // TML: pre-compute matched trains per platform (with destination verification)
+    var tmlMatchedByPlatform = {}; // key: platformNum → array of infoObj|null
     // Track which platforms already have door status shown (per line-section)
     var sections = document.querySelectorAll('.line-section');
     sections.forEach(function (section) {
         var rowLine = section.getAttribute('data-line');
         var platformDoorShown = {}; // platform -> true
+
+        // TML: pre-build destination and ttnt arrays per platform for this section
+        if (rowLine === 'TML') {
+            var tmlRows = section.querySelectorAll('.eta-row[data-line="TML"]');
+            var platformDests = {}; // platformNum → [dest1, dest2, ...]
+            var platformTtnts = {}; // platformNum → [ttnt1, ttnt2, ...]
+            tmlRows.forEach(function (r) {
+                var plat = r.getAttribute('data-platform') || '1';
+                var dest = r.getAttribute('data-dest') || '';
+                var ttnt = r.getAttribute('data-ttnt') || '';
+                if (!platformDests[plat]) platformDests[plat] = [];
+                if (!platformTtnts[plat]) platformTtnts[plat] = [];
+                platformDests[plat].push(dest);
+                platformTtnts[plat].push(ttnt);
+            });
+            // Resolve matched trains for each platform
+            Object.keys(platformDests).forEach(function (plat) {
+                var platNum = parseInt(plat) || 1;
+                var matchKey = 'TML_' + plat;
+                tmlMatchedByPlatform[matchKey] = getTmlTrainByPosition(currentStationCode, platNum, -1, platformDests[plat], platformTtnts[plat]);
+            });
+        }
+
+        var tmlPlatformCounters = {}; // per-section counters
         var rows = section.querySelectorAll('.eta-row');
         rows.forEach(function (row) {
             var row1 = row.querySelector('.eta-row1');
@@ -1050,7 +1421,20 @@ function updateTrainEnrichment() {
             if (!td) return;
 
             var key = rowLine ? rowLine + '_' + td : null;
-            var info = key ? lookup[key] : null;
+            var info = key ? lookupWithIslFallback(lookup, rowLine, td) : null;
+
+            // TML: use pre-computed position-based matching with destination verification
+            if (rowLine === 'TML' && (!info || !info.carLoads || !info.carLoads.length)) {
+                var platform = row.getAttribute('data-platform') || '1';
+                var pKey = 'TML_' + platform;
+                if (!tmlPlatformCounters[pKey]) tmlPlatformCounters[pKey] = 0;
+                var orderIdx = tmlPlatformCounters[pKey];
+                tmlPlatformCounters[pKey]++;
+                var matchedArr = tmlMatchedByPlatform[pKey];
+                if (matchedArr && orderIdx < matchedArr.length && matchedArr[orderIdx]) {
+                    info = matchedArr[orderIdx];
+                }
+            }
 
             // Update or create train-type badge with click handler
             var typeEl = row1.querySelector('.train-type-badge');
@@ -1291,7 +1675,7 @@ function processETAData(data) {
             var evenBg = isDark ? darkenColor(colour, 0.80) : lightenColor(colour, 0.80);
             var rowStyle = (rowIndex % 2 === 0) ? ' style="background-color:' + evenBg + '"' : '';
 
-            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '">';
+            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '">';
             html += '<div class="eta-row1">';
             html += '<div class="eta-dest">';
             html += '<span class="eta-dest-chi' + (isNoop || isUnknownDest ? ' eta-dest-noop' : '') + '">' + destChi + '</span>';
@@ -1398,7 +1782,27 @@ function populateRow2(row2El) {
     normTd = normTd.slice(-3);
     var key = lineCode + '_' + normTd;
     var lookup = getTrainInfoByTd(lineCode);
-    var info = lookup[key];
+    var info = lookupWithIslFallback(lookup, lineCode, normTd);
+
+    // TML: use position-based matching since trainId ≠ ETA td
+    if (lineCode === 'TML' && (!info || !info.carLoads || !info.carLoads.length)) {
+        var platform = parseInt(etaRow.getAttribute('data-platform')) || 1;
+        // Determine order index and collect destinations for all same-platform rows
+        var section = etaRow.closest('.line-section');
+        var orderIdx = 0;
+        var etaDests = [];
+        var etaTtnts = [];
+        if (section) {
+            var sameRows = section.querySelectorAll('.eta-row[data-line="TML"][data-platform="' + platform + '"]');
+            for (var ri = 0; ri < sameRows.length; ri++) {
+                etaDests.push(sameRows[ri].getAttribute('data-dest') || '');
+                etaTtnts.push(sameRows[ri].getAttribute('data-ttnt') || '');
+                if (sameRows[ri] === etaRow) { orderIdx = ri; }
+            }
+        }
+        var tmlInfo = getTmlTrainByPosition(currentStationCode, platform, orderIdx, etaDests, etaTtnts);
+        if (tmlInfo) info = tmlInfo;
+    }
 
     if (!info || !info.carLoads || !info.carLoads.length) {
         // Show door status only if available
@@ -1428,24 +1832,60 @@ function populateRow2(row2El) {
     // Train info row (upper) with door badge on right
     html += '<div class="row2-info-row">';
     html += '<div class="row2-info">';
+
+    var locText = '';
+    // NSL: show currentStation > nextStation
+    if ((lineCode === 'EAL' || lineCode === 'NSL') && info.currentStation) {
+        var currStaCode = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.currentStation]) || info.currentStation;
+        var currStaObj = stationByCode[resolveStationCode(currStaCode)];
+        var currStaLabel = currStaObj ? currStaObj.name_chi : currStaCode;
+        var nextStaLabel = '';
+        if (info.nextStation) {
+            var nextStaCode = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.nextStation]) || info.nextStation;
+            var nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
+            nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaCode;
+        }
+        locText = currStaLabel + (nextStaLabel ? ' > ' + nextStaLabel : '');
+    }
+    // TML: show train code + currentStation > nextStation → destination (Chinese names)
+    if (lineCode === 'TML' && info.currentStation) {
+        if (info.trainId) {
+            html += '<span class="row2-info-item">Train #' + info.trainId + '</span>';
+        }
+        var currStaAbbr = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.currentStation]) || info.currentStation;
+        var currStaObj = stationByCode[resolveStationCode(currStaAbbr)];
+        var currStaLabel = currStaObj ? currStaObj.name_chi : currStaAbbr;
+        var nextStaLabel = '';
+        if (info.nextStation) {
+            var nextStaAbbr = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.nextStation]) || info.nextStation;
+            var nextStaObj = stationByCode[resolveStationCode(nextStaAbbr)];
+            nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaAbbr;
+        }
+        locText = currStaLabel + (nextStaLabel ? ' > ' + nextStaLabel : '');
+    }
+    // KTL/TWL/ISL/TKL/SIL/TCL: show currentStation > nextStation (Chinese names)
+    if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL' || lineCode === 'SIL' || lineCode === 'TCL') && info.nextStation) {
+        var currStaObj = (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-') ? stationByCode[resolveStationCode(info.currentStation)] : null;
+        var nextStaObj = stationByCode[resolveStationCode(info.nextStation)];
+        var currStaLabel = currStaObj ? currStaObj.name_chi : '';
+        var nextStaLabel = nextStaObj ? nextStaObj.name_chi : info.nextStation;
+        // If currentStation === nextStation, train is stopped at the station
+        if (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' &&
+            resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
+            locText = nextStaLabel + ' (停站中)';
+        } else {
+            locText = currStaLabel ? (currStaLabel + ' > ' + nextStaLabel) : ('> ' + nextStaLabel);
+        }
+    }
+
+    if (locText && locText.trim() !== '') {
+        html += '<span class="row2-info-item row2-loc-item">' + locText + '</span>';
+    }
+
     if (info.trainSpeed && info.trainSpeed > 0) {
         html += '<span class="row2-info-item">' + info.trainSpeed + ' km/h</span>';
     }
-    // NSL: show currentStation > nextStation
-    if ((lineCode === 'EAL' || lineCode === 'NSL') && info.currentStation) {
-        var curSta = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.currentStation]) || info.currentStation;
-        var nextSta = '';
-        if (info.nextStation) {
-            nextSta = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.nextStation]) || info.nextStation;
-        }
-        var locText = curSta + (nextSta ? ' > ' + nextSta : '');
-        html += '<span class="row2-info-item">' + locText + '</span>';
-    }
-    // KTL: show currentStationCode > nextStationCode
-    if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL') && info.currentStation && info.nextStation) {
-        var locText = info.currentStation + ' > ' + info.nextStation;
-        html += '<span class="row2-info-item">' + locText + '</span>';
-    }
+
     if (info.trainConsist) {
         html += '<span class="row2-info-item">Consist: ' + info.trainConsist + '</span>';
     }
@@ -1476,11 +1916,24 @@ function populateRow2(row2El) {
         }
     }
 
+    // TML: no reversal needed — always show car 1 to 8 from left
+    var tmlIsUpline = true;
+    if (lineCode === 'TML') {
+        var tmlPlatform = parseInt(etaRow.getAttribute('data-platform')) || 1;
+        tmlIsUpline = (tmlPlatform % 2 === 1);
+    }
+
     carLoadsOrdered.forEach(function (car, idx) {
         // Check if this is the first-class car for NSL
         var parsedCarNo = parseInt(car.carNo);
         var carNoNum;
-        if (!isNaN(parsedCarNo)) {
+        if ((lineCode === 'EAL' || lineCode === 'NSL') && typeof isUp !== 'undefined' && !isUp) {
+            // NSL downline: array is reversed for display, so use idx+1 to label cars 1→9 left to right
+            carNoNum = idx + 1;
+        } else if (lineCode === 'TML') {
+            // TML: always label car 1 to 8 from left
+            carNoNum = idx + 1;
+        } else if (!isNaN(parsedCarNo)) {
             // KTL C-Train: carNo is 0-indexed — shift to 1-indexed for display
             carNoNum = (lineCode === 'KTL') ? parsedCarNo + 1 : (parsedCarNo || (idx + 1));
         } else {
@@ -1488,15 +1941,7 @@ function populateRow2(row2El) {
         }
         var isFirstClass = (firstClassCarNo > 0 && carNoNum === firstClassCarNo);
 
-        // Round passengerLoad to nearest integer (HALF_UP)
-        //var loadVal = car.passengerLoad;
-        //if (loadVal !== undefined && loadVal !== null && loadVal >= 0) {
-        //    loadVal = Math.round(loadVal);
-        //} else {
-        //    loadVal = '?';
-        //}
-
-        // Determine color class
+        // Determine color class and display value
         var colorClass;
         var loadVal;
         if (lineCode === 'EAL' || lineCode === 'NSL') {
@@ -1509,6 +1954,34 @@ function populateRow2(row2El) {
             } else {
                 colorClass = loadVal < 110 ? 'car-rect-low' : (loadVal < 250 ? 'car-rect-mid' : 'car-rect-high');
             }
+        } else if (lineCode === 'TML') {
+            // TML: passengerCount with thresholds 120/230
+            var pCount = car.passengerCount;
+            if (pCount === undefined || pCount === null || pCount < 0) {
+                // Missing passengerCount: show "?" with white background
+                loadVal = '?';
+                colorClass = 'car-rect-empty';
+            } else {
+                loadVal = pCount;
+                if (pCount < 120) colorClass = 'car-rect-low';
+                else if (pCount < 230) colorClass = 'car-rect-mid';
+                else colorClass = 'car-rect-high';
+            }
+        } else if (lineCode === 'TCL') {
+            // TCL: passengerCount for color (same as URL), passengerLoad rounded to 2dp for display
+            var pLoad = car.passengerLoad;
+            if (pLoad !== undefined && pLoad !== null && pLoad >= 0) {
+                loadVal = (Math.round(pLoad * 100) / 100).toFixed(2);
+            } else {
+                loadVal = '?';
+            }
+
+            var pCount = car.passengerCount !== undefined ? car.passengerCount : 0;
+            if (pCount < 0) pCount = 0;
+            if      (pCount <= 0)  colorClass = 'car-rect-empty';
+            else if (pCount === 1) colorClass = 'car-rect-low';
+            else if (pCount === 2) colorClass = 'car-rect-mid';
+            else                   colorClass = 'car-rect-high';
         } else {
             // Other lines: use passengerCount as color indicator
             loadVal = car.passengerLoad;
@@ -1657,7 +2130,7 @@ function renderTrainCode(td, lineCode) {
     // Look up train info for type badge (line-specific only)
     var lookup = getTrainInfoByTd();
     var key = lineCode ? lineCode + '_' + nums : null;
-    var info = key ? lookup[key] : null;
+    var info = key ? lookupWithIslFallback(lookup, lineCode, nums) : null;
     var typeBadge = '';
     if (info && info.trainType) {
         typeBadge = '<span class="train-type-badge train-type-' + info.trainType.toLowerCase() + '" onclick="toggleRow2(this)">' + info.trainType + '</span>';

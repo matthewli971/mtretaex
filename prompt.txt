@@ -205,33 +205,33 @@ Please help to update readme.md for above updates in v0.07
 3. Please add car number indicator to the buttom of each car rectangle, align at the center of each car-rect
 4. Please make the trainload rect size reflective for narrower screens, and please save the font size as a var for easier adjustment
 
+In NSL the trainload of down line in inverted (carLoads[0] is car 9, carLoads[8] is car 1), Please help to update the code to handle this case
 
-function mapStation(code) {
-   switch (code) {
-      case '1': return 'HUH';
-      case '2': return 'MKK';
-      case '3': return 'KOT';
-      case '4': return 'TAW';
-      case '5': return 'SHT';
-      case '6': return 'FOT';
-      case '7': return 'RAC';
-      case '8': return 'UNI';
-      case '9': return 'TAP';
-      case '10': return 'TWO';
-      case '11': return 'FAN';
-      case '12': return 'SHS';
-      case '13': return 'LOW';
-      case '14': return 'LMC';
-      case '18': return 'KTU';
-      case '21': return 'HUH';
-      case '22': return 'EXC';
-      case '23': return 'ADM';
-      case '91': return 'HTD';
-      case '92': return 'HTD';
-      case '81': return 'TEST';
-      case '82': return 'TEST';
+KTL C-Train Trainload data CarNo is started from 0, which makes the display showing wrong car number, please update the code to fix it
 
-      default: return code;
+for ISL Q Train trainload, please use last 2 digit of td from ETA API to pair up the train code instead of hard codely add 100 to td
 
-   }
-}
+For TML train load, please help to implement the TML trainload API next station like other lines to the web app. I have extracted the station code to station map, please add variable to data.js like the NSL one in data.js. Please help to analyze the API response and implement the function
+
+Please implement following function:
+For TML trainload, the train number is different from the train sequence proclvided by ETA API. Please refer to tml_trainload.html to identify the usage of TML Trainload API.
+The upline/downline train in trainLoad API should be identified by a spefic sequence. Please add this sequence to data.js if needed. For ETA app upline/downline, it is classified by platform number. Odd numbers always upline,even numbers always downline
+Please do data distillling and processing before mapping process, because in the API response there maybe 2 trains showing similar data with same destination, currentStation and nextStation but with different train code. In these case please only get the data with smaller trainCode and ignore the another one.
+Please extract all useful information included all data inplemented in tml_trainload.html for showing in web app.
+Please map the train by the order according to the linesData variable TML data, included the nextStationCode, destination and currentStation
+For trainLoad, please reference the tml_trainload.html for calculation of the trainload (car.passengerCount). Sometimes the car.passengerCount is missing, please mark a ? and set white background with black text.
+
+1. Sometimes trains are from several stations before. If there is no trains with nextStation the target station, please find for previous stations (e.g. in TAW, if no upline trains that nextStaionCode:21 (TAW), find the previous station until there is the train i.e. 22(CKT), 23(STW), ...)
+2. Please use this sequence to map the trainLoad for next departures. Please verify the destination and ignore the Not-in-service departures. If the destination is not match, please stop trying to process trainLoad data to other farer trains
+
+Please update the app behaviour in TML
+1. Please help to invert back the TML downline Trainload to show car 1 till 8 from the left
+
+In TML, please add checking on the train mapping. If the nextStationCode is on the station after target station, the ETA shouold only be 0 or below. If the ETA is >=1min and the nextStationCode is after, please ignore the train data ans show next to this record
+
+Please help to add ttl 1 hour checking to all lines, note that some APIs use UNIX millisecond and some use UNIX second 
+
+Please add support to the TCL trainload referring to the api, while in car Passenger load data please refer to car.passengerCount(Colour indicator, same behaviour as URL) and passengerLoad (reound to 2 decimal place).
+There is also the currentStation and nextStation data in the API response. The handling should be same as URL
+
+Please update the readme for v0.09 including TCL Train load support and unix time filtering

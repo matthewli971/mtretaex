@@ -3,6 +3,18 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.09
+- **TML trainload support**: Full implementation of the TML (Tuen Ma Line) trainload display. Car-level passenger count data is now shown when expanding a TML ETA row, with colour-coded thresholds (green <120, yellow <230, red ≥230). Missing passenger data shows "?" on a white background.
+- **TML position-based train matching**: Since TML train codes differ between the ETA and trainload APIs, trains are matched by their physical position on the line (next station + direction) rather than by train code. If no train is found at the immediate next station, the system searches backwards along the line to find approaching trains.
+- **Chinese station names in row2**: All lines now display station names in Chinese (e.g. "美孚 > 南昌") in the expanded detail row, resolved from the station database.
+- **TCL trainload support**: Tung Chung Line trainload data is now displayed in row2. Car occupancy colour uses `passengerCount` (same indicator as KTL/TWL/ISL/TKL) and the displayed value is `passengerLoad` rounded to 2 decimal places. Current/next station and "停站中" (stopped at station) display is also supported.
+- **Unix time (TTL) freshness filtering**: All trainload APIs now filter out stale records whose `ttl` field differs from the current time by more than 10 minutes (configurable via `trainLoadTimeFilterMs` in `data.js`). Handles both Unix-second formats (KTL/TWL/ISL/TKL, SIL, TCL) and Unix-millisecond formats (EAL/NSL).
+- **Train TD collision handling**: When multiple trains share the same normalised train code (e.g. Q-train vs C-train on KTL), the entry with a valid station position is preferred over one showing "NA".
+- **ISL 2-digit fallback refinement**: ISL train matching now checks the exact 3-digit TD first; only falls back to last-2-digit matching when no exact match exists, preventing incorrect cross-train associations.
+- **Stopped-at-station display**: For URL-type lines (KTL/TWL/ISL/TKL/SIL/TCL), when `currentStation === nextStation`, the location display shows "[station] (停站中)" instead of "station > station".
+- **Station hotline call button**: A phone button now appears in the station info bar when a station is selected. Tapping/clicking it initiates a direct call to the station's hotline. 
+
+
 ### v0.08
 - **Train type badge click to expand row2**: Clicking the train type badge (instead of the entire ETA row) now expands/collapses the detail row showing car occupancy and door status.
 - **Door status limited to first row per platform**: The door status indicator now only appears on the first ETA row of each platform within a line section. For stations with platform groups (e.g. Central), each platform's first row shows its own door status independently.
