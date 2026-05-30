@@ -40,7 +40,7 @@
     --font-size-refresh:      4.8vw;
     --font-size-search:       4vw;
     --font-size-dropdown:     3.8vw;
-    --font-size-curr-station: 5vw;
+    --font-size-curr-station: 4.8vw;
     --font-size-line-bar:     4vw;
     --font-size-station-name: 5vw;
     --font-size-eta:          5.5vw;
@@ -425,9 +425,10 @@ html, body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
+    gap: 4px;
+    padding: 4px 8px;
     height: 28px;
-    border-radius: 50%;
+    border-radius: 14px;
     background-color: rgba(0,0,0,0.3);
     color: inherit;
     text-decoration: none;
@@ -435,6 +436,8 @@ html, body {
     transition: background-color 0.2s;
     position: relative;
     flex-shrink: 0;
+    font-size: var(--font-size-line-bar);
+    font-weight: bold;
 }
 
 .station-call-btn:hover {
