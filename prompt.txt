@@ -235,3 +235,42 @@ Please add support to the TCL trainload referring to the api, while in car Passe
 There is also the currentStation and nextStation data in the API response. The handling should be same as URL
 
 Please update the readme for v0.09 including TCL Train load support and unix time filtering
+
+Please update the app according to following requirements (v0.09.1):
+1. For EAL/NSL, there are some trains will go through RAC(馬場). This is identified by the train code in ETA API. Trains go through RAC will contains B/G/K/N (e.g. JG0155, JN0332). Please update the code to handle this case, then show " 經馬場" after the destinatino name chi, with chinese font 0.8x of destination name displayed
+2. In KTL Q-train, the car number is shown as car 2-9, please help to update the code to show car 1-8 instead
+3. In TWL, the trainload is inverted un up line. Same as EAL, the up/down line is identified by platform number (odd=up, even=down)
+4. For all lines, if the ETA is shown as departed(已離站), please grey out the destination and 已離站 text
+
+
+1. For TCL upline, the train sequence is inverted too, please help to flip the trainload like above.
+2. For TWL and TCL train trainloads, please change the behaviour to always treat the first car as car 1
+
+Please update the app according to following requirements (0.09.2)
+1. In EAL, Please don't show "經馬場" if the app is in RAC
+2. For EAL down line trains, please identify the train code from ETA API, then show [xx開出] on the deationation row (e.g. if train code js A=SHT, C=FOT, D/G=TAP, H/K=SHS, R=RAC)
+3. Please help to analayze why TAP Platform 3 data is not displayed in the page
+
+Please update the readme.md for this changes and the changes in above prompts since 0.09. Please mark changelog for funcional changes, no need technical changes
+
+1. In EAL please add support to show full train codes from ETA API in row 2 like the one in TML (e.g. JM0375, JG0428)
+
+1. For EAL down line stations, please add departure station support from LOW and LMC too
+2. With the reference to train code, please change display text to "[當駅始発]" if the departure station is the current station, but please dont show this in LOW, LMC and ADM (terminus stations)
+
+In EAL if the train code is staring with TT, which means the train is not in service, please isngore the destination name and show "不 載 客 列 車" instead
+
+1. Please align the [xxx始発] to the right of the display as attahced image shown. Please take note for those didn't get the trainload (red line is for your info about the alignment, don't add into the app)
+2. For [當駅始発] departures, please exit the text to light tellow for dark mode, and brown for light mode. Please add a variable like before for showing the text colour in css
+
+1. For Internal API mode the update routine is per 1 min. Please update the logic: call internal API everytime, if the difference time less than 15 seconds, keep showing the ETA from internal API (original flow). If the update time is over 15 seconds (s > 15), call the OpenData API. After calling it, map the ETA time by destination, platform code, then replace the ttnt from OpenData API ONLY WHEN INTERNAL API/OPENDATA TTNT DIFFERENCE IS 1 MINUTE LESS (compare(internal ttnt, opendata ttnt) is 1 or 0). Note that in internal API there maybe NO_ train there won't be exist in OpenData API. If the ttnt is replaced by OpenData please set the colour of the ttnt display to light yellow in dark mode, and dark blue(#1a2a4a) in light mode, then set the ETA last update time colour to light yellow (for both modes as the colour of header is deep for both modes)
+2. In EAL please put Car Number in row2 "value.trainId + '(T' + (value.trainId /3) + ')" (e.g. trainId=045: "045(T15)") after Train number
+
+In EAL, if the train code is starting VV (e.g. VV0320), please add lib/chai.png to the ETA row1 on the left of the platform bagde, align on the right, then grey out the dest name and ETA minutes
+
+In EAL trainload, if train start distance (train.startDistance == 0), please treat the train is stopped and display stopping text like URL ones e.g. "紅磡 (停站中)"
+
+
+PENDING:
+3. In internal API there is a line "ABC", which should be the internal testing data of EAL. Please add handling to the line and 
+

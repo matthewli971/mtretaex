@@ -3,6 +3,18 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.10
+- **EAL downline origin display**: For EAL down-line trains, origin station will be shown if the train is not departed in end of the line.
+- **EAL hide "經馬場" at RAC station**: When viewing ETA at Racecourse station (RAC), the "經馬場" via label is no longer shown (redundant when already at RAC).
+- **Trainload car numbering**: All lines now use positional car numbering (car 1 = leftmost) instead of relying on the API's carNo field.
+- **TCL trainload decimal places**: TCL passengerLoad display rounded to 1 decimal place.
+- **EAL "via Racecourse" detection**: Trains via Racecourse will be shown with "經馬場" next to destination.
+- **EAL Start-from station enhancement**: Show starting station in EAL, and highlight the text if the train is starting from current station ("當駅始発").
+- **Train Car numbering fix**: All train cars display now shown from car 1 on the left.
+- **Departed row greying**: Trains departing (ttnt=0) will be greyed-out for better indication.
+- **ETA minutes hybrid mode**: Get ETA data from OpenData if internal API is outdated (t > 15s).
+- **EAL arrived station detection**: In EAL ETAs, Show "停站中" text whenthe train has arrive at the station
+
 ### v0.09
 - **TML trainload support**: Full implementation of the TML (Tuen Ma Line) trainload display. Car-level passenger count data is now shown when expanding a TML ETA row, with colour-coded thresholds (green <120, yellow <230, red ≥230). Missing passenger data shows "?" on a white background.
 - **TML position-based train matching**: Since TML train codes differ between the ETA and trainload APIs, trains are matched by their physical position on the line (next station + direction) rather than by train code. If no train is found at the immediate next station, the system searches backwards along the line to find approaching trains.
@@ -92,7 +104,7 @@ MTR Trains ETA Web-app
 - **Web page name change**: Change web app to index.html for easier access.
 
 ### v0.02
-- **Home station**: Added `HOME_STATION` variable in `data.js` (default: `ADM`). The app automatically loads ETA for the home station on startup, unless a `?station=` URL parameter is provided.
+- **Home station**: Home station will be saved in memory and shown on every start up unless a `?station=` URL parameter is provided.
 - **Station font colours**: Added `station_font_colour` field to every station in `data.js` for correct text contrast on coloured backgrounds.
 - **Removed `LINES_COLOURS_DATA`**: Duplicate colour data array removed from `data.js`. Line colours are now read directly from `linesData[].colour_code`.
 - **Station search — select-all on click**: Clicking the search bar now selects all existing text and shows the full unfiltered station list immediately.

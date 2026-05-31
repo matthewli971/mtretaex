@@ -14,23 +14,19 @@
 :root {
     /* === Color Palette === */
     --color-primary:          #1a2a4a;   /* Header background */
-    --color-primary-dark:     #0f1a2e;   /* Darker shade */
-    --color-primary-light:    #2c4270;   /* Lighter shade */
     --color-accent:           #4caf50;   /* Refresh button / accent */
     --color-accent-hover:     #388e3c;   /* Accent hover */
     --color-text-light:       #ffffff;   /* Light text on dark bg */
     --color-text-dark:        #222222;   /* Dark text on light bg */
     --color-text-muted:       #888888;   /* Muted text */
     --color-bg-page:          #ffffff;   /* Page background */
-    --color-bg-card:          #ffffff;   /* Card background */
     --color-bg-row-even:      #c7ebfa;   /* Even row background */
     --color-bg-row-odd:       #ffffff;   /* Odd row background */
     --color-bg-input:         #ffffff;   /* Input background */
     --color-border:           #cccccc;   /* General borders */
     --color-dropdown-bg:      #ffffff;   /* Dropdown background */
     --color-dropdown-hover:   #e8f0fe;   /* Dropdown item hover */
-    --color-station-info-bg:  #eaf2fb;   /* Station info bar bg */
-    --color-departing:        #d32f2f;   /* Departing badge */
+    --color-origin-self:      #7a3800;   /* [當駅始発] text color (light mode: brown) */
 
     /* === Typography === */
     --font-family:            'MyriadMM', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
@@ -56,6 +52,9 @@
     --car-num-font-size: 3.2vw;
     --trainload-info-font-size: 3.2vw;
 
+    /* Train type badge visualization */
+    --train-type-badge-size: 5.2vw;
+
     /* === Spacing === */
     --spacing-xs:  4px;
     --spacing-sm:  8px;
@@ -70,12 +69,8 @@
     --radius-xl:  24px;
 
     /* === Shadows === */
-    --shadow-card:     0 2px 8px rgba(0,0,0,0.10);
     --shadow-dropdown: 0 4px 16px rgba(0,0,0,0.18);
 
-    /* === Layout === */
-    --header-height:  auto;
-    --max-width:      800px;
 }
 
 /* ============================================
@@ -145,7 +140,7 @@ html, body {
 #header-right {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
     flex-shrink: 0;
 }
 
@@ -409,7 +404,7 @@ html, body {
 #station-info-row1 {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     flex-wrap: wrap;
 }
 
@@ -426,9 +421,8 @@ html, body {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 4px 8px;
-    height: 28px;
-    border-radius: 14px;
+    padding: 2px 10px;
+    border-radius: var(--radius-xl);
     background-color: rgba(0,0,0,0.3);
     color: inherit;
     text-decoration: none;
@@ -549,7 +543,7 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: #2196f3;
     border-radius: 1em;
     transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -573,7 +567,7 @@ html, body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.35);
 }
 .mode-switch-input:checked + .mode-switch-slider {
-    background-color: #b0d7fc;
+    background-color: #5cb85c;
 }
 .mode-switch-input:checked + .mode-switch-slider::before {
     background-color: #fff;
@@ -584,8 +578,8 @@ html, body {
 .master-mode-switch-wrap {
     display: inline-flex;
     align-items: center;
-    margin-left: var(--spacing-md);
-    margin-right: var(--spacing-md);
+    margin-left: var(--spacing-xs);
+    margin-right: var(--spacing-xs);
 }
 .master-mode-switch-wrap .mode-switch {
     width: 3.4em;
@@ -634,7 +628,7 @@ html, body {
     gap: 6px;
     margin-bottom: 4px;
     font-size: var(--trainload-info-font-size);
-    color: var(--color-text-light);
+    color: var(--color-text-dark);
 }
 
 .trainload-cars {
@@ -671,14 +665,12 @@ html, body {
 .car-num-label {
     font-size: var(--car-num-font-size);
     font-weight: bold;
-    color: var(--color-text-light);
     margin-top: 1px;
     line-height: 1;
 }
 
 .trainload-direction {
     font-size: 1.2em;
-    color: var(--color-text-light);
     margin-right: 4px;
     flex-shrink: 0;
     align-self: center;
@@ -689,7 +681,7 @@ html, body {
     align-items: center;
     gap: 6px;
     font-size: var(--trainload-info-font-size);
-    color: var(--color-text-light);
+    color: var(--color-text-dark);
     flex-wrap: wrap;
 }
 
@@ -740,7 +732,11 @@ html, body {
 .eta-row .eta-dest {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-right: 0.5em;
+    align-items: center;
+    gap: var(--spacing-xs);
 }
 
 .eta-row .eta-dest-chi {
@@ -764,6 +760,17 @@ html, body {
     font-family: var(--font-family);
     margin: 0 var(--spacing-sm);
     flex-shrink: 0;
+}
+
+/* VV badge Chai icon */
+.eta-chai-badge {
+    width: 6vw;
+    height: 6vw;
+    min-height: 28px;
+    max-height: 28px;
+    object-fit: contain;
+    flex-shrink: 0;
+    margin-right: 2px;
 }
 
 .eta-row .eta-time {
@@ -816,8 +823,8 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 5vw;
-    height: 5vw;
+    width: var(--train-type-badge-size);
+    height: var(--train-type-badge-size);
     min-width: 18px;
     min-height: 18px;
     border-radius: 3px;
@@ -836,7 +843,7 @@ html, body {
 .train-type-k { background-color: #999999; color: #000; }
 .train-type-r { background-color: #999999; color: #000; }
 .train-type-s { background-color: #5bc0de; color: #fff; }
-.train-type-sp { background-color: #d40026; border-bottom: 2px solid #092869; color: #fff; min-width: 25px;}
+.train-type-sp { background-color: #d40026; border-bottom: 4px solid #092869; color: #fff; width: calc(var(--train-type-badge-size) * 1.2);}
 .train-type-a { background-color: #666666; color: #fff; }
 
 /* Door Status Indicator */
@@ -870,6 +877,26 @@ html, body {
     color: var(--color-text-muted);
 }
 
+/* Departed train — grey out destination */
+.eta-dest-departed {
+    color: var(--color-text-muted);
+}
+
+/* Via RAC suffix label */
+.eta-dest-via {
+    font-size: calc(var(--font-size-station-name) * 0.8);
+}
+
+.eta-dest-origin {
+    font-size: calc(var(--font-size-station-name) * 0.6);
+    font-weight: bold;
+}
+
+.eta-dest-origin.eta-dest-origin-self {
+    color: var(--color-origin-self);
+    font-weight: bold;
+}
+
 /* Countdown timer */
 .eta-time-countdown {
     font-size: var(--font-size-eta);
@@ -887,10 +914,25 @@ html, body {
     color: var(--color-text-muted) !important;
 }
 
+/* OpenData supplemented ETA time — dark blue in light mode */
+.eta-time-od-supplemented {
+    color: #1a2a4a !important;
+}
+
+/* OpenData supplemented ETA time — light yellow in dark mode */
+body.dark-mode .eta-time-od-supplemented {
+    color: #fff8db !important;
+}
+
+/* Last update time highlighted when OpenData supplement is active */
+.eta-update-od-supplemented {
+    color: #fff8db !important;
+}
+
 #action-group {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: 2px;
     margin-left: auto;
 }
 
@@ -939,12 +981,10 @@ body.theme-loaded.dark-mode .theme-btn {
    Dark Mode
    ============================================ */
 body.dark-mode {
+    --color-origin-self:      #ffe57a;   /* [當駅始発] text color (dark mode: light yellow) */
     --color-primary:          #111;
-    --color-primary-dark:     #13162a;
-    --color-primary-light:    #2a2f4a;
     --color-text-title:       #f0ad4e;
     --color-bg-page:          #15171e;
-    --color-bg-card:          #1a1c27;
     --color-bg-row-odd:       #15171e;
     --color-bg-row-even:      #1e2030;
     --color-bg-input:         #22253a;
@@ -953,7 +993,6 @@ body.dark-mode {
     --color-border:           #2e3044;
     --color-dropdown-bg:      #1e2235;
     --color-dropdown-hover:   #2d3155;
-    --color-station-info-bg:  #1e2235;
 }
 
 body.dark-mode .station-item {

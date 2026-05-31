@@ -142,6 +142,25 @@ var nslStationCodeMap = {
   '82': 'TEST'
 };
 
+var nslOriginMap = { 
+  'A': 'SHT', 
+  'B': 'LMC', 
+  'C': 'FOT', 
+  'D': 'TAP', 
+  'E': 'MKK', 
+  'G': 'TAP', 
+  'H': 'SHS', 
+  'J': 'ADM', 
+  'K': 'SHS', 
+  'L': 'LMC', 
+  'M': 'LOW', 
+  'N': 'LOW', 
+  'R': 'RAC', 
+  'Y': 'HUH' 
+};
+
+var nslTermini = ['LOW', 'LMC', 'ADM'];
+
 var tmlStationCodeMap = {
   '1': 'HUH',
   '14': 'ETS',
