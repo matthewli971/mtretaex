@@ -1,0 +1,581 @@
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <link href="https://www.jqueryscript.net/css/jquerysctipttop.css" rel="stylesheet" type="text/css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.3.1/lumen/bootstrap.min.css">
+   <link href='https://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+   <title>NSL Train Load Viewer</title>
+
+   <!-- INCLUDING JQUERY-->
+   <script src=
+"https://code.jquery.com/jquery-3.5.1.js">
+   </script>
+
+   <!-- CSS FOR STYLING THE PAGE -->
+   <style>
+       table {
+           margin: 0 auto;
+           font-size: medium;
+           border: 1px solid black;
+           width: 80%
+       }
+
+       h1 {
+           text-align: center;
+           color: #006600;
+           font-size: xx-large;
+           font-family: 'Gill Sans',
+               'Gill Sans MT', ' Calibri',
+               'Trebuchet MS', 'sans-serif';
+       }
+       h2 {
+           text-align: right;
+           color: #006600;
+           font-size: large;
+           font-family: 'Gill Sans',
+               'Gill Sans MT', ' Calibri',
+               'Trebuchet MS', 'sans-serif';
+       }
+
+       td {
+           background-color: #E4F5D4;
+           border: 1px solid black;
+       }
+
+       th,
+       td {
+           font-weight: bold;
+           border: 1px solid black;
+           padding: 10px;
+           text-align: center;
+       }
+
+       td {
+           font-weight: lighter;
+       }
+
+       .slider {
+        -webkit-appearance: none;
+        width: 60%;
+        height: 10px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 1;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+      }
+
+
+      .slider:hover {
+        opacity: 1;
+      }
+
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico.png');
+        cursor: pointer;
+      }
+
+      .slider::-moz-range-thumb {
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico.png');
+        cursor: pointer;
+      }
+
+      .slider_back {
+        -webkit-appearance: none;
+        width: 60%;
+        height: 10px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 1;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+      }
+
+
+      .slider_back:hover {
+        opacity: 1;
+      }
+
+      .slider_back::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico_back.png');
+        cursor: pointer;
+      }
+
+      .slider_back::-moz-range-thumb {
+        width: 32px;
+        height: 24px;
+        border: 0;
+        background: url('train_ico_back.png');
+        cursor: pointer;
+      }
+
+      .numberCircle {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        padding-top: 10px;
+
+        background: #fff;
+        border: 3px solid #666;
+        color: #000;
+        text-align: center;
+
+        font: 13px Arial, sans-serif;
+        font-weight: bold;
+        }
+
+        .numberCircleYellow {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        padding-top: 10px;
+
+        background: #fff;
+        border: 3px solid #dddd00;
+        color: #000;
+        text-align: center;
+
+        font: 13px Arial, sans-serif;
+        font-weight: bold;
+        }
+   </style>
+   <script type="text/javascript">
+
+    /* ON PAGE LOAD */
+    window.addEventListener("DOMContentLoaded", () => {
+    
+      
+    while(true){
+      let login = prompt("Password:");
+      if (window.btoa(login) == "MjgxMTk4OTg=") {
+        break;
+      } else {
+        continue;
+      }
+    }
+    
+
+    // renderTable(); //create the table 
+    // renderBadge();
+    //alert("TEST");
+    
+    reload();
+    
+  });
+
+       var sortBy = null;
+
+       function comparer(index) {
+           return function(a, b) {
+               var valA = getCellValue(a, index), valB = getCellValue(b, index);
+               return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.toString().localeCompare(valB);
+           }
+       }
+       function getCellValue(row, index){
+           return $(row).children('td').eq(index).text();
+       }
+
+
+       function reload() {
+
+           $.ajax({
+               beforeSend: function(request) {
+                   request.setRequestHeader("x-api-key", 'QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ');
+               },
+               dataType: "json",
+               url: 'https://d30c8uozaghdca.cloudfront.net',
+
+               success: function(data) {
+                   //Your code
+                  // console.log(data);
+                   var noOfTrains = 0;
+                   var train = '';
+                   data.sort(function(a, b){
+                        var aRunNumber = parseInt(a.td.substring(2));
+                        var bRunNumber = parseInt(b.td.substring(2));
+                        var aDirection = aRunNumber % 2 == 0?0:1;
+                        var bDirection = aRunNumber % 2 == 0?0:1;
+                        if (aDirection - bDirection == 0) {
+                          return a.trainId - b.trainId;
+                        } else {
+                          return aDirection - bDirection;
+                        }
+                    });
+                   $.each(data, function (key, value) {
+
+                   //CONSTRUCTION OF ROWS HAVING
+                   // DATA FROM JSON OBJECT
+
+
+                   //console.log(value);
+
+
+                   
+                   if (value.trainId != null) {
+                   		//continue;
+                     if (value.td == "UNKNOWN" && $('#hideUnknown')[0].checked) {
+                       // continue;
+                     } else {
+                     var direction = "up";
+                     var passengerTrain = true;
+                     if (value.td.length == 6) {
+                       var missionCode = value.td.substring(0,2);
+                       //console.log(missionCode);
+                       var runNumber = parseInt(value.td.substring(2));
+                       direction = runNumber % 2 == 0?"down":"up";
+                       if (missionCode == "FF" || missionCode == "SS" || missionCode == "VL" ||
+                        missionCode == "VT" || missionCode == "VV" ||
+                        missionCode == "VW" || missionCode == "DP" ||
+                        missionCode == "XX" || missionCode == "TT") {
+                          passengerTrain = false;
+                       }
+                       if (!((runNumber > 0 && runNumber < 7000) || (runNumber>=8000 && runNumber <9000))) {
+                          passengerTrain = false;
+                       }
+                     }
+                     if ((direction == "up" && !$('#up_dir')[0].checked) || (direction == "down" && !$('#dn_dir')[0].checked))  {
+                     } else {
+                     if (passengerTrain == true || $('#hideUnknown')[0].checked == false) {
+                      train += '<tr>';
+                      train += '<td>' +
+                         value.trainId + '(T' + (value.trainId /3) + ')</td>';
+
+                     if (direction == "down") {
+	                       train += '<td>' +
+	                       value.td +'</td>';
+
+                         train += '<td style="min-width:450px;  font-family: Orbitron, sans-serif;">';
+                         if (value.startDistance != null && value.startDistance != 0) {
+                           var progress = (parseInt(value.startDistance) / (parseInt(value.startDistance) + parseInt(value.targetDistance)))*100 ;
+                           train += '<label class="numberCircleYellow">' + mapStation(value.currentStationCode) + '</label>';
+                           train += '<input type="range" disabled value="' +progress+ '" max="100" class="slider"></input>';
+                           train += '<label class="numberCircle">' + mapStation(value.nextStationCode) + '</label>';
+                           if (mapStation(value.nextStationCode) !=  mapStation(value.destinationStationCode) && mapStation(value.destinationStationCode) != "-1") {
+                             train += '----->';
+                             train += '<label class="numberCircle">' + mapStation(value.destinationStationCode) + '</label>';
+                           }
+                         } else {
+                           train += '<label class="numberCircleYellow">' + mapStation(value.currentStationCode) + '</label>';
+                           if (mapStation(value.currentStationCode) !=  mapStation(value.nextStationCode)) {
+                             train += '---->';
+                             train += '<label class="numberCircle">' + mapStation(value.nextStationCode) + '</label>';
+                           }
+                           if (mapStation(value.nextStationCode) !=  mapStation(value.destinationStationCode) && mapStation(value.destinationStationCode) != "-1") {
+                             train += '----->';
+                             train += '<label class="numberCircle">' + mapStation(value.destinationStationCode) + '</label>';
+                           }
+                         }
+     	                  train += '</td>';
+                      } else {
+                        train += '<td>' +
+                         value.td +'</td>';
+
+                         train += '<td style="min-width:450px;  font-family: Orbitron, sans-serif;">';
+                         if (value.startDistance != null && value.startDistance != 0) {
+                           var progress = 100 -(parseInt(value.startDistance) / (parseInt(value.startDistance) + parseInt(value.targetDistance)))*100 ;
+                          if (mapStation(value.nextStationCode) !=  mapStation(value.destinationStationCode) && mapStation(value.destinationStationCode) != "-1") {
+                             train += '<label class="numberCircle">' + mapStation(value.destinationStationCode) + '</label>';
+                             train += '<----';
+                           }
+                           train += '<label class="numberCircle">' + mapStation(value.nextStationCode) + '</label>';
+                           train += '<input type="range" disabled value="' +progress+ '" max="100" class="slider_back"></input>';
+                           train += '<label class="numberCircleYellow">' + mapStation(value.currentStationCode) + '</label>';
+                         } else {
+                          if (mapStation(value.nextStationCode) !=  mapStation(value.destinationStationCode) && mapStation(value.destinationStationCode) != "-1") {
+                             train += '<label class="numberCircle">' + mapStation(value.destinationStationCode) + '</label>';
+                             train += '<----';
+                           }
+                           if (mapStation(value.currentStationCode) !=  mapStation(value.nextStationCode)) {
+                             train += '<label class="numberCircle">' + mapStation(value.nextStationCode) + '</label>';
+                             train += '<----';
+                           }
+                           train += '<label class="numberCircleYellow">' + mapStation(value.currentStationCode) + '</label>';
+                         }
+                        train += '</td>';
+                      }
+                     if (direction == "up") {
+  	                   for (var i = 0 ; i < 9; i++) {
+  	                       train += '<td ';
+
+  	                       if (i == 3 ) { // for first class
+  	                         if (parseInt(value.listCars[i].passengerCount) < 70) {
+  	                             train += 'style=\'background-color:#00ff00;border:6px solid #ffec00;\'';
+  	                         } else if (parseInt(value.listCars[i].passengerCount) < 150) {
+  	                             train += 'style=\'background-color:#ffff00;border:6px solid #ffec00;\'';
+  	                         } else {
+  	                             train += 'style=\'background-color:#ff0000;border:6px solid #ffec00;\'';
+  	                         }
+  	                       } else {
+  	                         if (parseInt(value.listCars[i].passengerCount) < 110) {
+  	                             train += 'style=\'background-color:#00ff00;\'';
+  	                         } else if (parseInt(value.listCars[i].passengerCount) < 250) {
+  	                             train += 'style=\'background-color:#ffff00;\'';
+  	                         } else {
+  	                             train += 'style=\'background-color:#ff0000;\'';
+  	                         }
+  	                       }
+
+  	                       train +='>' +
+  	                           value.listCars[i].passengerCount + '-' + (value.listCars[i].passengerCount+10) + ' P</td>';
+  	                   }
+                    } else {
+                      for (var i = 8 ; i >=0; i--) {
+                           train += '<td ';
+
+                           if (i == 3 ) { // for first class
+                             if (parseInt(value.listCars[i].passengerCount) < 70) {
+                                 train += 'style=\'background-color:#00ff00;border:6px solid #ffec00;\'';
+                             } else if (parseInt(value.listCars[i].passengerCount) < 150) {
+                                 train += 'style=\'background-color:#ffff00;border:6px solid #ffec00;\'';
+                             } else {
+                                 train += 'style=\'background-color:#ff0000;border:6px solid #ffec00;\'';
+                             }
+                           } else {
+                             if (parseInt(value.listCars[i].passengerCount) < 110) {
+                                 train += 'style=\'background-color:#00ff00;\'';
+                             } else if (parseInt(value.listCars[i].passengerCount) < 250) {
+                                 train += 'style=\'background-color:#ffff00;\'';
+                             } else {
+                                 train += 'style=\'background-color:#ff0000;\'';
+                             }
+                           }
+
+                           train +='>' +
+                               value.listCars[i].passengerCount + '-' + (value.listCars[i].passengerCount+10) + ' P</td>';
+                       }
+                    }
+
+	                  train += '<td><div style="font-family: Orbitron, sans-serif;">';
+	                  train += value.trainSpeed;
+	                  train += ' km/h';
+	                  train += '</div></td>';
+	                  train += '<td><div style="font-family: Orbitron, sans-serif;">';
+	                  train += value.doorStatus == "1" ? "Closed" : "Opened";
+	                  train += '</div></td>';
+
+                    train += '<td><div style="font-family: Orbitron, sans-serif;">';
+	                  train += value.targetDistance + "m";
+	                  train += '</div></td>';
+
+	                   train += '<td ';
+
+	                   var m = new Date(value.receivedTime);
+	                   var dateString =
+	                       m.getFullYear() + "/" +
+	                       ("0" + (m.getMonth()+1)).slice(-2) + "/" +
+	                       ("0" + m.getDate()).slice(-2) + " " +
+	                       ("0" + m.getHours()).slice(-2) + ":" +
+	                       ("0" + m.getMinutes()).slice(-2) + ":" +
+	                       ("0" + m.getSeconds()).slice(-2);
+	                   train += '<td>' +
+	                       dateString + '</td>';
+	                   train += '</tr>';
+                     noOfTrains++;
+               		}
+                }
+              }
+                //document.getElementById("noOfTrains").innerHTML = noOfTrains;
+                }
+               });
+         $('#trainContent').empty();
+                   $('#trainContent').append(train);
+                   filter();
+               }
+           });
+
+          // if (this.sortby != null) {
+          //    var table = $(sortby).parents('table').eq(0)
+          //    var rows = table.find('tr:gt(0)').toArray().sort(comparer($(sortby).index()))
+          //    this.asc = !this.asc
+          //    if (!this.asc){rows = rows.reverse()}
+          //    for (var i = 0; i < rows.length; i++){table.append(rows[i])}
+          // }
+       }
+
+       function filter() {
+           table_search($('#searchInput').val(),$('#table tbody tr'),'0');
+       }
+
+       function ToInteger(x) {
+           x = Number(x);
+           return x < 0 ? Math.ceil(x) : Math.floor(x);
+       }
+
+       function modulo(a, b) {
+           return a - Math.floor(a/b)*b;
+       }
+       function ToUint8(x) {
+           return modulo(ToInteger(x), Math.pow(2, 8));
+       }
+
+       function decimalToHexString(number)
+       {
+         if (number < 0)
+         {
+           number = 0xFF + number + 1;
+         }
+
+         return number.toString(16).toUpperCase();
+       }
+
+       function toBinary(a) { //: String
+           var r = '';
+           var binCounter = 0;
+           while (a > 0) {
+               r = a%2 + r;
+               a = Math.floor(a/2);
+           }
+           return r;
+       }
+
+
+       function twoscompl(a) { //: int
+           var l = toBinaryFill(a).length;
+           var msb = a >>> (l-1);
+
+           if (msb == 0) {
+               return a;
+           }
+
+           a = a-1;
+           var str = toBinary(a);
+           var nstr = '';
+           for (var i = 0; i < str.length; i++) {
+               nstr += str.charAt(i) == '1' ? '0' : '1';
+           }
+           return (-1)*parseInt(nstr);
+       }
+
+       function mapStation(code) {
+           switch (code) {
+               case '1': return 'HUH';
+               case '2': return 'MKK';
+               case '3': return 'KOT';
+               case '4': return 'TAW';
+               case '5': return 'SHT';
+               case '6': return 'FOT';
+               case '7': return 'RAC';
+               case '8': return 'UNI';
+               case '9': return 'TAP';
+               case '10': return 'TWO';
+               case '11': return 'FAN';
+               case '12': return 'SHS';
+               case '13': return 'LOW';
+               case '14': return 'LMC';
+               case '18': return 'KTU';
+               case '21': return 'HUH';
+               case '22': return 'EXC';
+               case '23': return 'ADM';
+               case '91': return 'HTD';
+               case '92': return 'HTD';
+               case '81': return 'TEST';
+               case '82': return 'TEST';
+
+               default: return code;
+
+           }
+       }
+   </script>
+</head>
+
+<body>
+   <section>
+       <h1><img src="roctec.jpeg" style="width: 100px;height: 100px" /></h1>
+       <h1>NSL Train Load Viewer</h1>
+       <div class="row">
+           <div class="column" style="margin-left: 20px">
+               <input type="text" id="searchInput" placeholder="Filter by Car Number" class="form-control"/>
+           </div>
+           <div class="column" style="margin-left: 20px">
+               <button type="button" id="reload" class="btn btn-primary mb-2" onClick="reload();">Reload</button>
+           </div>
+           <div class="column" style="margin-left: 20px;margin-top: 8px">
+               Hide UNKNOWN and Non-Revenue TD
+               <input type="checkbox" checked id="hideUnknown" name="hide_unknown" value="Hide Unknown"/>
+           </div>
+           <div class="column" style="margin-left: 20px;margin-top: 8px">
+               Show Up Direction
+               <input type="checkbox" checked id="up_dir" name="up_dir" value="Show Up Direction"/>
+           </div>
+           <div class="column" style="margin-left: 20px;margin-top: 8px">
+               Show Down Direction
+               <input type="checkbox" checked id="dn_dir" name="dn_dir" value="Show Down Direction"/>
+           </div>
+       </div>
+
+       <!-- TABLE CONSTRUCTION-->
+       <table id='table' class="table table-bordered table-striped">
+           <!-- HEADING FORMATION -->
+           <thead>
+               <tr>
+               <th>Car Number</th>
+               <th>TD</th>
+               <th>Journey</th>
+               <th>Car 1</th>
+               <th>Car 2</th>
+               <th>Car 3</th>
+               <th>Car 4</th>
+               <th>Car 5</th>
+               <th>Car 6</th>
+               <th>Car 7</th>
+               <th>Car 8</th>
+               <th>Car 9</th>
+               <th>Train Speed</th>
+               <th>Door Status</th>
+               <th>To Next Station</th>
+               <th>Last Update</th>
+               </tr>
+           </thead>
+           <tbody id="trainContent">
+
+           </tbody>
+
+           <script src="table_search.js"></script>
+
+           <script>
+               
+               $(document).ready(function () {
+
+                   reload();
+
+                   $('th').click(function(){
+                       sortby = $(this);
+                       var table = $(this).parents('table').eq(0)
+                       var rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()))
+                       this.asc = !this.asc
+                       if (!this.asc){rows = rows.reverse()}
+                       for (var i = 0; i < rows.length; i++){table.append(rows[i])}
+                   })
+
+                   $('#searchInput').keyup(function () {
+
+                     table_search($('#searchInput').val(),$('#table tbody tr'),'0');
+
+
+                   });
+
+               });
+
+               window.setInterval("reload()",5000);
+
+           </script>
+   </section>
+</body>
+
+</html>
