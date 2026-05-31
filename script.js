@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.10.1";
+const APP_VERSION = "v0.10.2";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1746,7 +1746,18 @@ function processETAData(data) {
                 }
             }
 
-            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '">';
+            // Determine grid column for 2-col layout based on platform group
+            var gridColAttr = '';
+            if (platformGroups) {
+                for (var gi = 0; gi < platformGroups.length; gi++) {
+                    if (platformGroups[gi].indexOf(train.platform) !== -1) {
+                        gridColAttr = ' data-grid-col="' + (gi + 1) + '"';
+                        break;
+                    }
+                }
+            }
+
+            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '"' + gridColAttr + '>';
             html += '<div class="eta-row1">';
             html += '<div class="eta-dest">';
             html += '<span class="eta-dest-chi' + destExtraClass + '">' + destInnerHtml + '</span>';

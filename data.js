@@ -78,6 +78,7 @@ var stationsData = [
   { "station_id": 75,  "station_code": "SHS", "name_chi": "上水",     "name_eng": "Sheung Shui",          "lines": ["EAL"],                  "station_colour": "#F6A600",  "station_font_colour": "#FFFFFF", "hotline": "2673 0769" },
   { "station_id": 76,  "station_code": "LOW", "name_chi": "羅湖",     "name_eng": "Lo Wu",                "lines": ["EAL"],                  "station_colour": "#8DC476",  "station_font_colour": "#FFFFFF", "hotline": "2673 5406" },
   { "station_id": 78,  "station_code": "LMC", "name_chi": "落馬洲",   "name_eng": "Lok Ma Chau",          "lines": ["EAL"],                  "station_colour": "#009E9B",  "station_font_colour": "#FFFFFF", "hotline": "3404 6007" },
+  { "station_id": 79,  "station_code": "KTU", "name_chi": "古洞",     "name_eng": "Kwu Tung",             "lines": ["EAL"],                  "station_colour": "#AD9D95",  "station_font_colour": "#FFFFFF", "hotline": null },
   { "station_id": 80,  "station_code": "ETS", "name_chi": "尖東",     "name_eng": "East Tsim Sha Tsui",   "lines": ["TML"],                  "station_colour": "#FFFF00",  "station_font_colour": "#000000", "hotline": "3471 5201" },
   { "station_id": 81,  "station_code": "SYP", "name_chi": "西營盤",   "name_eng": "Sai Ying Pun",         "lines": ["ISL"],                  "station_colour": "#8B7BA0",  "station_font_colour": "#000000", "hotline": "2803 7696" },
   { "station_id": 82,  "station_code": "HKU", "name_chi": "香港大學", "name_eng": "HKU",                  "lines": ["ISL"],                  "station_colour": "#B8DA89",  "station_font_colour": "#000000", "hotline": "2517 0933" },
@@ -260,7 +261,7 @@ var linesData = [
   { "line_id": 6,  "line_code": "TCL", "name_chi": "東涌綫",    "name_eng": "Tung Chung Line",         "colour_code": "#F7943E", "stations": ["HOK","KOW","OLY","NAC","LAK","TSY","SUN","TUC"] },
   { "line_id": 7,  "line_code": "AEL", "name_chi": "機場快綫",  "name_eng": "Airport Express",        "colour_code": "#00888A", "stations": ["HOK","KOW","TSY","AIR","AWE"] },
   { "line_id": 8,  "line_code": "DRL", "name_chi": "迪士尼綫",  "name_eng": "Disneyland Resort Line",  "colour_code": "#F173AC", "stations": ["SUN","DIS"] },
-  { "line_id": 9,  "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","LOW","LMC"] },
+  { "line_id": 9,  "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","KTU","LOW","LMC"] },
   { "line_id": 10, "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] }
 ];
 
