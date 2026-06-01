@@ -242,6 +242,8 @@ Please update the app according to following requirements (v0.09.1):
 3. In TWL, the trainload is inverted un up line. Same as EAL, the up/down line is identified by platform number (odd=up, even=down)
 4. For all lines, if the ETA is shown as departed(已離站), please grey out the destination and 已離站 text
 
+1. In NSL there is a currentStationCode and nextStationCode variable, the translation is attached in the prompt. Please help add this in data.js and show in NSL train information as "xxx > xxx" next to the speed  indicator (e.g. currentStationCode:11, nextStationCode:12 show "FAN > SHS")
+2. PLEASE ALIGN THE "Door opened"/"Door Closed" indicator on the right of the train info rowm, currently is still align next to train information
 
 1. For TCL upline, the train sequence is inverted too, please help to flip the trainload like above.
 2. For TWL and TCL train trainloads, please change the behaviour to always treat the first car as car 1

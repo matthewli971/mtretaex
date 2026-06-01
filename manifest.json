@@ -1,0 +1,20 @@
+{
+    "name": "地下鐵到站時間關注組",
+    "short_name": "MTR ETA",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "fullscreen",
+    "display_override": ["fullscreen", "standalone"],
+    "orientation": "portrait",
+    "background_color": "#1a2a4a",
+    "theme_color": "#1a2a4a",
+    "description": "MTR Real-time ETA display",
+    "icons": [
+        {
+            "src": "logo.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

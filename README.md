@@ -3,6 +3,10 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.11
+- **PWA Feature**: Allow user to add the app to home screen as a PWA.
+- **EAL Up Line Start station**:  Show starting station in EAL for up line i.e. LoWu/LokMaChau direction
+
 ### v0.10
 - **EAL downline origin display**: For EAL down-line trains, origin station will be shown if the train is not departed in end of the line.
 - **EAL hide "經馬場" at RAC station**: When viewing ETA at Racecourse station (RAC), the "經馬場" via label is no longer shown (redundant when already at RAC).

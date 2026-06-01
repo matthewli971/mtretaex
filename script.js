@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.10.2";
+const APP_VERSION = "v0.11";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -74,7 +74,42 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     // Signal that theme has been resolved — CSS active states now apply
     document.body.classList.add("theme-loaded");
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js').catch(function (err) {
+            console.warn('Service worker registration failed:', err);
+        });
+    }
 });
+
+// ============================================
+// PWA Install Prompt
+// ============================================
+var _pwaInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    _pwaInstallPrompt = e;
+    var btn = document.getElementById('btn-pwa-install');
+    if (btn) btn.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', function () {
+    _pwaInstallPrompt = null;
+    var btn = document.getElementById('btn-pwa-install');
+    if (btn) btn.classList.add('hidden');
+});
+
+function pwaInstallClick() {
+    if (!_pwaInstallPrompt) return;
+    _pwaInstallPrompt.prompt();
+    _pwaInstallPrompt.userChoice.then(function () {
+        _pwaInstallPrompt = null;
+        var btn = document.getElementById('btn-pwa-install');
+        if (btn) btn.classList.add('hidden');
+    });
+}
 
 // ============================================
 // Clock
@@ -111,6 +146,9 @@ function setupEventListeners() {
             fetchETASilent(currentStationCode);
         }
     });
+
+    var pwaBtn = document.getElementById('btn-pwa-install');
+    if (pwaBtn) pwaBtn.addEventListener('click', pwaInstallClick);
 
     // Close dropdown when clicking outside
     document.addEventListener("click", function (e) {
@@ -1728,19 +1766,17 @@ function processETAData(data) {
                 var ealSeq = (lineByCode['EAL'] || {}).stations || [];
                 var currSeqIdx = ealSeq.indexOf(currentStationCode);
                 var destSeqIdx = ealSeq.indexOf(resolveStationCode(train.destination));
-                var ealIsDown = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
-                if (ealIsDown) {
-                    var trainCodeLetter = train.td.charAt(1).toUpperCase();
-                    var originCode = nslOriginMap[trainCodeLetter];
-                    if (originCode) {
-                        var originSta = stationByCode[originCode];
-                        if (originSta) {
-                            if (originCode === currentStationCode && nslTermini.indexOf(currentStationCode) === -1) {
-                                destOriginHtml = '[當駅始発]';
-                                isOriginSelf = true;
-                            } else if (originCode !== currentStationCode) {
-                                destOriginHtml = '[' + originSta.name_chi + '始発]';
-                            }
+                var nslIsDown = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
+                var trainCodeLetter = train.td.charAt(nslIsDown ? 1 : 0).toUpperCase();
+                var originCode = nslOriginMap[trainCodeLetter];
+                if (originCode) {
+                    var originSta = stationByCode[originCode];
+                    if (originSta) {
+                        if (originCode === currentStationCode && nslTermini.indexOf(currentStationCode) === -1) {
+                            destOriginHtml = '[當駅始発]';
+                            isOriginSelf = true;
+                        } else if (originCode !== currentStationCode) {
+                            destOriginHtml = '[' + originSta.name_chi + '始発]';
                         }
                     }
                 }
@@ -2044,7 +2080,7 @@ function populateRow2(row2El) {
             carLoadsOrdered = info.carLoads.slice().reverse();
         }
     // TWL/TCL: up line (odd platform) is inverted — reverse carLoads for upline
-    } else if (lineCode === 'TWL' || lineCode === 'TCL') {
+    } else if (lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TCL') {
         if (isUp) {
             carLoadsOrdered = info.carLoads.slice().reverse();
         }
@@ -2266,6 +2302,8 @@ function renderTrainCode(td, lineCode) {
     var typeBadge = '';
     if (info && info.trainType) {
         typeBadge = '<span class="train-type-badge train-type-' + info.trainType.toLowerCase() + '" onclick="toggleRow2(this)">' + info.trainType + '</span>';
+    } else {
+        typeBadge = '<span class="train-type-badge train-type-unknown"></span>';
     }
     var html = typeBadge + '<div class="train-code" data-td="' + nums + '">';
     for (var i = 0; i < 3; i++) {

@@ -2,10 +2,15 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <title>地下鐵到站時間關注組</title>
     <link rel="icon" href="logo.svg" type="image/svg+xml">
-    <!--<link rel="manifest" href="manifest.json">-->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MTR ETA">
+    <link rel="apple-touch-icon" href="logo.svg">
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
@@ -57,6 +62,11 @@
                         <span class="mode-switch-slider" data-label="I"></span>
                     </label>
                 </span>
+                <button id="btn-pwa-install" class="hidden" title="Download App" aria-label="Install App">
+                    <svg viewBox="0 0 24 24" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                    </svg>
+                </button>
                 <button id="btn-refresh">F5</button>
             </div>
         </div>

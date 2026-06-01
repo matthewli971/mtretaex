@@ -151,7 +151,7 @@ var nslOriginMap = {
   'E': 'MKK', 
   'G': 'TAP', 
   'H': 'SHS', 
-  'J': 'ADM', 
+  /*'J': 'ADM', */
   'K': 'SHS', 
   'L': 'LMC', 
   'M': 'LOW', 
