@@ -639,7 +639,8 @@ html, body {
     display: flex;
     flex-direction: column;
     padding: 0 var(--spacing-md);
-    min-height: var(--eta-row-height);
+    height: var(--eta-row-height);
+    min-height: 38px;
     animation: fadeIn 0.3s ease;
 }
 
@@ -647,7 +648,8 @@ html, body {
     display: flex;
     align-items: center;
     padding: 0px;
-    min-height: var(--eta-row-height);
+    height: var(--eta-row-height);
+    min-height: 38px;
 }
 
 .eta-row2 {
