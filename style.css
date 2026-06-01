@@ -639,8 +639,7 @@ html, body {
     display: flex;
     flex-direction: column;
     padding: 0 var(--spacing-md);
-    height: var(--eta-row-height);
-    min-height: 38px;
+    min-height: var(--eta-row-height);
     animation: fadeIn 0.3s ease;
 }
 
