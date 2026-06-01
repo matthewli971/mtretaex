@@ -58,13 +58,16 @@
     --font-size-platform:     5.2vw;
     --font-size-station-info: 3.2vw;
     --font-size-train-type:   4.5vw;
+    --font-size-car-rect:     4.1vw;
+    --font-size-car-num:      3.2vw;
+    --font-size-trainload-info: 3.2vw;
+
+    /* ETA Row visualization */
+    --eta-row-height: 8.2vw;
 
     /* Trainload car visualization */
-    --car-rect-width: 8.4vw;
-    --car-rect-height: 5.2vw;
-    --car-rect-font-size: 3.8vw;
-    --car-num-font-size: 3.2vw;
-    --trainload-info-font-size: 3.2vw;
+    --car-rect-width: 8.8vw;
+    --car-rect-height: 5.5vw;
 
     /* Train type badge visualization */
     --train-type-badge-size: 5.2vw;
@@ -636,7 +639,7 @@ html, body {
     display: flex;
     flex-direction: column;
     padding: 0 var(--spacing-md);
-    min-height: 40px;
+    min-height: var(--eta-row-height);
     animation: fadeIn 0.3s ease;
 }
 
@@ -644,7 +647,7 @@ html, body {
     display: flex;
     align-items: center;
     padding: 0px;
-    min-height: 40px;
+    min-height: var(--eta-row-height);
 }
 
 .eta-row2 {
@@ -663,7 +666,7 @@ html, body {
     justify-content: space-between;
     gap: 6px;
     margin-bottom: 4px;
-    font-size: var(--trainload-info-font-size);
+    font-size: var(--font-size-trainload-info);
     color: var(--color-text-dark);
 }
 
@@ -687,7 +690,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--car-rect-font-size);
+    font-size: var(--font-size-car-rect);
     font-weight: bold;
 }
 .car-rect.first-class {
@@ -699,7 +702,7 @@ html, body {
 .car-rect-high   { background-color: #F44336; color: #fff; }
 
 .car-num-label {
-    font-size: var(--car-num-font-size);
+    font-size: var(--font-size-car-num);
     font-weight: bold;
     margin-top: 1px;
     line-height: 1;
@@ -716,7 +719,7 @@ html, body {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: var(--trainload-info-font-size);
+    font-size: var(--font-size-trainload-info);
     color: var(--color-text-dark);
     flex-wrap: wrap;
 }
@@ -726,12 +729,12 @@ html, body {
 }
 
 .row2-loc-item {
-    font-size: calc(var(--trainload-info-font-size) * 0.8);
+    font-size: calc(var(--font-size-trainload-info) * 0.8);
 }
 
 /* Door status badge in row2 */
 .door-badge {
-    font-size: var(--trainload-info-font-size);
+    font-size: var(--font-size-trainload-info);
     padding: 2px 8px;
     border-radius: 3px;
     font-weight: bold;
@@ -784,8 +787,6 @@ html, body {
 .eta-row .eta-platform-badge {
     width: 6vw;
     height: 6vw;
-    min-width: 28px;
-    min-height: 28px;
     border-radius: 50%;
     color: #fff;
     display: flex;
@@ -1088,29 +1089,31 @@ body.dark-mode .eta-row-odd {
    Responsive
    ============================================ */
 
-/* Tablet and above (≥500px): fixed text sizes */
-@media (min-width: 500px) {
+/* Tablet and above (≥480px): fixed text sizes */
+@media (min-width: 480px) {
     :root {
-        --font-size-title:        30px;
-        --font-size-clock:        38px;
-        --font-size-last-update:  18px;
-        --font-size-refresh:      26px;
-        --font-size-search:       20px;
-        --font-size-dropdown:     16px;
-        --font-size-curr-station: 24px;
-        --font-size-line-bar:     20px;
-        --font-size-station-name: 25px;
-        --font-size-eta:          28px;
-        --font-size-eta-unit:     15px;
-        --font-size-platform:     28px;
-        --font-size-station-info: 14px;
-        --font-size-train-type:   22px;
-        --train-type-badge-size:  26px;
+        --font-size-title:        29px;
+        --font-size-clock:        36px;
+        --font-size-last-update:  17px;
+        --font-size-refresh:      22px;
+        --font-size-search:       19px;
+        --font-size-dropdown:     18px;
+        --font-size-curr-station: 23px;
+        --font-size-line-bar:     19px;
+        --font-size-station-name: 24px;
+        --font-size-eta:          26px;
+        --font-size-eta-unit:     14px;
+        --font-size-platform:     26px;
+        --font-size-station-info: 12px;
+        --font-size-train-type:   21px;
+        --train-type-badge-size:  24px;
+        --font-size-car-rect: 20px;
+        --font-size-car-num: 15px;
+        --font-size-trainload-info: 16px;
+
         --car-rect-width: 42px;
         --car-rect-height: 26px;
-        --car-rect-font-size: 20px;
-        --car-num-font-size: 16px;
-        --trainload-info-font-size: 16px;
+        --eta-row-height: 40px;
     }
 
     .eta-row .eta-platform-badge {
@@ -1135,31 +1138,30 @@ body.dark-mode .eta-row-odd {
 }
 }
 
-/* Wide screens (≥1000px): single-row header */
-@media (min-width: 1000px) {
-    #header {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
+/* Desktop (≥820px): larger text, 2-column ETA layout */
+@media (min-width: 820px) {
+    #sticky-header-group {
+        position: static;
     }
 
-    #header-left {
-        width: auto;
-        flex: 1;
+    :root {
+        --font-size-station-name: 22px;
+        --font-size-trainload-info: 14px;
+        
+        /* Trainload car visualization */
+        --car-rect-width: 4.6vw;
     }
 
-    #header-right {
-        width: auto;
-        flex-shrink: 0;
-        justify-content: flex-end;
-        gap: var(--spacing-xl);
+    .eta-row .eta-time {
+        min-width: 17%;
     }
-}
 
-/* Desktop (≥800px): larger text, 2-column ETA layout */
-@media (min-width: 800px) {
     .eta-time-departing {
-        font-size: calc(var(--font-size-eta) * 0.9);
+        font-size: calc(var(--font-size-eta) * 0.8);
+    }
+
+    .eta-dest-via {
+        font-size: calc(var(--font-size-station-name) * 0.7);
     }
 
     .train-code {
@@ -1215,5 +1217,35 @@ body.dark-mode .eta-row-odd {
     #eta-container > .line-section:only-child > .eta-row[data-grid-col="2"] {
         grid-column: 2;
         border-right: none;
+    }
+
+    /* Wide screens (≥1000px): single-row header */
+    @media (min-width: 1000px) {
+        :root {
+            --font-size-station-name: 24px;
+            --font-size-trainload-info: 16px;
+
+            
+            /* Trainload car visualization */
+            --car-rect-width: 45px;
+        }
+
+        #header {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #header-left {
+            width: auto;
+            flex: 1;
+        }
+
+        #header-right {
+            width: auto;
+            flex-shrink: 0;
+            justify-content: flex-end;
+            gap: var(--spacing-xl);
+        }
     }
 }

@@ -276,3 +276,14 @@ In EAL trainload, if train start distance (train.startDistance == 0), please tre
 PENDING:
 3. In internal API there is a line "ABC", which should be the internal testing data of EAL. Please add handling to the line and 
 
+Please update the responsive design as follows:
+1. Please make the narrow screens as the default mode (move all max-width 600px elements to global variables as default, then add customized settings for wider screens)
+2. Add settings for min-width: 600px screens, with fixed text size (use px instead of vw). Please take note at the train-type-badge size and set fixed size when screen width > 600px as the badge goes larger when screen become wider
+3. Please help to redesign the responsive design for wide screens (min-width: 800px) to show 2 columns of ETA rows at the same time, while left is one platform/platform group and right is another platform/platform group
+
+1. Please make the action group button always align on the right of the screen, both on single row mode or 2 row mode
+2. Please switch the header to single row mode when min-width is 1000px, if less than 1000px please keep header dual row mode
+3. For min-width:800px, please align the columns starting from top, current behaviour is second column start next to the bottom row of the left column
+
+For stations with 2 lines in wide screen mode(>800px), please show like attached image 
+
