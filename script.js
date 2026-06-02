@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.11.3";
+const APP_VERSION = "v0.12";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -74,6 +74,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     // Signal that theme has been resolved — CSS active states now apply
     document.body.classList.add("theme-loaded");
+
+    // Resize handler for responsive layout changes
+    window.addEventListener('resize', function () {
+        applySuperWideLayout();
+        autoExpandRow2ForWideScreen();
+    });
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
@@ -804,6 +810,7 @@ function fetchLineApi(lineCode, retryCount) {
                     updateLineApiTime();
                     if (currentStationCode) {
                         updateTrainEnrichment();
+                        autoExpandRow2ForWideScreen();
                     }
                 }
             } catch (e) {
@@ -1863,6 +1870,8 @@ function processETAData(data) {
 
     // Re-apply train enrichment from cached line API data
     updateTrainEnrichment();
+    autoExpandRow2ForWideScreen();
+    applySuperWideLayout();
 
     // Populate row2 content for restored expanded rows
     if (expandedKeys.length) {
@@ -1870,6 +1879,124 @@ function processETAData(data) {
             populateRow2(row2);
         });
     }
+}
+
+// Auto-expand row2 for rows with trainload data
+function autoExpandRow2ForWideScreen() {
+    // Only expand the first row per platform/platform-group per line-section.
+    // If the first row has no trainload badge, stop — do not try subsequent rows.
+    document.querySelectorAll('.line-section').forEach(function (section) {
+        var seenGroups = {}; // key: grid-col or platform → true once first row encountered
+        section.querySelectorAll('.eta-row').forEach(function (etaRow) {
+            // Use data-grid-col (platform group) if present, else fall back to platform number
+            var groupKey = etaRow.getAttribute('data-grid-col') || etaRow.getAttribute('data-platform') || '1';
+            if (seenGroups[groupKey]) return; // already handled the first row for this group
+            // Mark this group as done immediately — first row only, no fallback
+            seenGroups[groupKey] = true;
+
+            var badge = etaRow.querySelector('.train-type-badge');
+            // If no badge or badge is unknown placeholder, no trainload data — stop here
+            if (!badge || badge.classList.contains('train-type-unknown') || !badge.textContent.trim()) return;
+
+            var row2 = etaRow.querySelector('.eta-row2');
+            var row1 = etaRow.querySelector('.eta-row1');
+            if (!row2 || !row2.classList.contains('hidden')) return; // already expanded
+            row2.classList.remove('hidden');
+            if (row1) row1.classList.add('eta-row1-expanded');
+            populateRow2(row2); // will collapse back silently if no carLoads data
+        });
+    });
+}
+
+// ============================================
+// Super-wide layout (≥1760px): multi-column for multi-line stations
+// ============================================
+function applySuperWideLayout() {
+    var container = document.getElementById('eta-container');
+    if (!container) return;
+    // Remove previous super-wide attributes
+    container.removeAttribute('data-sw-cols');
+    var sections = container.querySelectorAll('.line-section');
+    sections.forEach(function (sec) {
+        sec.removeAttribute('data-sw-col');
+        sec.removeAttribute('data-sw-span');
+    });
+
+    if (window.innerWidth < 1760) return;
+
+    var numLines = sections.length;
+    if (numLines <= 1) return; // single line uses existing 2-col behavior
+
+    if (numLines === 2) {
+        // 2 lines: 4 columns total. Each line gets 2 columns, unless a line has only 1 platform/group
+        container.setAttribute('data-sw-cols', '4');
+
+        sections.forEach(function (sec, idx) {
+            var lineCode = sec.getAttribute('data-line');
+            var platformCount = getDistinctPlatformGroupCount(lineCode);
+            if (platformCount === 1) {
+                // Single platform/group: span 2 columns
+                sec.setAttribute('data-sw-col', String(idx * 2 + 1));
+                sec.setAttribute('data-sw-span', '2');
+            } else {
+                // Multiple platforms: use internal 2-col grid
+                sec.setAttribute('data-sw-col', String(idx * 2 + 1));
+                sec.setAttribute('data-sw-span', '2');
+            }
+        });
+    } else if (numLines === 3) {
+        container.setAttribute('data-sw-cols', '3');
+        sections.forEach(function (sec, idx) {
+            sec.setAttribute('data-sw-col', String(idx + 1));
+        });
+    } else {
+        // 4+ lines: 4 columns
+        container.setAttribute('data-sw-cols', '4');
+        sections.forEach(function (sec, idx) {
+            sec.setAttribute('data-sw-col', String((idx % 4) + 1));
+        });
+    }
+}
+
+// Count distinct platform groups or platforms for a line at the current station
+function getDistinctPlatformGroupCount(lineCode) {
+    if (!currentStationCode) return 1;
+    var station = stationByCode[currentStationCode];
+    if (!station) return 1;
+
+    // Check if platformGroup is defined for this station and line
+    var platformGroups = null;
+    if (typeof platformGroup !== "undefined" && platformGroup[currentStationCode]) {
+        platformGroups = platformGroup[currentStationCode];
+    }
+
+    // Get platforms for this line at this station from the ETA container
+    var section = document.querySelector('.line-section[data-line="' + lineCode + '"]');
+    if (!section) return 1;
+
+    var platforms = {};
+    section.querySelectorAll('.eta-row').forEach(function (row) {
+        var p = row.getAttribute('data-platform');
+        if (p) platforms[p] = true;
+    });
+    var platformList = Object.keys(platforms);
+
+    if (platformGroups) {
+        // Count how many distinct groups these platforms belong to
+        var groupSet = {};
+        platformList.forEach(function (p) {
+            var pNum = parseInt(p);
+            for (var gi = 0; gi < platformGroups.length; gi++) {
+                if (platformGroups[gi].indexOf(pNum) !== -1) {
+                    groupSet[gi] = true;
+                    break;
+                }
+            }
+        });
+        return Math.max(Object.keys(groupSet).length, 1);
+    }
+
+    return platformList.length;
 }
 
 // ============================================
@@ -1935,7 +2062,12 @@ function populateRow2(row2El) {
             var doorText = info.doorStatus ? 'Door Opened' : 'Door Closed';
             row2El.innerHTML = '<span class="door-badge ' + doorClass + '">' + doorText + '</span>';
         } else {
-            row2El.innerHTML = '<span class="row2-no-data">沒有列車資料</span>';
+            // No trainload data — collapse row2 silently
+            row2El.classList.add('hidden');
+            var row1El = row2El.previousElementSibling;
+            if (row1El && row1El.classList.contains('eta-row1')) {
+                row1El.classList.remove('eta-row1-expanded');
+            }
         }
         return;
     }
@@ -2032,8 +2164,15 @@ function populateRow2(row2El) {
         }
     }
 
-    if (info.trainConsist) {
-        html += '<span class="row2-info-item">Consist: ' + info.trainConsist + '</span>';
+    var trainConsistText = '';
+    if (lineCode === 'TKL') {
+        trainConsistText = info.trainId ? info.trainId : '';
+    }
+    else {
+        trainConsistText = info.trainConsist ? info.trainConsist : '';
+    }
+    if (trainConsistText && trainConsistText.trim() !== '') {
+        html += '<span class="row2-info-item">Consist: ' + trainConsistText + '</span>';
     }
     html += '</div>';
     // Door status badge (only on first row per platform)

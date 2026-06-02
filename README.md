@@ -3,6 +3,10 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.12
+- **Wide-screen enhancement**: Show more columns in wider screens
+- **TKL Train Consist Update**: Updated parameters to show TKL train ID
+
 ### v0.11
 - **PWA Feature**: Allow user to add the app to home screen as a PWA.
 - **EAL Up Line Start station**:  Show starting station in EAL for up line i.e. LoWu/LokMaChau direction

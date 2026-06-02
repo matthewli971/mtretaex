@@ -287,3 +287,10 @@ Please update the responsive design as follows:
 
 For stations with 2 lines in wide screen mode(>800px), please show like attached image 
 
+
+Please update the app according to below:
+If the screen is in 2-column mode (min-width: 820px) and trainload data exists (i.e. platform badge exist but not unknown), please show the row2 trainload data of each platform/platform group by default. And please change the behaviour of trainload to not showing row 2 and "沒有列車資訊" if there is no trainload data found
+
+Please update the app to show 4 columns mode if the min-width is 1760px (super wide mode) with scenario below:\
+- Stations with only 1 line stay as current behaviour: 2 rows expanding to whole screen
+- Stations with 2 lines: Column 1-2 show first line different platform/platform group respectively, Columns 3-4 show second line different platform/platform group respectively. If there is only 1 platform/platform group (e.g. CEN have 1 TWL platofrm group and 2 ISL platforms), please expand the platform group 
