@@ -3,12 +3,12 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.12";
+const APP_VERSION = "v0.12.3";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
 const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
-const LINE_API_REFRESH_INTERVAL = 20000; // 20 seconds\
+const LINE_API_REFRESH_INTERVAL = 20000; // 20 seconds
 const TRAIN_LOAD_TIME_FILTER_MS = 10 * 60 * 1000; // 10 minutes // Trainload TTL filter: discard records older than this (milliseconds)
 
 // ============================================
@@ -36,6 +36,9 @@ let countdownTimer = null;
 
 // Global mode: "I" = Internal API, "D" = OpenData
 let masterMode = 'I';
+
+//Railway Plastic mode:
+let railwayPlasticMode = false;
 
 // ============================================
 // Initialisation
@@ -426,7 +429,9 @@ function filterByLine(lineCode) {
     activeLineFilter = lineCode;
     //document.getElementById("btn-show-all").classList.remove("hidden");
     // Hide/show line sections in eta-container
-    var sections = document.querySelectorAll('#eta-container .line-section');
+    var container = document.getElementById('eta-container');
+    container.setAttribute('data-filtered', 'true');
+    var sections = container.querySelectorAll('.line-section');
     sections.forEach(function (sec) {
         if (sec.getAttribute('data-line') === lineCode) {
             sec.style.display = '';
@@ -434,15 +439,19 @@ function filterByLine(lineCode) {
             sec.style.display = 'none';
         }
     });
+    applySuperWideLayout();
 }
 
 function showAllLines() {
     activeLineFilter = null;
     //document.getElementById("btn-show-all").classList.add("hidden");
-    var sections = document.querySelectorAll('#eta-container .line-section');
+    var container = document.getElementById('eta-container');
+    container.removeAttribute('data-filtered');
+    var sections = container.querySelectorAll('.line-section');
     sections.forEach(function (sec) {
         sec.style.display = '';
     });
+    applySuperWideLayout();
 }
 
 // ============================================
@@ -968,20 +977,27 @@ function normalizeTmlFormat(raw) {
     if (!Array.isArray(items)) return [];
 
     // Filter: only in-service trains with recent data (within 2 minutes)
-    var twoMinutesAgo = Date.now() - (2 * 60 * 1000);
     var filtered = items.filter(function (train) {
         if (!train.isInService) return false;
         var ts = parseInt(train.receivedTime);
-        if (isNaN(ts) || ts < twoMinutesAgo) return false;
+        var isOutdated = ts < Date.now() - TRAIN_LOAD_TIME_FILTER_MS;
+        if (isNaN(ts) || isOutdated) return false;
         if (!train.trainId || train.trainId === '000' || train.trainId === '999') return false;
         return true;
     });
 
     // Deduplicate: group by (currentStationCode, nextStationCode, destinationStationCode)
-    // Keep only the one with the smallest trainId (numeric)
+    // Keep only the one with the smallest trainId (numeric), verifying trainload of all cars
     var groups = {};
     filtered.forEach(function (train) {
         var key = String(train.currentStationCode) + '_' + String(train.nextStationCode) + '_' + String(train.destinationStationCode);
+        if (train.listCars?.every(car => !car.passengerCount)) {
+            return;
+        }
+
+        if (train.listCars && Array.isArray(train.listCars)) {
+            key += '_' + train.listCars.map(function(c) { return c.passengerCount; }).join(',');
+        }
         if (!groups[key]) {
             groups[key] = train;
         } else {
@@ -1108,7 +1124,8 @@ function getTrainInfoByTd(filterLine) {
                 startDistance: train.startDistance,
                 updatedTime: train.updatedTime ? new Date(train.updatedTime * 1000) : null,
                 line: train.line || lineCode,
-                carLoads: train.carLoads || null
+                carLoads: train.carLoads || null,
+                routeCode: train.jsonContent ? train.jsonContent.routeCode || '' : ''
             };
 
             // On td collision, prefer the entry with valid currentStation (not "NA"/"-"/"")
@@ -1199,7 +1216,7 @@ function getTmlPositionLookup() {
             isUpline: train.isUpline,
             carLoads: train.carLoads || null,
             currIdx: currStaAbbr ? (stationIndex[currStaAbbr] !== undefined ? stationIndex[currStaAbbr] : -1) : -1,
-            nextIdx: nextStaAbbr ? (stationIndex[nextStaAbbr] !== undefined ? stationIndex[nextStaAbbr] : -1) : -1
+            routeCode: train.jsonContent ? train.jsonContent.routeCode || '' : ''
         };
 
         // Register under nextStationAbbr + direction (train is heading to this station)
@@ -1397,7 +1414,7 @@ function parseTrainTypeForLine(train, lineCode) {
     // TML: parse from train_type field
     else if (lineCode === "TML") {
         var tt = train.train_type || train.trainType || '';
-        if (tt.indexOf('SP1900') !== -1) return 'SP';
+        if (tt.indexOf('SP1900') !== -1) return '19';
         if (tt.indexOf('T1141A') !== -1) return 'C';
         return '';
     }
@@ -1513,6 +1530,33 @@ function updateTrainEnrichment() {
                     typeEl.onclick = function() { toggleRow2(this); };
                     if (tcEl) { tcEl.parentNode.insertBefore(typeEl, tcEl); }
                     else { row1.insertBefore(typeEl, row1.firstChild); }
+                }
+            }
+
+            // TKL at TKO/TIK: update origin display from trainload currentStation (down line = even platforms only)
+            if (rowLine === 'TKL' && (currentStationCode === 'TKO' || currentStationCode === 'TIK') && info && info.currentStation) {
+                var tklPlatform = parseInt(row.getAttribute('data-platform'), 10);
+                var tklIsDownLine = (!isNaN(tklPlatform) && tklPlatform % 2 === 0);
+                var tklCurSta = info.currentStation;
+                var tklOriginText = '';
+                if (tklIsDownLine) {
+                    if (tklCurSta === 'LHP') {
+                        tklOriginText = stationByCode['LHP'].name_chi;
+                    } else if (tklCurSta === 'POA' || tklCurSta === 'HAH') {
+                        tklOriginText = stationByCode['POA'].name_chi;
+                    }
+                }
+                var destEl = row1.querySelector('.eta-dest');
+                var originEl = destEl ? destEl.querySelector('.eta-dest-origin') : null;
+                if (tklOriginText && destEl) {
+                    if (!originEl) {
+                        originEl = document.createElement('span');
+                        destEl.appendChild(originEl);
+                    }
+                    originEl.className = 'eta-dest-origin';
+                    originEl.textContent = '[' + tklOriginText + '始発]';
+                } else if (originEl) {
+                    originEl.parentNode.removeChild(originEl);
                 }
             }
 
@@ -1691,35 +1735,36 @@ function processETAData(data) {
         html += '<span class="line-bar-eng">' + lineEng + '</span>';
         html += '</div>';
 
-        var prevPlatform = null;
-        var rowIndex = 1;
+        // Group trains into 2 columns for independent layout rendering
+        var columns = [[], []];
         limitedTrains.forEach(function (train) {
-            // Platform separator: skip if platforms are in same group
-            if (prevPlatform !== null && train.platform !== prevPlatform) {
-                var sameGroup = false;
-                if (platformGroups) {
-                    for (var gi = 0; gi < platformGroups.length; gi++) {
-                        if (platformGroups[gi].indexOf(prevPlatform) !== -1 && platformGroups[gi].indexOf(train.platform) !== -1) {
-                            sameGroup = true;
-                            break;
-                        }
+            var colIdx = 0; // Default to col 1 (left)
+            if (platformGroups && platformGroups.length >= 2) {
+                // If platformGroups is defined, find the group index
+                for (var gi = 0; gi < platformGroups.length; gi++) {
+                    if (platformGroups[gi].indexOf(train.platform) !== -1) {
+                        colIdx = gi % 2; // Support up to 2 cols for now, so modulo 2
+                        break;
                     }
                 }
-                if (!sameGroup) {
-                    html += '<div class="platform-separator"></div>';
-                    rowIndex = 1; // reset row index after separator for consistent striping
+            } else {
+                // If no platformGroups, even platforms go to col 2 (right), odd to col 1 (left)
+                var pNum = parseInt(train.platform, 10);
+                if (!isNaN(pNum) && pNum % 2 === 0) {
+                    colIdx = 1;
                 }
             }
-            prevPlatform = train.platform;
+            columns[colIdx].push(train);
+        });
 
+        // Function to build row HTML
+        function buildRowHtml(train, rowIndex, gridColAttr) {
             var destCode = train.destination;
             var destChi, isNoop = false;
             var isUnknownDest = false;
 
-            // EAL: VV-prefix train codes are Locomotive trains
             var isVVTrain = (lineCode === 'EAL' && train.td && train.td.toUpperCase().indexOf('VV') === 0);
 
-            // EAL: TT-prefix train codes are not-in-service trains
             if (lineCode === 'EAL' && train.td && train.td.toUpperCase().indexOf('TT') === 0) {
                 destChi = "不 載 客 列 車";
                 isNoop = true;
@@ -1739,13 +1784,11 @@ function processETAData(data) {
                 }
             }
 
-            // EAL/NSL: detect RAC via trains by td containing B/G/K/N
             var isViaRac = false;
             if ((lineCode === 'EAL' || lineCode === 'NSL') && train.td && /[BGKN]/i.test(train.td) && !isNoop) {
                 isViaRac = true;
             }
 
-            // Detect departed state (ttnt=0 and elapsed >30s) for greying out
             var isDeparted = false;
             if ((train.ttnt === 0 || train.ttnt === "0") && lastUpdateTime) {
                 isDeparted = (new Date() - lastUpdateTime) > 30000;
@@ -1767,8 +1810,6 @@ function processETAData(data) {
                 destInnerHtml += '<span class="eta-dest-via"> 經馬場</span>';
             }
 
-            // EAL downline: show [xx始発] or [當駅始発] based on train code (2nd char of td)
-            // Detect downline by destination position in EAL sequence (not platform parity)
             if (lineCode === 'EAL' && train.td && train.td.length >= 2 && !isNoop) {
                 var ealSeq = (lineByCode['EAL'] || {}).stations || [];
                 var currSeqIdx = ealSeq.indexOf(currentStationCode);
@@ -1780,44 +1821,83 @@ function processETAData(data) {
                     var originSta = stationByCode[originCode];
                     if (originSta) {
                         if (originCode === currentStationCode && nslTermini.indexOf(currentStationCode) === -1) {
-                            destOriginHtml = '[當駅始発]';
+                            destOriginHtml = '當駅';
                             isOriginSelf = true;
                         } else if (originCode !== currentStationCode) {
-                            destOriginHtml = '[' + originSta.name_chi + '始発]';
+                            destOriginHtml = originSta.name_chi;
                         }
                     }
                 }
+            } else if (lineCode === 'TKL') {
+                //var tklIsDown = train.platform % 2 === 0;
+                //if (tklTermini.indexOf(currentStationCode) === -1 && train.td) {
+                //    var trainCodeLetter = train.td.charAt(0).toUpperCase();
+                //    var originCode = tklOriginMap[trainCodeLetter];
+                //    var originSta = originCode ? stationByCode[originCode] : null;
+                //    if (originSta) {
+                //        if (originCode === currentStationCode) {
+                //            destOriginHtml = '當駅';
+                //            isOriginSelf = true;
+                //        } else if (originCode !== currentStationCode) {
+                //            destOriginHtml = originSta.name_chi;
+                //        }
+                //    }
+                //}
             }
 
-            // Determine grid column for 2-col layout based on platform group
-            var gridColAttr = '';
-            if (platformGroups) {
-                for (var gi = 0; gi < platformGroups.length; gi++) {
-                    if (platformGroups[gi].indexOf(train.platform) !== -1) {
-                        gridColAttr = ' data-grid-col="' + (gi + 1) + '"';
-                        break;
-                    }
-                }
-            }
-
-            html += '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '"' + gridColAttr + '>';
-            html += '<div class="eta-row1">';
-            html += '<div class="eta-dest">';
-            html += '<span class="eta-dest-chi' + destExtraClass + '">' + destInnerHtml + '</span>';
+            var rowHtml = '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '"' + gridColAttr + '>';
+            rowHtml += '<div class="eta-row1">';
+            rowHtml += '<div class="eta-dest">';
+            rowHtml += '<span class="eta-dest-chi' + destExtraClass + '">' + destInnerHtml + '</span>';
             if (destOriginHtml) {
-                html += '<span class="eta-dest-origin' + (isOriginSelf ? ' eta-dest-origin-self' : '') + '">' + destOriginHtml + '</span>';
+                rowHtml += '<span class="eta-dest-origin' + (isOriginSelf ? ' eta-dest-origin-self' : '') + '">[' + destOriginHtml + '始発]</span>';
             }
-            html += '</div>';
+            rowHtml += '</div>';
             if (isVVTrain) {
-                html += '<img src="lib/chai.png" class="eta-chai-badge">';
+                rowHtml += '<img src="lib/chai.png" class="eta-chai-badge">';
             }
-            html += tdHtml;
-            html += '<div class="eta-platform-badge" style="background-color:' + colour + '">' + train.platform + '</div>';
-            html += '<div class="eta-time' + ((isNoop || isUnknownDest || isVVTrain) ? ' eta-time-muted' : (isDeparted ? ' eta-time-muted' : '')) + '">' + timeDisplay + '</div>'
+            rowHtml += tdHtml;
+            rowHtml += '<div class="eta-platform-badge" style="background-color:' + colour + '">' + train.platform + '</div>';
+            rowHtml += '<div class="eta-time' + ((isNoop || isUnknownDest || isVVTrain) ? ' eta-time-muted' : (isDeparted ? ' eta-time-muted' : '')) + '">' + timeDisplay + '</div>'
+            rowHtml += '</div>';
+            rowHtml += '<div class="eta-row2 hidden"></div>';
+            rowHtml += '</div>';
+            return rowHtml;
+        }
+
+        // Render each column's container wrapper
+        columns.forEach(function (colTrains, ci) {
+            if (colTrains.length === 0) return;
+            if (ci > 0) {
+                html += '<div class="platform-separator"></div>';
+            }
+            html += '<div class="platform-col" data-col="' + (ci + 1) + '">';
+            var prevPlatform = null;
+            var rowIndex = 1;
+            colTrains.forEach(function (train) {
+                // Determine layout separator rules correctly for within the column
+                if (prevPlatform !== null && train.platform !== prevPlatform) {
+                    //var sameGroup = false;
+                    if (platformGroups) {
+                        for (var gi = 0; gi < platformGroups.length; gi++) {
+                            if (platformGroups[gi].indexOf(prevPlatform) !== -1 && platformGroups[gi].indexOf(train.platform) !== -1) {
+                                //sameGroup = true;
+                                break;
+                            }
+                        }
+                    }
+                    /*if (!sameGroup) {
+                        html += '<div class="platform-separator"></div>';
+                        rowIndex = 1;
+                    }*/
+                }
+                prevPlatform = train.platform;
+
+                var gridColAttr = ' data-grid-col="' + (ci + 1) + '"';
+                html += buildRowHtml(train, rowIndex, gridColAttr);
+                rowIndex++;
+            });
             html += '</div>';
-            html += '<div class="eta-row2 hidden"></div>';
-            html += '</div>';
-            rowIndex++;
         });
 
         html += '</div>';
@@ -1916,22 +1996,25 @@ function applySuperWideLayout() {
     if (!container) return;
     // Remove previous super-wide attributes
     container.removeAttribute('data-sw-cols');
-    var sections = container.querySelectorAll('.line-section');
-    sections.forEach(function (sec) {
+    var allSections = container.querySelectorAll('.line-section');
+    allSections.forEach(function (sec) {
         sec.removeAttribute('data-sw-col');
         sec.removeAttribute('data-sw-span');
     });
 
     if (window.innerWidth < 1760) return;
 
-    var numLines = sections.length;
+    var visibleSections = Array.prototype.slice.call(allSections).filter(function(sec) {
+        return sec.style.display !== 'none';
+    });
+    var numLines = visibleSections.length;
     if (numLines <= 1) return; // single line uses existing 2-col behavior
 
     if (numLines === 2) {
         // 2 lines: 4 columns total. Each line gets 2 columns, unless a line has only 1 platform/group
         container.setAttribute('data-sw-cols', '4');
 
-        sections.forEach(function (sec, idx) {
+        visibleSections.forEach(function (sec, idx) {
             var lineCode = sec.getAttribute('data-line');
             var platformCount = getDistinctPlatformGroupCount(lineCode);
             if (platformCount === 1) {
@@ -1946,13 +2029,13 @@ function applySuperWideLayout() {
         });
     } else if (numLines === 3) {
         container.setAttribute('data-sw-cols', '3');
-        sections.forEach(function (sec, idx) {
+        visibleSections.forEach(function (sec, idx) {
             sec.setAttribute('data-sw-col', String(idx + 1));
         });
     } else {
         // 4+ lines: 4 columns
         container.setAttribute('data-sw-cols', '4');
-        sections.forEach(function (sec, idx) {
+        visibleSections.forEach(function (sec, idx) {
             sec.setAttribute('data-sw-col', String((idx % 4) + 1));
         });
     }
@@ -2109,14 +2192,14 @@ function populateRow2(row2El) {
         }
     }
     if ((lineCode === 'TML') && info.currentStation) {
-        var currStaAbbr = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.currentStation]) || info.currentStation;
-        var currStaObj = stationByCode[resolveStationCode(currStaAbbr)];
-        var currStaLabel = currStaObj ? currStaObj.name_chi : currStaAbbr;
+        var currStaCode = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.currentStation]) || info.currentStation;
+        var currStaObj = stationByCode[resolveStationCode(currStaCode)];
+        var currStaLabel = currStaObj ? currStaObj.name_chi : currStaCode;
         var nextStaLabel = '';
         if (info.nextStation) {
-            var nextStaAbbr = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.nextStation]) || info.nextStation;
-            var nextStaObj = stationByCode[resolveStationCode(nextStaAbbr)];
-            nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaAbbr;
+            var nextStaCode = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.nextStation]) || info.nextStation;
+            var nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
+            nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaCode;
         }
         locText = currStaLabel + (nextStaLabel ? ' > ' + nextStaLabel : '');
     }
@@ -2171,10 +2254,16 @@ function populateRow2(row2El) {
     else {
         trainConsistText = info.trainConsist ? info.trainConsist : '';
     }
+
     if (trainConsistText && trainConsistText.trim() !== '') {
         html += '<span class="row2-info-item">Consist: ' + trainConsistText + '</span>';
     }
+
+    if (info.routeCode) {
+        html += '<span class="row2-info-item">RC: ' + info.routeCode + '</span>';
+    }
     html += '</div>';
+
     // Door status badge (only on first row per platform)
     if (isFirstRow && info.doorStatus !== undefined && info.doorStatus !== null) {
         var doorClass = info.doorStatus ? 'door-badge-open' : 'door-badge-closed';
@@ -2226,16 +2315,17 @@ function populateRow2(row2El) {
     }
 
     // TML: no reversal needed — always show car 1 to 8 from left
-    var tmlIsUpline = true;
-    if (lineCode === 'TML') {
-        var tmlPlatform = parseInt(etaRow.getAttribute('data-platform')) || 1;
-        tmlIsUpline = (tmlPlatform % 2 === 1);
-    }
+    //var tmlIsUpline = true;
+    //if (lineCode === 'TML') {
+    //    var tmlPlatform = parseInt(etaRow.getAttribute('data-platform')) || 1;
+    //    tmlIsUpline = (tmlPlatform % 2 === 1);
+    //}
 
     carLoadsOrdered.forEach(function (car, idx) {
         // Check if this is the first-class car for NSL
-        var carNoNum = idx + 1;
-        var isFirstClass = (firstClassCarNo > 0 && carNoNum === firstClassCarNo);
+        var carNo = idx + 1;
+        var carNoStr = '';
+        var isFirstClass = (firstClassCarNo > 0 && carNo === firstClassCarNo);
 
         // Determine color class and display value
         var colorClass;
@@ -2263,6 +2353,7 @@ function populateRow2(row2El) {
                 else if (pCount < 230) colorClass = 'car-rect-mid';
                 else colorClass = 'car-rect-high';
             }
+            carNoStr = ' (' + car.carNo + ')';
         } else if (lineCode === 'TCL') {
             // TCL: passengerCount for color (same as URL), passengerLoad rounded to 2dp for display
             var pLoad = car.passengerLoad;
@@ -2299,7 +2390,10 @@ function populateRow2(row2El) {
         html += '<div class="car-rect ' + colorClass + (isFirstClass ? ' first-class' : '') + '">';
         html += '<span class="car-load-val">' + loadVal + '</span>';
         html += '</div>';
-        html += '<span class="car-num-label">' + carNoNum + '</span>';
+        html += '<span class="car-num-label">' + carNo + '</span>';
+        if (railwayPlasticMode && carNoStr) {
+            html += '<span class="car-num-label car-num-label-extra">' + carNoStr + '</span>';
+        }
         html += '</div>';
     });
     html += '</div>';
