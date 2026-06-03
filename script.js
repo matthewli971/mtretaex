@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.12.3";
+const APP_VERSION = "v0.12.4";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1112,12 +1112,22 @@ function getTrainInfoByTd(filterLine) {
             td = td.slice(-3);
             var key = lineCode + '_' + td;
 
+            var trainType = parseTrainTypeForLine(train, lineCode);
+            var originStationCode = null;
+            var routeCode = train.jsonContent ? train.jsonContent.routeCode : '';
+            if ('C' === trainType) {
+                if ('24' == routeCode) {
+                    originStationCode = 'HOM';
+                }
+            }
+
             var infoObj = {
                 trainId: train.trainId || '',
-                trainType: parseTrainTypeForLine(train, lineCode),
+                trainType: trainType,
                 trainConsist: train.trainConsist || '',
                 currentStation: resolveStationCode((train.currentStationCode || '').replace(/_PLT$/, '')),
                 nextStation: resolveStationCode(train.nextStationCode || ''),
+                origin: resolveStationCode(originStationCode),
                 destination: resolveStationCode(train.destinationStationCode || ''),
                 doorStatus: train.doorStatus,
                 trainSpeed: train.trainSpeed,
@@ -1125,7 +1135,7 @@ function getTrainInfoByTd(filterLine) {
                 updatedTime: train.updatedTime ? new Date(train.updatedTime * 1000) : null,
                 line: train.line || lineCode,
                 carLoads: train.carLoads || null,
-                routeCode: train.jsonContent ? train.jsonContent.routeCode || '' : ''
+                routeCode: routeCode
             };
 
             // On td collision, prefer the entry with valid currentStation (not "NA"/"-"/"")
@@ -1215,8 +1225,7 @@ function getTmlPositionLookup() {
             line: 'TML',
             isUpline: train.isUpline,
             carLoads: train.carLoads || null,
-            currIdx: currStaAbbr ? (stationIndex[currStaAbbr] !== undefined ? stationIndex[currStaAbbr] : -1) : -1,
-            routeCode: train.jsonContent ? train.jsonContent.routeCode || '' : ''
+            currIdx: currStaAbbr ? (stationIndex[currStaAbbr] !== undefined ? stationIndex[currStaAbbr] : -1) : -1
         };
 
         // Register under nextStationAbbr + direction (train is heading to this station)
