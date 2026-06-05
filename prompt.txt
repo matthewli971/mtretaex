@@ -303,3 +303,9 @@ Please update thwe app to only show the row2 for the first row of each platform/
 For mid-wide screen (min-width: 820px, max-width: 1760px), currently when user use the single line filter function the ETA will show in single column mode. So please change the behaviour to the behaviour like station with 1 line (as attached image)
 
 Please help to update TML group method by verify the trainload of all 8 cars, only treated as same train if the trainload of 2 cars data is exactly the same(compare by car)
+
+Please update the code to populate starting station of TKL to by using TrainLoad data "currentStation". Please do this for TKO and TIK station TKL sector first.
+
+Please update the app according to following requirements:
+1. There are some trains that will start service at specific station. I have added the data in data.js. Please help analyze the data and add the "xx始発". Please also show at those "NO_"(不載客列車) train and mark as grey same as the "不載客列車" text. Please follow the show before and after minutes based on the data variable or the DEFAULT xxx const added in script.js
+2. For KTL, please mark original station as "HOM" if the train routeCode is 24

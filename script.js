@@ -3,13 +3,15 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.12.4";
+const APP_VERSION = "v0.13";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
 const AUTO_REFRESH_INTERVAL = 10000; // 10 seconds
 const LINE_API_REFRESH_INTERVAL = 20000; // 20 seconds
 const TRAIN_LOAD_TIME_FILTER_MS = 10 * 60 * 1000; // 10 minutes // Trainload TTL filter: discard records older than this (milliseconds)
+const DEFAULT_SPECIAL_TRAIN_SHOW_BEFORE_MINS = 20; // Default "show before" time for special trains without explicit show_before_mins (in minutes)
+const DEFAULT_SPECIAL_TRAIN_SHOW_AFTER_MINS = 30; // Default "show after" time for special trains without explicit show_after_mins (in minutes)
 
 // ============================================
 // Data stores — defined in data.js
@@ -1647,6 +1649,7 @@ function processETAData(data) {
                     tta: train.tta,
                     ttd: train.ttd,
                     td: train.td || "",
+                    routeCode: train.routeCode || null,
                     _odSupplemented: train._odSupplemented || false
                 });
             });
@@ -1852,6 +1855,30 @@ function processETAData(data) {
                 //        }
                 //    }
                 //}
+            } else if (lineCode === 'KTL' && !destOriginHtml) {
+                if (train.routeCode == 24) {
+                    var homSta = stationByCode['HOM'];
+                    if (homSta) {
+                        destOriginHtml = (currentStationCode === 'HOM') ? '當駅' : homSta.name_chi;
+                        if (currentStationCode === 'HOM') isOriginSelf = true;
+                    }
+                }
+            }
+
+            // Special trains: show origin based on specialTrains data (time-windowed)
+            if (!destOriginHtml && typeof specialTrains !== 'undefined' && specialTrains[lineCode]) {
+                var spOriginCode = getSpecialTrainOrigin(lineCode, train.td || '', train.platform);
+                if (spOriginCode) {
+                    var spOriginSta = stationByCode[spOriginCode];
+                    if (spOriginSta) {
+                        if (spOriginCode === currentStationCode) {
+                            destOriginHtml = '當駅';
+                            isOriginSelf = true;
+                        } else {
+                            destOriginHtml = spOriginSta.name_chi;
+                        }
+                    }
+                }
             }
 
             var rowHtml = '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '"' + gridColAttr + '>';
@@ -1859,7 +1886,8 @@ function processETAData(data) {
             rowHtml += '<div class="eta-dest">';
             rowHtml += '<span class="eta-dest-chi' + destExtraClass + '">' + destInnerHtml + '</span>';
             if (destOriginHtml) {
-                rowHtml += '<span class="eta-dest-origin' + (isOriginSelf ? ' eta-dest-origin-self' : '') + '">[' + destOriginHtml + '始発]</span>';
+                var originExtraClass = isNoop ? ' eta-dest-noop' : (isOriginSelf ? ' eta-dest-origin-self' : '');
+                rowHtml += '<span class="eta-dest-origin' + originExtraClass + '">[' + destOriginHtml + '始発]</span>';
             }
             rowHtml += '</div>';
             if (isVVTrain) {
@@ -2477,6 +2505,30 @@ function formatTrainTime(train, isMuted) {
         return '<span class="eta-time-departing' + mutedClass + odClass + '">' + escapeHtml(String(val)) + '</span>';
     }
     return '<span class="eta-time-value' + mutedClass + odClass + '">' + mins + '</span><span class="eta-time-unit' + mutedClass + '"> min</span>';
+}
+
+function getSpecialTrainOrigin(lineCode, trainTd, platformNum) {
+    if (typeof specialTrains === 'undefined' || !specialTrains[lineCode]) return null;
+    var now = new Date();
+    var dayOfWeek = now.getDay();
+    var specialsNew = specialTrains[lineCode];
+    var lineData = linesOperationData[lineCode];
+    var specialTrainShowBeforeMins = (lineData != null && lineData.journey_time != null) ? lineData.journey_time : DEFAULT_SPECIAL_TRAIN_SHOW_BEFORE_MINS;
+    var specialTrainShowAfterMins  = (lineData != null && lineData.journey_time != null) ? lineData.journey_time  : DEFAULT_SPECIAL_TRAIN_SHOW_AFTER_MINS;
+    var normalizedTd = String(parseInt((trainTd || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(2, '0').slice(-2);
+    var isUp = (parseInt(platformNum, 10) % 2 === 1);
+    var specials = isUp ? specialsNew.up : specialsNew.down;
+    for (var i = 0; i < specials.length; i++) {
+        var s = specials[i];
+        if ((s.td !== normalizedTd) || (s.operating_days && s.operating_days.indexOf(dayOfWeek) === -1)) continue;
+        var depParts = s.departure_time.split(':');
+        var depMin = parseInt(depParts[0], 10) * 60 + parseInt(depParts[1], 10);
+        var nowMin = now.getHours() * 60 + now.getMinutes();
+        if (nowMin >= depMin - specialTrainShowBeforeMins && nowMin <= depMin + specialTrainShowAfterMins) {
+            return s.origin_station_code;
+        }
+    }
+    return null;
 }
 
 // ============================================

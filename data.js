@@ -112,6 +112,21 @@ var stationsData = [
   { "station_id": 120, "station_code": "TUM", "name_chi": "屯門",     "name_eng": "Tuen Mun",             "lines": ["TML"],                  "station_colour": "#035F94",  "station_font_colour": "#FFFFFF", "hotline": "2630 2801" }
 ];
 
+// All MTR lines with station sequence and colour
+// Fields: line_id, line_code, name_chi, name_eng, colour_code, stations[]
+var linesData = [
+  { "line_id": 1,  "line_code": "KTL", "name_chi": "觀塘綫",    "name_eng": "Kwun Tong Line",          "colour_code": "#00AB4E", "stations": ["WHA","HOM","YMT","MOK","PRE","SKM","KOT","LOF","WTS","DIH","CHH","KOB","NTK","KWT","LAT","YAT","TIK"] },
+  { "line_id": 2,  "line_code": "TWL", "name_chi": "荃灣綫",    "name_eng": "Tsuen Wan Line",          "colour_code": "#ED1D24", "stations": ["CEN","ADM","TST","JOR","YMT","MOK","PRE","SSP","CSW","LCK","MEF","LAK","KWF","KWH","TWH","TSW"] },
+  { "line_id": 3,  "line_code": "ISL", "name_chi": "港島綫",    "name_eng": "Island Line",             "colour_code": "#007DC5", "stations": ["KET","HKU","SYP","SHW","CEN","ADM","WAC","CAB","TIH","FOH","NOP","QUB","TAK","SWH","SKW","HFC","CHW"] },
+  { "line_id": 4,  "line_code": "TKL", "name_chi": "將軍澳綫",  "name_eng": "Tseung Kwan O Line",      "colour_code": "#7D499D", "stations": ["NOP","QUB","YAT","TIK","TKO","HAH","POA","LHP"] },
+  { "line_id": 5,  "line_code": "SIL", "name_chi": "南港島綫",  "name_eng": "South Island Line",       "colour_code": "#BAC429", "stations": ["ADM","OCP","WCH","LET","SOH"] },
+  { "line_id": 6,  "line_code": "TCL", "name_chi": "東涌綫",    "name_eng": "Tung Chung Line",         "colour_code": "#F7943E", "stations": ["HOK","KOW","OLY","NAC","LAK","TSY","SUN","TUC"] },
+  { "line_id": 7,  "line_code": "AEL", "name_chi": "機場快綫",  "name_eng": "Airport Express",        "colour_code": "#00888A", "stations": ["HOK","KOW","TSY","AIR","AWE"] },
+  { "line_id": 8,  "line_code": "DRL", "name_chi": "迪士尼綫",  "name_eng": "Disneyland Resort Line",  "colour_code": "#F173AC", "stations": ["SUN","DIS"] },
+  { "line_id": 9,  "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","KTU","LOW","LMC"] },
+  { "line_id": 10, "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] }
+];
+
 var alternativeNames = [
   { "NHUH": "HUH" }
 ];
@@ -250,21 +265,6 @@ var platformGroup = {
     "CHH": [[1, 2], [3, 4]]
 };
 
-// All MTR lines with station sequence and colour
-// Fields: line_id, line_code, name_chi, name_eng, colour_code, stations[]
-var linesData = [
-  { "line_id": 1,  "line_code": "KTL", "name_chi": "觀塘綫",    "name_eng": "Kwun Tong Line",          "colour_code": "#00AB4E", "stations": ["WHA","HOM","YMT","MOK","PRE","SKM","KOT","LOF","WTS","DIH","CHH","KOB","NTK","KWT","LAT","YAT","TIK"] },
-  { "line_id": 2,  "line_code": "TWL", "name_chi": "荃灣綫",    "name_eng": "Tsuen Wan Line",          "colour_code": "#ED1D24", "stations": ["CEN","ADM","TST","JOR","YMT","MOK","PRE","SSP","CSW","LCK","MEF","LAK","KWF","KWH","TWH","TSW"] },
-  { "line_id": 3,  "line_code": "ISL", "name_chi": "港島綫",    "name_eng": "Island Line",             "colour_code": "#007DC5", "stations": ["KET","HKU","SYP","SHW","CEN","ADM","WAC","CAB","TIH","FOH","NOP","QUB","TAK","SWH","SKW","HFC","CHW"] },
-  { "line_id": 4,  "line_code": "TKL", "name_chi": "將軍澳綫",  "name_eng": "Tseung Kwan O Line",      "colour_code": "#7D499D", "stations": ["NOP","QUB","YAT","TIK","TKO","HAH","POA","LHP"] },
-  { "line_id": 5,  "line_code": "SIL", "name_chi": "南港島綫",  "name_eng": "South Island Line",       "colour_code": "#BAC429", "stations": ["ADM","OCP","WCH","LET","SOH"] },
-  { "line_id": 6,  "line_code": "TCL", "name_chi": "東涌綫",    "name_eng": "Tung Chung Line",         "colour_code": "#F7943E", "stations": ["HOK","KOW","OLY","NAC","LAK","TSY","SUN","TUC"] },
-  { "line_id": 7,  "line_code": "AEL", "name_chi": "機場快綫",  "name_eng": "Airport Express",        "colour_code": "#00888A", "stations": ["HOK","KOW","TSY","AIR","AWE"] },
-  { "line_id": 8,  "line_code": "DRL", "name_chi": "迪士尼綫",  "name_eng": "Disneyland Resort Line",  "colour_code": "#F173AC", "stations": ["SUN","DIS"] },
-  { "line_id": 9,  "line_code": "EAL", "name_chi": "東鐵綫",    "name_eng": "East Rail Line",          "colour_code": "#53B7E8", "stations": ["ADM","EXC","HUH","MKK","KOT","TAW","SHT","FOT","RAC","UNI","TAP","TWO","FAN","SHS","KTU","LOW","LMC"] },
-  { "line_id": 10, "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] }
-];
-
 // ============================================
 // Per-line API configuration
 // Each entry defines how to call the ETA API for a specific line.
@@ -286,6 +286,147 @@ var lineApiConfig = {
 };
 
 // Lines with confirmed train type support
-var TRAINTYPE_SUPPORTED_LINES = ["KTL", "TWL", "ISL", "TKL", "TCL", "TML", "EAL", "SIL", "AEL"];
+var TRAINTYPE_SUPPORTED_LINES = ["KTL", "TWL", "ISL", "TKL", "TCL", "TML", "EAL", "SIL"];
 
 var openDataLines = ["DRL"];
+
+// Special Train List: Show origin for specific trains
+// Fields: td, origin_station_code, departure_time, operating_days (1=Mon, 2=Tue, ..., 7=Sun)
+var specialTrains = {
+  "KTL": {
+    "up": [
+      { "td": "40", "origin_station_code": "NTK", "departure_time": "15:56", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "42", "origin_station_code": "NTK", "departure_time": "16:10", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "35", "origin_station_code": "NTK", "departure_time": "16:32", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "36", "origin_station_code": "NTK", "departure_time": "16:39", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "37", "origin_station_code": "NTK", "departure_time": "16:46", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "38", "origin_station_code": "NTK", "departure_time": "16:53", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "39", "origin_station_code": "NTK", "departure_time": "16:57", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "41", "origin_station_code": "NTK", "departure_time": "17:14", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "44", "origin_station_code": "NTK", "departure_time": "17:27", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "19", "origin_station_code": "NTK", "departure_time": "11:44", "operating_days": [6] },
+      { "td": "24", "origin_station_code": "NTK", "departure_time": "11:57", "operating_days": [6] },
+      { "td": "01", "origin_station_code": "NTK", "departure_time": "12:09", "operating_days": [6] },
+      { "td": "06", "origin_station_code": "NTK", "departure_time": "12:21", "operating_days": [6] },
+      { "td": "12", "origin_station_code": "NTK", "departure_time": "12:37", "operating_days": [6] },
+      { "td": "02", "origin_station_code": "NTK", "departure_time": "08:31", "operating_days": [7] },
+      { "td": "05", "origin_station_code": "NTK", "departure_time": "08:41", "operating_days": [7] },
+      { "td": "07", "origin_station_code": "NTK", "departure_time": "08:46", "operating_days": [7] },
+      { "td": "10", "origin_station_code": "NTK", "departure_time": "08:56", "operating_days": [7] },
+      { "td": "13", "origin_station_code": "NTK", "departure_time": "09:06", "operating_days": [7] },
+      { "td": "15", "origin_station_code": "NTK", "departure_time": "09:11", "operating_days": [7] },
+      { "td": "18", "origin_station_code": "NTK", "departure_time": "09:21", "operating_days": [7] },
+      { "td": "20", "origin_station_code": "NTK", "departure_time": "09:26", "operating_days": [7] },
+      { "td": "23", "origin_station_code": "NTK", "departure_time": "09:36", "operating_days": [7] },
+      { "td": "44", "origin_station_code": "PRE", "departure_time": "18:23", "operating_days": [1, 2, 3, 4, 5] }
+    ],
+    "down": [
+      { "td": "45", "origin_station_code": "CHH", "departure_time": "16:47", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "46", "origin_station_code": "CHH", "departure_time": "16:56", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "43", "origin_station_code": "CHH", "departure_time": "17:50", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "32", "origin_station_code": "DIH", "departure_time": "08:21", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "08", "origin_station_code": "NTK", "departure_time": "18:30", "operating_days": [1, 2, 3, 4, 5] }
+    ]
+  },
+  "ISL": {
+    "up": [
+      { "td": "36", "origin_station_code": "ADM", "departure_time": "18:33", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "20", "origin_station_code": "CEN", "departure_time": "18:41", "operating_days": [1, 2, 3, 4, 5] }
+    ],
+    "down": [
+      { "td": "28", "origin_station_code": "NOP", "departure_time": "08:28", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "30", "origin_station_code": "NOP", "departure_time": "08:35", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "33", "origin_station_code": "NOP", "departure_time": "08:44", "operating_days": [1, 2, 3, 4, 5] }
+    ]
+  },
+  "TKL": {
+    "up": [],
+    "down": [
+      { "td": "22", "origin_station_code": "TKO", "departure_time": "07:08", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "37", "origin_station_code": "TKO", "departure_time": "16:18", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "38", "origin_station_code": "TKO", "departure_time": "16:27", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "39", "origin_station_code": "TKO", "departure_time": "16:35", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "40", "origin_station_code": "TKO", "departure_time": "16:39", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "41", "origin_station_code": "TKO", "departure_time": "16:45", "operating_days": [1, 2, 3, 4, 5] }
+    ]
+  },
+  "TML": {
+    "up": [{ "td": "12", "origin_station_code": "KSR", "departure_time": "06:03", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "13", "origin_station_code": "KSR", "departure_time": "06:09", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "45", "origin_station_code": "KSR", "departure_time": "06:23", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "41", "origin_station_code": "KSR", "departure_time": "06:26", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "46", "origin_station_code": "KSR", "departure_time": "06:32", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "17", "origin_station_code": "KSR", "departure_time": "06:35", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "47", "origin_station_code": "KSR", "departure_time": "06:41", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "19", "origin_station_code": "KSR", "departure_time": "06:44", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "32", "origin_station_code": "KSR", "departure_time": "06:50", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "24", "origin_station_code": "KSR", "departure_time": "06:56", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "33", "origin_station_code": "KSR", "departure_time": "07:02", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "25", "origin_station_code": "KSR", "departure_time": "07:09", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "34", "origin_station_code": "KSR", "departure_time": "07:16", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "01", "origin_station_code": "KSR", "departure_time": "07:24", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "14", "origin_station_code": "HUH", "departure_time": "05:53", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "15", "origin_station_code": "HUH", "departure_time": "05:58", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "35", "origin_station_code": "ETS", "departure_time": "07:02", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "06", "origin_station_code": "CIO", "departure_time": "07:14", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "28", "origin_station_code": "CIO", "departure_time": "07:20", "operating_days": [1, 2, 3, 4, 5] },
+
+      { "td": "64", "origin_station_code": "KSR", "departure_time": "16:26", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "65", "origin_station_code": "KSR", "departure_time": "16:43", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "66", "origin_station_code": "KSR", "departure_time": "16:49", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "67", "origin_station_code": "KSR", "departure_time": "16:56", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "68", "origin_station_code": "ETS", "departure_time": "16:43", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "69", "origin_station_code": "ETS", "departure_time": "16:50", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "70", "origin_station_code": "ETS", "departure_time": "16:57", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "71", "origin_station_code": "ETS", "departure_time": "17:04", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "74", "origin_station_code": "ETS", "departure_time": "18:30", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "72", "origin_station_code": "HOM", "departure_time": "17:07", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "73", "origin_station_code": "HOM", "departure_time": "17:14", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "75", "origin_station_code": "NAC", "departure_time": "18:44", "operating_days": [1, 2, 3, 4, 5] }
+    ],
+    "down": [
+      { "td": "21", "origin_station_code": "TAW", "departure_time": "05:40", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "22", "origin_station_code": "TAW", "departure_time": "05:47", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "23", "origin_station_code": "TAW", "departure_time": "05:54", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "36", "origin_station_code": "TAW", "departure_time": "06:01", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "29", "origin_station_code": "TAW", "departure_time": "06:08", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "37", "origin_station_code": "TAW", "departure_time": "06:14", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "04", "origin_station_code": "ETS", "departure_time": "06:01", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "05", "origin_station_code": "ETS", "departure_time": "06:07", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "27", "origin_station_code": "ETS", "departure_time": "06:14", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "30", "origin_station_code": "TWW", "departure_time": "06:23", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "10", "origin_station_code": "TWW", "departure_time": "06:31", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "39", "origin_station_code": "TWW", "departure_time": "06:37", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "40", "origin_station_code": "TWW", "departure_time": "06:43", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "49", "origin_station_code": "TWW", "departure_time": "06:50", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "44", "origin_station_code": "TWW", "departure_time": "06:56", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "51", "origin_station_code": "TIS", "departure_time": "08:09", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "52", "origin_station_code": "TIS", "departure_time": "08:19", "operating_days": [1, 2, 3, 4, 5] },
+
+      { "td": "53", "origin_station_code": "TAW", "departure_time": "16:23", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "54", "origin_station_code": "TAW", "departure_time": "16:31", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "55", "origin_station_code": "TAW", "departure_time": "16:38", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "56", "origin_station_code": "TAW", "departure_time": "16:45", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "57", "origin_station_code": "TAW", "departure_time": "16:52", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "58", "origin_station_code": "TWW", "departure_time": "16:25", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "59", "origin_station_code": "TWW", "departure_time": "16:32", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "60", "origin_station_code": "TWW", "departure_time": "16:39", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "61", "origin_station_code": "TWW", "departure_time": "16:46", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "62", "origin_station_code": "TWW", "departure_time": "16:53", "operating_days": [1, 2, 3, 4, 5] },
+      { "td": "63", "origin_station_code": "TWW", "departure_time": "17:00", "operating_days": [1, 2, 3, 4, 5] }
+    ]
+  }
+};
+
+var linesOperationData = {
+  "KTL": { "journey_time": 34 },
+  "TWL": { "journey_time": 33 },
+  "ISL": { "journey_time": 33 },
+  "TKL": { "journey_time": 17 },
+  "SIL": { "journey_time": 12 },
+  "TCL": { "journey_time": 31 },
+  "AEL": { "journey_time": 29 },
+  "DRL": { "journey_time": 4 },
+  "EAL": { "journey_time": 50 },
+  "TML": { "journey_time": 74 }
+};

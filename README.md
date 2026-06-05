@@ -3,6 +3,9 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.13
+- **Origin Station Display**: Show Train Origin Station according to train timetable
+
 ### v0.12
 - **Wide-screen enhancement**: Show more columns in wider screens
 - **TKL Train Consist Update**: Updated parameters to show TKL train ID
