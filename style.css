@@ -66,7 +66,7 @@
     --eta-row-height: 8.2vw;
 
     /* Trainload car visualization */
-    --car-rect-width: 8.8vw;
+    --car-rect-width: 9.5vw;
     --car-rect-height: 5.5vw;
 
     /* Train type badge visualization */
@@ -634,6 +634,167 @@ html, body {
     transform: translateX(1.16em);
 }
 
+/* Settings Panel */
+#settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+#settings-overlay.open {
+    opacity: 1;
+}
+#settings-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(320px, 85vw);
+    height: 100%;
+    background: var(--color-bg-page);
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.3);
+}
+#settings-panel.open {
+    transform: translateX(0);
+}
+#settings-panel.hidden {
+    display: none;
+}
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+.settings-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+.settings-close {
+    background: none;
+    border: none;
+    font-size: 1.6em;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+.settings-body {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow-y: auto;
+    flex: 1;
+}
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.settings-item-label {
+    font-size: 0.95em;
+    color: var(--color-text-dark);
+}
+
+/* Settings Switch (reusable) */
+.settings-switch {
+    position: relative;
+    display: inline-block;
+    width: 3.2em;
+    height: 1.8em;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.settings-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+.settings-switch-slider {
+    position: absolute;
+    inset: 0;
+    background-color: #555;
+    border-radius: 1em;
+    transition: background-color 0.3s ease;
+}
+.settings-switch-slider::before {
+    content: attr(data-off);
+    position: absolute;
+    font-size: 1em;
+    top: 0.2em;
+    left: 0.2em;
+    height: 1.4em;
+    width: 1.4em;
+    background-color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-weight: bold;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.settings-switch input:checked + .settings-switch-slider {
+    background-color: #2196f3;
+}
+.settings-switch input:checked + .settings-switch-slider::before {
+    content: attr(data-on);
+    transform: translateX(1.4em);
+}
+
+/* Mode switch colors - I mode (unchecked) is blue */
+.settings-switch-mode .settings-switch-slider {
+    background-color: #2196f3;
+}
+.settings-switch-mode input:checked + .settings-switch-slider {
+    background-color: #5cb85c;
+}
+
+/* Viz switch colors */
+.settings-switch-viz .settings-switch-slider {
+    background-color: #888;
+}
+.settings-switch-viz input:checked + .settings-switch-slider {
+    background-color: #4caf50;
+}
+
+/* Settings theme toggle (sun/moon icons) */
+.settings-theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+.settings-theme-toggle .sun-btn,
+.settings-theme-toggle .theme-btn {
+    width: 1.8em;
+    height: 1.8em;
+    color: var(--color-text-dark);
+}
+
+#btn-settings {
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-refresh);
+}
+
 /* ETA Row */
 .eta-row {
     display: flex;
@@ -663,12 +824,158 @@ html, body {
 
 .row2-info-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: stretch;
     gap: 6px;
     margin-bottom: 4px;
     font-size: var(--font-size-trainload-info);
     color: var(--color-text-dark);
+}
+
+/* LEFT column: visualization or text info (50% width) */
+.row2-left-col {
+    width: 70%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* RIGHT column: door badge + train info (50% width, right-aligned) */
+.row2-right-col {
+    width: 30%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 2px;
+}
+
+.row2-door-slot {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 1.4em;
+}
+
+.row2-traininfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-size: var(--font-size-trainload-info);
+    color: var(--color-text-dark);
+}
+
+.row2-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+/* Train ID / Consist right-aligned */
+.row2-info-right {
+    margin-left: auto;
+    text-align: right;
+}
+
+/* Next Station Visualization — fills left column */
+.row2-viz {
+    position: relative;
+    width: 100%;
+    height: 44px;
+    display: flex;
+    align-items: center;
+}
+.row2-viz-line {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    height: 6px;
+    border-radius: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-top: -8px;
+}
+.row2-viz-dot {
+    position: absolute;
+    width: var(--font-size-trainload-info);
+    height: var(--font-size-trainload-info);
+    border-radius: 50%;
+    background: #fff;
+    border: 2.5px solid #444;
+    top: 50%;
+    transform: translate(-50%, calc(-50% - 8px));
+    z-index: 2;
+}
+.row2-viz-dot-left {
+    left: 16px;
+}
+.row2-viz-dot-right {
+    left: calc(100% - 16px);
+}
+.row2-viz-dot-center {
+    left: 50%;
+    animation: vizDotFlash 2s infinite;
+    animation-timing-function: steps(1, start);
+}
+.row2-viz-dot-flash {
+    animation: vizDotFlash 1s infinite;
+    animation-timing-function: steps(1, start);
+}
+@keyframes vizDotFlash {
+    0%, 100% { background: #fff; }
+    50% { background: #ffd700; }
+}
+/* Train icon on the progress line */
+.row2-viz-train {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    right: 16px;
+    transform: translate(-50%, calc(-50% - 20px));
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 14px;
+    color: #fff;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+.row2-viz-train svg {
+    width: 18px;
+    height: 14px;
+}
+.row2-viz-speed {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    font-size: var(--font-size-trainload-info);
+    color: var(--color-text-dark);
+    z-index: 2;
+    white-space: nowrap;
+}
+.row2-viz-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(calc(-50% + 12px));
+    font-size: var(--font-size-trainload-info);
+    color: var(--color-text-dark);
+    white-space: nowrap;
+}
+.row2-viz-label-left {
+    left: 0%;
+    transform: translateY(calc(-50% + 12px));
+}
+.row2-viz-label-right {
+    right: 0%;
+    left: auto;
+    transform: translateY(calc(-50% + 12px));
+}
+.row2-viz-label-center {
+    left: 50%;
+    transform: translate(-50%, calc(-50% + 12px));
 }
 
 .trainload-cars {
@@ -676,6 +983,7 @@ html, body {
     gap: 2px;
     align-items: flex-start;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .car-rect-wrapper {
@@ -694,6 +1002,11 @@ html, body {
     font-size: var(--font-size-car-rect);
     font-weight: bold;
 }
+
+.car-rect.car-rect-eal {
+    width: calc(var(--car-rect-width) * 0.88);
+}
+
 .car-rect.first-class {
     border: 3px solid #FFD700;
 }
@@ -754,11 +1067,6 @@ html, body {
 .door-badge-closed {
     background-color: #555;
     color: #fff;
-}
-
-.row2-no-data {
-    font-size: 0.7em;
-    color: #999;
 }
 
 @keyframes fadeIn {
@@ -859,6 +1167,11 @@ html, body {
     background-color: #111111;
     padding: 3px;
     border-radius: 3px;
+}
+
+/* Hidden/placeholder train code for openDataLines rows with no matched td */
+.train-code-hidden {
+    opacity: 0.2;
 }
 
 /* Train Type Badge (C/Q/M) */
@@ -1011,8 +1324,8 @@ body.dark-mode .eta-time-od-supplemented {
 
 /* Sun active: light mode — only after theme is loaded from storage */
 body.theme-loaded:not(.dark-mode) .sun-btn {
-    background-color: #ffffff;
-    color: var(--color-primary);
+    background-color: #111111;
+    color: #ffffff;
 }
 
 /* Moon active: dark mode — only after theme is loaded from storage */
@@ -1117,8 +1430,8 @@ body.dark-mode .eta-row-odd {
         --font-size-car-num: 15px;
         --font-size-trainload-info: 16px;
 
-        --car-rect-width: 42px;
-        --car-rect-height: 24px;
+        --car-rect-width: 46px;
+        --car-rect-height: 25px;
         --eta-row-height: 40px;
     }
 
@@ -1155,7 +1468,7 @@ body.dark-mode .eta-row-odd {
         --font-size-trainload-info: 14px;
         
         /* Trainload car visualization */
-        --car-rect-width: 4.6vw;
+        --car-rect-width: 5vw;
     }
 
     .eta-row .eta-time {
@@ -1265,6 +1578,10 @@ body.dark-mode .eta-row-odd {
             flex-shrink: 0;
             justify-content: flex-end;
             gap: var(--spacing-xl);
+        }
+        
+        .car-rect.car-rect-eal {
+            width: var(--car-rect-width);
         }
     }
 }

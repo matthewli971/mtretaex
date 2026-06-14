@@ -3,6 +3,13 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.14
+- **UI Update**: Put config items in settings page indicated with a spala logo
+- **Car Rectangle UI fix**: Avoid car rectangles goes to the second row which affect readability
+- **DoorOpen badge fix**: Avoid showing door status if the train is not in current station
+- **Visualized Mode**: (testing in progess) Show visualized next station info
+- **Backend Station Code behaviour update**: Optimized station behaviour code
+
 ### v0.13
 - **Origin Station Display**: Show Train Origin Station according to train timetable
 

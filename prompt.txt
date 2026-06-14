@@ -309,3 +309,30 @@ Please update the code to populate starting station of TKL to by using TrainLoad
 Please update the app according to following requirements:
 1. There are some trains that will start service at specific station. I have added the data in data.js. Please help analyze the data and add the "xx始発". Please also show at those "NO_"(不載客列車) train and mark as grey same as the "不載客列車" text. Please follow the show before and after minutes based on the data variable or the DEFAULT xxx const added in script.js
 2. For KTL, please mark original station as "HOM" if the train routeCode is 24
+
+In the trainload API, some lines (e.g. DRL) may not have valid eta data, some is always showing invalid data. In these cases please display ETA data from opendata(data.gov.hk) API (i.e. D-mode API) while keeping the td from I-mode API. That means if there is only one record with td, show the td while keeping other data lines from opendata with hidden td digit display module
+
+1. Please help to apply AJAX silent refresh on refreshtimer and refresh button to avoid loading screen appear
+2. The App icon cannot be shown in iOS when install the app as PWA, please help to fix the issue 
+
+Please help update the search bar behaviour, when user searched the result and press enter in their device, if there is only 1 result filtered, directly select that station e.g. in photo, when user press enter, directly go to Whampoa station
+
+Please help to update the app according to follows:
+1. (Refer to Pasted image 1-3) For platform groups, currently if there is more than 1 lines in station, the station group cannot be applied to the station. I tried to comment the "&& platformGroups.length >= 2", however the other line that not in the group grouped as same group and the separator is gone, and the display in super-wide mode is not as expected (e.g. in CEN, expected result is Tsuen Wan Line using same platform group, while Island line show as same as before with platfoem separator in normal mode and 2 columns in super wide mode)
+2. Please create a "Settings" panel and create a svg settings button at the left of refresh button, then put the light/dark mode with title "Colour Background", D/I mode with title "ETA Mode" inside the settings panel. For D/I mode switch, please extract the switch appearance to reuse in other future settings (included below), then make the text (originally D/I text in the mode) and on/off colour customizabel
+3a. (Refer to Pasted image 4-5) Please help visualize the next station behaviour if the . Please show the line with the railway line colours and draft a station dot with white background and black margin. The behaviour should be like below:
+- When the train is going to the next station, show the current station at the left dot, next station on the right dot, and 'flash' the right dot with white and yellow (1sec white, 1sec yellow). Then show the train speed at the centre of two station names
+- When the train is at a station (originally 停站中) state, show the station dot at the centre of the new line bar, hide
+3b. Please move the trinID/Consist to align at the right below "Door Open/Door Close" badge (as image shown)
+3c. Please save the new behaviour as a new mode with title "Next Station Display Visualization" and add config to the settings panel, with off as "O" with grey colour and on as "I" with green colour
+
+Please help to update the app according to follows:
+1. Please put the row2-viz at the same row of "Door Open/Door Close" badge to save spaces
+2. Please help to add train logo if the train is going to the next station. Now EAL have train distance (startDistance, targetDistance), so please calculate the distance and locate the train logo on the lines between two station like a progress bar calculating with [startDistance/targetDistance]. For other line that is not yet support, please just put the train icon at the centre of the lines between 2 stations. Take note with the transform of lines in above item
+3. (Refer to image 2)when in light mode please set the light mode logo with white sun and black background
+
+Please help update the row2 behaviour :
+1. Please update row2 first row behaviour to:
+- Left column: visualized next station element, set the width to 50% of the column
+- Right column: Top row put the "Door open/Door Close" (fix position) then put the train ID/Train consist information at the right. Both elements align to right
+2. Please align the train load element to align at center

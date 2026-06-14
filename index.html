@@ -10,7 +10,40 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MTR ETA">
-    <link rel="apple-touch-icon" href="logo.svg">
+    <link rel="apple-touch-icon" id="apple-touch-icon-link" href="logo.svg">
+    <script>
+    // iOS requires a PNG for the home-screen icon; SVG is not supported.
+    // Generate a PNG from the SVG via canvas and update the apple-touch-icon link.
+    (function () {
+        var sizes = [180, 152, 120];
+        function buildIcon(size) {
+            var canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            var ctx = canvas.getContext('2d');
+            var img = new Image();
+            img.onload = function () {
+                // Solid background in case SVG has transparent areas
+                ctx.fillStyle = '#1a2a4a';
+                ctx.fillRect(0, 0, size, size);
+                ctx.drawImage(img, 0, 0, size, size);
+                var dataUrl = canvas.toDataURL('image/png');
+                if (size === 180) {
+                    var link = document.getElementById('apple-touch-icon-link');
+                    if (link) link.href = dataUrl;
+                }
+                // Add additional size links
+                var extra = document.createElement('link');
+                extra.rel = 'apple-touch-icon';
+                extra.setAttribute('sizes', size + 'x' + size);
+                extra.href = dataUrl;
+                document.head.appendChild(extra);
+            };
+            img.src = 'logo.svg';
+        }
+        sizes.forEach(buildIcon);
+    })();
+    </script>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
@@ -20,28 +53,6 @@
         <div id="header-left">
             <span id="app-title">地下鐵到站時間關注組</span>
             <span id="app-version"></span>
-            <div id="theme-group" onclick="toggleTheme()">
-                <button id="sun-toggle" class="sun-btn" type="button" aria-label="Light mode">
-                <!-- onclick handler moved to theme-group div -->
-                    <svg class="sun-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
-                        <line x1="12" y1="5.5" x2="12" y2="2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <line x1="16.6" y1="7.4" x2="18.7" y2="5.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <line x1="18.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <line x1="16.6" y1="16.6" x2="18.7" y2="18.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <line x1="12" y1="18.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <line x1="7.4" y1="16.6" x2="5.3" y2="18.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <line x1="5.5" y1="12" x2="2.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <line x1="7.4" y1="7.4" x2="5.3" y2="5.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </button>
-                <button id="theme-toggle" class="theme-btn" type="button" aria-label="Toggle dark mode">
-                <!-- onclick handler moved to theme-group div -->
-                    <svg class="theme-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z" fill="currentColor"/>
-                    </svg>
-                </button>
-            </div>
         </div>
         <div id="header-right">
             <div id="clock"></div>
@@ -56,12 +67,11 @@
                 </div>
             </div>
             <div id="action-group">
-                <span class="master-mode-switch-wrap">
-                    <label class="mode-switch" title="Master mode switch">
-                        <input type="checkbox" class="mode-switch-input" id="master-mode-input" onchange="toggleMasterMode()">
-                        <span class="mode-switch-slider" data-label="I"></span>
-                    </label>
-                </span>
+                <button id="btn-settings" title="Settings" aria-label="Settings" onclick="toggleSettingsPanel()">
+                    <svg viewBox="0 0 24 24" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.61 3.61 0 0 1 8.4 12 3.61 3.61 0 0 1 12 8.4a3.61 3.61 0 0 1 3.6 3.6 3.61 3.61 0 0 1-3.6 3.6z" fill="currentColor"/>
+                    </svg>
+                </button>
                 <button id="btn-pwa-install" class="hidden" title="Download App" aria-label="Install App">
                     <svg viewBox="0 0 24 24" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg">
                         <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
@@ -112,6 +122,54 @@
     <!-- Loading Overlay -->
     <div id="loader" class="hidden">
         <div class="loader-spinner"></div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-overlay" class="hidden" onclick="closeSettingsPanel()"></div>
+    <div id="settings-panel" class="hidden">
+        <div class="settings-header">
+            <span class="settings-title">Settings</span>
+            <button class="settings-close" onclick="closeSettingsPanel()" aria-label="Close settings">&times;</button>
+        </div>
+        <div class="settings-body">
+            <div class="settings-item">
+                <span class="settings-item-label">Colour Background</span>
+                <div id="settings-theme-group" class="settings-theme-toggle" onclick="settingsToggleTheme()">
+                    <button class="sun-btn" type="button" aria-label="Light mode">
+                        <svg class="sun-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
+                            <line x1="12" y1="5.5" x2="12" y2="2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="16.6" y1="7.4" x2="18.7" y2="5.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="18.5" y1="12" x2="21.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="16.6" y1="16.6" x2="18.7" y2="18.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="12" y1="18.5" x2="12" y2="21.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="7.4" y1="16.6" x2="5.3" y2="18.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="5.5" y1="12" x2="2.5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <line x1="7.4" y1="7.4" x2="5.3" y2="5.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button class="theme-btn" type="button" aria-label="Dark mode">
+                        <svg class="theme-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="settings-item">
+                <span class="settings-item-label">ETA Mode</span>
+                <label class="settings-switch settings-switch-mode">
+                    <input type="checkbox" id="settings-mode-input" onchange="settingsToggleMode()">
+                    <span class="settings-switch-slider" data-on="D" data-off="I"></span>
+                </label>
+            </div>
+            <div class="settings-item">
+                <span class="settings-item-label">Next Station Display Visualization</span>
+                <label class="settings-switch settings-switch-viz">
+                    <input type="checkbox" id="settings-viz-input" onchange="settingsToggleViz()">
+                    <span class="settings-switch-slider" data-on="I" data-off="O"></span>
+                </label>
+            </div>
+        </div>
     </div>
 
     <script src="data.js"></script>

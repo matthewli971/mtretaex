@@ -39,8 +39,8 @@ let countdownTimer = null;
 // Global mode: "I" = Internal API, "D" = OpenData
 let masterMode = 'I';
 
-//Railway Plastic mode:
 let railwayPlasticMode = false;
+let nextStationVizMode = false;
 
 // ============================================
 // Initialisation
@@ -79,6 +79,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     // Signal that theme has been resolved — CSS active states now apply
     document.body.classList.add("theme-loaded");
+
+    // Load next station visualization preference
+    try {
+        nextStationVizMode = localStorage.getItem("mtreta_nextstationviz") === "true";
+    } catch(e) {}
+
+    // Initialize settings panel
+    initSettingsPanel();
 
     // Resize handler for responsive layout changes
     window.addEventListener('resize', function () {
@@ -160,6 +168,18 @@ function setupEventListeners() {
 
     var pwaBtn = document.getElementById('btn-pwa-install');
     if (pwaBtn) pwaBtn.addEventListener('click', pwaInstallClick);
+
+    // Enter key on search: if exactly one result is visible, select it
+    document.getElementById("station-search").addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+        var visibleItems = Array.prototype.slice.call(
+            document.querySelectorAll(".station-item")
+        ).filter(function (el) { return el.style.display !== "none"; });
+        if (visibleItems.length === 1) {
+            var code = visibleItems[0].getAttribute("data-code");
+            if (code) selectStation(code);
+        }
+    });
 
     // Close dropdown when clicking outside
     document.addEventListener("click", function (e) {
@@ -359,6 +379,7 @@ function selectStation(code) {
     fetchETA(code);
     startAutoRefresh();
     startLineApiFetch(code);
+    showAllLines();
 }
 
 // ============================================
@@ -493,10 +514,18 @@ function fetchETAInternal(stationCode, withLoader) {
                     // Check staleness: if gen_time is >15s old, supplement with OpenData
                     var genTime = data.gen_time || data.sys_time;
                     var staleMs = genTime ? (Date.now() - new Date(genTime).getTime()) : 0;
-                    if (staleMs > 15000) {
+                    var openDataLinesToMerge = getOpenDataLinesForStation(stationCode);
+                    var needsOdFetch = (staleMs > 15000) || (openDataLinesToMerge.length > 0);
+                    if (needsOdFetch) {
                         fetchOpenDataForHybrid(stationCode, function (odData, odSysTime) {
-                            supplementInternalWithOpenData(data, odData);
-                            if (odSysTime) data._odSysTime = odSysTime;
+                            // For openDataLines: replace I-mode ETA with OpenData, keeping td from I-mode
+                            if (openDataLinesToMerge.length > 0) {
+                                mergeOpenDataLinesETA(data, odData, openDataLinesToMerge);
+                            }
+                            if (staleMs > 15000) {
+                                supplementInternalWithOpenData(data, odData);
+                                if (odSysTime) data._odSysTime = odSysTime;
+                            }
                             processETAData(data);
                         });
                     } else {
@@ -555,6 +584,43 @@ function fetchOpenDataForHybrid(stationCode, callback) {
     fetchOpenDataLines(stationCode, linesToFetch, callback);
 }
 
+// Return the subset of a station's lines that are listed in openDataLines
+function getOpenDataLinesForStation(stationCode) {
+    if (typeof openDataLines === 'undefined' || !openDataLines.length) return [];
+    var station = stationByCode[stationCode];
+    if (!station || !station.lines) return [];
+    return station.lines.filter(function (lc) {
+        return openDataLines.indexOf(lc) !== -1;
+    });
+}
+
+// For lines in openDataLines: replace I-mode ETA with OpenData ETA,
+// carrying over td from I-mode by position matching.
+// This lets us show valid ETA times while preserving the train number (td).
+function mergeOpenDataLinesETA(data, odData, openDataLinesList) {
+    if (!data.line) data.line = {};
+    openDataLinesList.forEach(function (lineCode) {
+        var odLineData = odData[lineCode];
+        if (!odLineData) return; // No OpenData available — keep I-mode data as-is
+        var iModeLineData = data.line[lineCode] || {};
+        var mergedPlatforms = {};
+        Object.keys(odLineData).forEach(function (platNum) {
+            var odTrains = odLineData[platNum];
+            if (!Array.isArray(odTrains) || odTrains.length === 0) return;
+            var iModeTrains = iModeLineData[platNum];
+            if (!Array.isArray(iModeTrains)) iModeTrains = [];
+            // Map each OpenData train to the I-mode train at the same position to get its td
+            mergedPlatforms[platNum] = odTrains.map(function (odTrain, idx) {
+                var merged = Object.assign({}, odTrain);
+                var iModeTrain = iModeTrains[idx];
+                merged.td = (iModeTrain && iModeTrain.td) ? iModeTrain.td : '';
+                return merged;
+            });
+        });
+        data.line[lineCode] = mergedPlatforms;
+    });
+}
+
 // Supplement internal API data with OpenData ttnt values when stale
 // Only replaces ttnt when |internal_ttnt - opendata_ttnt| <= 1
 // Marks replaced trains with _odSupplemented flag for styling
@@ -566,6 +632,8 @@ function supplementInternalWithOpenData(data, odData) {
     var legacyToCanonical = { "NSL": "EAL", "EWL": "TML" };
 
     Object.keys(data.line).forEach(function (internalLineCode) {
+        // Skip lines handled by mergeOpenDataLinesETA — they already use OpenData ETA
+        if (typeof openDataLines !== 'undefined' && openDataLines.indexOf(internalLineCode) !== -1) return;
         var canonicalLine = legacyToCanonical[internalLineCode] || internalLineCode;
         var odLine = odData[canonicalLine];
         if (!odLine) return;
@@ -638,12 +706,10 @@ function loadLineModeState() {
 
 // Update master switch UI to reflect current state
 function updateMasterSwitch() {
-    var el = document.getElementById('master-mode-input');
+    var el = document.getElementById('settings-mode-input');
     if (!el) return;
     var isD = masterMode === 'D';
     el.checked = isD;
-    var slider = el.nextElementSibling;
-    if (slider) slider.setAttribute('data-label', isD ? 'D' : 'I');
 }
 
 function showLoader() {
@@ -967,6 +1033,7 @@ function normalizeNslFormat(raw) {
             doorStatus: doorOpen,
             trainSpeed: parseFloat(train.trainSpeed) || 0,
             startDistance: train.startDistance,
+            targetDistance: train.targetDistance,
             updatedTime: train.receivedTime ? train.receivedTime / 1000 : null,
             line: 'EAL',
             carLoads: cars
@@ -1134,6 +1201,7 @@ function getTrainInfoByTd(filterLine) {
                 doorStatus: train.doorStatus,
                 trainSpeed: train.trainSpeed,
                 startDistance: train.startDistance,
+                targetDistance: train.targetDistance,
                 updatedTime: train.updatedTime ? new Date(train.updatedTime * 1000) : null,
                 line: train.line || lineCode,
                 carLoads: train.carLoads || null,
@@ -1185,13 +1253,14 @@ function lookupWithIslFallback(lookup, lineCode, normTd) {
 // Returns: { "stationAbbr_up": [info1, info2, ...], "stationAbbr_down": [...] }
 // Each array is sorted by proximity (closest to station first, based on linesData order)
 function getTmlPositionLookup() {
-    var cache = trainInfoCache['TML'];
+    var tmlLineCode = 'TML';
+    var cache = trainInfoCache[tmlLineCode];
     if (!cache || !cache.data) return {};
 
     // Get TML station order from linesData for sorting
     var tmlLine = null;
     for (var i = 0; i < linesData.length; i++) {
-        if (linesData[i].line_code === 'TML') { tmlLine = linesData[i]; break; }
+        if (linesData[i].line_code === tmlLineCode) { tmlLine = linesData[i]; break; }
     }
     if (!tmlLine) return {};
     var stationList = tmlLine.stations; // TUM(idx0) → WKS(idx26), idx increases = downline direction
@@ -1205,17 +1274,18 @@ function getTmlPositionLookup() {
     cache.data.forEach(function (train) {
         if (!train.nextStationCode && !train.currentStationCode) return;
 
+        var tmlStationCodeNewMap = stationCodeMap[tmlLineCode];
         // Resolve station codes to abbreviations
-        var nextStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.nextStationCode] : null;
-        var currStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.currentStationCode] : null;
-        var destStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.destinationStationCode] : null;
+        var nextStaAbbr = (typeof tmlStationCodeNewMap !== 'undefined') ? tmlStationCodeNewMap[train.nextStationCode] : null;
+        var currStaAbbr = (typeof tmlStationCodeNewMap !== 'undefined') ? tmlStationCodeNewMap[train.currentStationCode] : null;
+        var destStaAbbr = (typeof tmlStationCodeNewMap !== 'undefined') ? tmlStationCodeNewMap[train.destinationStationCode] : null;
 
         // Direction: use precomputed isUpline
         var direction = train.isUpline ? 'up' : 'down';
 
         var infoObj = {
             trainId: train.trainId || '',
-            trainType: parseTrainTypeForLine(train, 'TML'),
+            trainType: parseTrainTypeForLine(train, tmlLineCode),
             trainConsist: '',
             currentStation: train.currentStationCode || '',
             nextStation: train.nextStationCode || '',
@@ -1224,7 +1294,7 @@ function getTmlPositionLookup() {
             doorStatus: train.doorStatus,
             trainSpeed: train.trainSpeed,
             updatedTime: train.updatedTime ? new Date(train.updatedTime * 1000) : null,
-            line: 'TML',
+            line: tmlLineCode,
             isUpline: train.isUpline,
             carLoads: train.carLoads || null,
             currIdx: currStaAbbr ? (stationIndex[currStaAbbr] !== undefined ? stationIndex[currStaAbbr] : -1) : -1
@@ -1532,7 +1602,7 @@ function updateTrainEnrichment() {
             } else if (info && info.carLoads && info.carLoads.length > 0) {
                 // NSL/SIL: show default badge only once trainload data is available
                 var defType = '';
-                if (rowLine === 'EAL' || rowLine === 'NSL') defType = 'R';
+                if (rowLine === 'EAL') defType = 'R';
                 else if (rowLine === 'SIL') defType = 'S';
                 if (defType && !typeEl) {
                     typeEl = document.createElement('span');
@@ -1671,20 +1741,31 @@ function processETAData(data) {
         const trains = lineGroups[lineCode];
 
         // Check if platformGroup applies for this station
-        var platformGroups = null;
+        var stationPlatformGroups = null;
         if (typeof platformGroup !== "undefined" && platformGroup[currentStationCode]) {
-            platformGroups = platformGroup[currentStationCode];
+            stationPlatformGroups = platformGroup[currentStationCode];
         }
 
-        if (platformGroups) {
+        // Determine which platform groups are relevant for THIS line's trains
+        var linePlatforms = {};
+        trains.forEach(function (t) { linePlatforms[t.platform] = true; });
+        var relevantGroups = null;
+        if (stationPlatformGroups) {
+            relevantGroups = stationPlatformGroups.filter(function (grp) {
+                return grp.some(function (p) { return linePlatforms[p]; });
+            });
+            if (relevantGroups.length === 0) relevantGroups = null;
+        }
+
+        if (relevantGroups) {
             // Group trains by platform group, sort by ttnt then platform
             var groupedTrains = [];
             var ungrouped = [];
 
             trains.forEach(function (train) {
                 var assigned = false;
-                for (var gi = 0; gi < platformGroups.length; gi++) {
-                    if (platformGroups[gi].indexOf(train.platform) !== -1) {
+                for (var gi = 0; gi < relevantGroups.length; gi++) {
+                    if (relevantGroups[gi].indexOf(train.platform) !== -1) {
                         if (!groupedTrains[gi]) groupedTrains[gi] = [];
                         groupedTrains[gi].push(train);
                         assigned = true;
@@ -1711,7 +1792,7 @@ function processETAData(data) {
             });
             sortedTrains = sortedTrains.concat(ungrouped);
 
-            renderTrainsForLine(sortedTrains, lineCode, platformGroups);
+            renderTrainsForLine(sortedTrains, lineCode, relevantGroups);
         } else {
             // Original logic: sort by platform ascending, then by time
             trains.sort(function (a, b) {
@@ -1752,15 +1833,18 @@ function processETAData(data) {
         limitedTrains.forEach(function (train) {
             var colIdx = 0; // Default to col 1 (left)
             if (platformGroups && platformGroups.length >= 2) {
-                // If platformGroups is defined, find the group index
+                // Multiple groups: assign by group index
                 for (var gi = 0; gi < platformGroups.length; gi++) {
                     if (platformGroups[gi].indexOf(train.platform) !== -1) {
-                        colIdx = gi % 2; // Support up to 2 cols for now, so modulo 2
+                        colIdx = gi % 2;
                         break;
                     }
                 }
+            } else if (platformGroups && platformGroups.length === 1) {
+                // Single group: all grouped trains go into col 0 (single column)
+                colIdx = 0;
             } else {
-                // If no platformGroups, even platforms go to col 2 (right), odd to col 1 (left)
+                // No platformGroups: even platforms go to col 2 (right), odd to col 1 (left)
                 var pNum = parseInt(train.platform, 10);
                 if (!isNaN(pNum) && pNum % 2 === 0) {
                     colIdx = 1;
@@ -1796,19 +1880,21 @@ function processETAData(data) {
                 }
             }
 
-            var isViaRac = false;
-            if ((lineCode === 'EAL' || lineCode === 'NSL') && train.td && /[BGKN]/i.test(train.td) && !isNoop) {
-                isViaRac = true;
-            }
-
-            var isDeparted = false;
-            if ((train.ttnt === 0 || train.ttnt === "0") && lastUpdateTime) {
-                isDeparted = (new Date() - lastUpdateTime) > 30000;
-            }
+            var isViaRac = (lineCode === 'EAL') && train.td && /[BGKN]/i.test(train.td) && !isNoop;
+            var isDeparted = (train.ttnt === 0 || train.ttnt === "0") && lastUpdateTime && (new Date() - lastUpdateTime) > 30000;
 
             var timeDisplay = formatTrainTime(train, isNoop || isUnknownDest);
-            var isOpenDataLine = (masterMode === 'D');
-            var tdHtml = isOpenDataLine ? '' : renderTrainCode(train.td, lineCode);
+            var isFullDMode = (masterMode === 'D');
+            var isOpenDataModeLine = (typeof openDataLines !== 'undefined' && openDataLines.indexOf(lineCode) !== -1);
+            var tdHtml;
+            if (isFullDMode) {
+                tdHtml = '';
+            //} else if (isOpenDataModeLine) {
+            //    // openDataLines in I-mode: show 7-seg if td matched from I-mode, otherwise dimmed placeholder
+            //    tdHtml = train.td ? renderTrainCode(train.td, lineCode) : renderHiddenTrainCode();
+            } else {
+                tdHtml = renderTrainCode(train.td, lineCode);
+            }
             var rowClass = (rowIndex % 2 === 0) ? 'eta-row-even' : 'eta-row-odd';
             var isDark = document.body.classList.contains('dark-mode');
             var evenBg = isDark ? darkenColor(colour, 0.80) : lightenColor(colour, 0.80);
@@ -1822,12 +1908,12 @@ function processETAData(data) {
                 destInnerHtml += '<span class="eta-dest-via"> 經馬場</span>';
             }
 
-            if (lineCode === 'EAL' && train.td && train.td.length >= 2 && !isNoop) {
+            if (lineCode === 'EAL' && train.td && train.td.length >= 2/* && !isNoop*/) {
                 var ealSeq = (lineByCode['EAL'] || {}).stations || [];
                 var currSeqIdx = ealSeq.indexOf(currentStationCode);
                 var destSeqIdx = ealSeq.indexOf(resolveStationCode(train.destination));
-                var nslIsDown = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
-                var trainCodeLetter = train.td.charAt(nslIsDown ? 1 : 0).toUpperCase();
+                var nslIsDownLine = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
+                var trainCodeLetter = train.td.charAt(nslIsDownLine ? 1 : 0).toUpperCase();
                 var originCode = nslOriginMap[trainCodeLetter];
                 if (originCode) {
                     var originSta = stationByCode[originCode];
@@ -1840,21 +1926,6 @@ function processETAData(data) {
                         }
                     }
                 }
-            } else if (lineCode === 'TKL') {
-                //var tklIsDown = train.platform % 2 === 0;
-                //if (tklTermini.indexOf(currentStationCode) === -1 && train.td) {
-                //    var trainCodeLetter = train.td.charAt(0).toUpperCase();
-                //    var originCode = tklOriginMap[trainCodeLetter];
-                //    var originSta = originCode ? stationByCode[originCode] : null;
-                //    if (originSta) {
-                //        if (originCode === currentStationCode) {
-                //            destOriginHtml = '當駅';
-                //            isOriginSelf = true;
-                //        } else if (originCode !== currentStationCode) {
-                //            destOriginHtml = originSta.name_chi;
-                //        }
-                //    }
-                //}
             } else if (lineCode === 'KTL' && !destOriginHtml) {
                 if (train.routeCode == 24) {
                     var homSta = stationByCode['HOM'];
@@ -2177,18 +2248,18 @@ function populateRow2(row2El) {
 
     if (!info || !info.carLoads || !info.carLoads.length) {
         // Show door status only if available
-        if (info && info.doorStatus !== undefined && info.doorStatus !== null) {
-            var doorClass = info.doorStatus ? 'door-badge-open' : 'door-badge-closed';
-            var doorText = info.doorStatus ? 'Door Opened' : 'Door Closed';
-            row2El.innerHTML = '<span class="door-badge ' + doorClass + '">' + doorText + '</span>';
-        } else {
+        //if (info && info.doorStatus !== undefined && info.doorStatus !== null) {
+        //    var doorClass = info.doorStatus ? 'door-badge-open' : 'door-badge-closed';
+        //    var doorText = info.doorStatus ? 'Door Opened' : 'Door Closed';
+        //    row2El.innerHTML = '<span class="door-badge ' + doorClass + '">' + doorText + '</span>';
+        //} else {
             // No trainload data — collapse row2 silently
             row2El.classList.add('hidden');
             var row1El = row2El.previousElementSibling;
             if (row1El && row1El.classList.contains('eta-row1')) {
                 row1El.classList.remove('eta-row1-expanded');
             }
-        }
+        //}
         return;
     }
 
@@ -2205,23 +2276,35 @@ function populateRow2(row2El) {
 
     var html = '';
 
-    // Train info row (upper) with door badge on right
-    html += '<div class="row2-info-row">';
-    html += '<div class="row2-info">';
+    // Build door badge HTML (used in right column)
+    var doorBadgeHtml = '';
+    if (isFirstRow && info.doorStatus !== undefined && info.doorStatus !== null) {
+        var doorClass = info.doorStatus ? 'door-badge-open' : 'door-badge-closed';
+        var doorText = info.doorStatus ? 'Door Opened' : 'Door Closed';
+        if (info.doorStatus && currStaCode != null && currentStationCode !== currStaCode) {
+            doorText += ' (' + currStaCode + ')';
+            doorClass = 'door-badge-closed';
+        }
+        doorBadgeHtml = '<span class="door-badge ' + doorClass + '">' + doorText + '</span>';
+    }
 
+    var lineStationCodeMap = stationCodeMap[lineCode] || null;
+    var currStaCode = lineStationCodeMap ? lineStationCodeMap[info.currentStation] : info.currentStation;
+    var currStaObj = '';
+    var nextStaObj = '';
+    var nextStaCode = '';
     var locText = '';
+
     // NSL: show currentStation > nextStation (or 停站中 if startDistance == 0)
-    if ((lineCode === 'EAL' || lineCode === 'NSL') && info.currentStation) {
-        var currStaCode = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.currentStation]) || info.currentStation;
-        var currStaObj = stationByCode[resolveStationCode(currStaCode)];
+    if ((lineCode === 'EAL') && info.currentStation) {
+        currStaObj = stationByCode[resolveStationCode(currStaCode)];
         var currStaLabel = currStaObj ? currStaObj.name_chi : currStaCode;
-        // If startDistance is 0, train is stopped at currentStation
         if (info.startDistance !== undefined && info.startDistance !== null && (info.startDistance === 0 || info.startDistance === '0')) {
             locText = currStaLabel + ' (停站中)';
         } else {
             var nextStaLabel = '';
             if (info.nextStation) {
-                var nextStaCode = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.nextStation]) || info.nextStation;
+                nextStaCode = lineStationCodeMap ? lineStationCodeMap[info.nextStation] : info.nextStation;
                 var nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
                 nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaCode;
             }
@@ -2229,12 +2312,11 @@ function populateRow2(row2El) {
         }
     }
     if ((lineCode === 'TML') && info.currentStation) {
-        var currStaCode = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.currentStation]) || info.currentStation;
-        var currStaObj = stationByCode[resolveStationCode(currStaCode)];
+        currStaObj = stationByCode[resolveStationCode(currStaCode)];
         var currStaLabel = currStaObj ? currStaObj.name_chi : currStaCode;
         var nextStaLabel = '';
         if (info.nextStation) {
-            var nextStaCode = (typeof tmlStationCodeMap !== 'undefined' && tmlStationCodeMap[info.nextStation]) || info.nextStation;
+            nextStaCode = lineStationCodeMap ? lineStationCodeMap[info.nextStation] : info.nextStation;
             var nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
             nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaCode;
         }
@@ -2242,11 +2324,10 @@ function populateRow2(row2El) {
     }
     // KTL/TWL/ISL/TKL/SIL/TCL: show currentStation > nextStation (Chinese names)
     if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL' || lineCode === 'SIL' || lineCode === 'TCL') && info.nextStation) {
-        var currStaObj = (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-') ? stationByCode[resolveStationCode(info.currentStation)] : null;
-        var nextStaObj = stationByCode[resolveStationCode(info.nextStation)];
+        currStaObj = (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-') ? stationByCode[resolveStationCode(info.currentStation)] : null;
+        nextStaObj = stationByCode[resolveStationCode(info.nextStation)];
         var currStaLabel = currStaObj ? currStaObj.name_chi : '';
         var nextStaLabel = nextStaObj ? nextStaObj.name_chi : info.nextStation;
-        // If currentStation === nextStation, train is stopped at the station
         if (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' &&
             resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
             locText = nextStaLabel + ' (停站中)';
@@ -2255,70 +2336,134 @@ function populateRow2(row2El) {
         }
     }
 
-    if (locText && locText.trim() !== '') {
-        html += '<span class="row2-info-item row2-loc-item">' + locText + '</span>';
+    // Determine stopped state and viz data
+    var isStopped = false;
+    var vizLineColour = getLineColour(lineCode);
+    var vizCurrLabel = currStaObj ? (currStaObj.name_chi || currStaCode) : (currStaCode || '');
+    var vizNextLabel = nextStaObj ? (nextStaObj.name_chi || nextStaCode) : (nextStaCode || '');
+    if (lineCode === 'EAL' && info.startDistance !== undefined && info.startDistance !== null && (info.startDistance === 0 || info.startDistance === '0')) {
+        isStopped = true;
+    } else if (lineCode === 'TML' && info.currentStation && info.nextStation && resolveStationCode(currStaCode) === resolveStationCode(nextStaCode)) {
+        isStopped = true;
+    } else if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL' || lineCode === 'SIL' || lineCode === 'TCL') && info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' && resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
+        isStopped = true;
     }
 
-    if (info.trainSpeed && info.trainSpeed > 0) {
-        html += '<span class="row2-info-item">' + info.trainSpeed + ' km/h</span>';
+    // Build train ID / consist HTML (for right column)
+    var trainInfoHtml = '';
+    if (!nextStationVizMode) {
+        if (locText && locText.trim() !== '') {
+            trainInfoHtml += '<span class="row2-info-item row2-loc-item">' + locText + '</span>';
+        }
+        if (info.trainSpeed && info.trainSpeed > 0) {
+            trainInfoHtml += '<span class="row2-info-item">' + info.trainSpeed + ' km/h</span>';
+        }
     }
     
-    // TML: show train code + currentStation > nextStation (Chinese names)
     if (lineCode === 'TML' && info.currentStation) {
         if (info.trainId) {
-            html += '<span class="row2-info-item">Train #' + info.trainId + '</span>';
+            trainInfoHtml += '<span class="row2-info-item">Train #' + info.trainId + '</span>';
         }
-    // EAL: show full train code from ETA API td field + car number from trainload API
-    } else if (lineCode === 'EAL' || lineCode === 'NSL') {
+    } else if (lineCode === 'EAL') {
         var ealTd = etaRow.getAttribute('data-td') || '';
         if (ealTd) {
             var ealTrainLabel = escapeHtml(ealTd);
-            // Append car number: trainId(T{trainId/3})
             if (info.trainId) {
                 var tidNum = parseInt(info.trainId, 10);
                 if (!isNaN(tidNum) && tidNum > 0) {
                     ealTrainLabel += '(T' + Math.floor(tidNum / 3) + ')';
                 }
             }
-            html += '<span class="row2-info-item">Train #' + ealTrainLabel + '</span>';
+            trainInfoHtml += '<span class="row2-info-item">Train #' + ealTrainLabel + '</span>';
         }
     }
-
     var trainConsistText = '';
-    if (lineCode === 'TKL') {
+    if (lineCode === 'TKL' || (info.trainConsist && info.trainConsist === '-')) {
         trainConsistText = info.trainId ? info.trainId : '';
-    }
-    else {
+    } else {
         trainConsistText = info.trainConsist ? info.trainConsist : '';
     }
-
     if (trainConsistText && trainConsistText.trim() !== '') {
-        html += '<span class="row2-info-item">Consist: ' + trainConsistText + '</span>';
+        trainInfoHtml += '<span class="row2-info-item">Consist: ' + trainConsistText + '</span>';
     }
-
     if (info.routeCode) {
-        html += '<span class="row2-info-item">RC: ' + info.routeCode + '</span>';
+        trainInfoHtml += '<span class="row2-info-item">RC: ' + info.routeCode + '</span>';
     }
-    html += '</div>';
 
-    // Door status badge (only on first row per platform)
-    if (isFirstRow && info.doorStatus !== undefined && info.doorStatus !== null) {
-        var doorClass = info.doorStatus ? 'door-badge-open' : 'door-badge-closed';
-        var doorText = info.doorStatus ? 'Door Opened' : 'Door Closed';
-        html += '<span class="door-badge ' + doorClass + '">' + doorText + '</span>';
+    // ── Row 1: two-column layout ──────────────────────────────────────────────
+    html += '<div class="row2-info-row">';
+
+    // LEFT column (50%): visualization or plain text
+    var leftColClass = 'row2-left-col';
+    if (nextStationVizMode) {
+        leftColClass += ' row2-left-col-viz';
     }
-    html += '</div>';
+    html += '<div class="' + leftColClass + '">';
+    if (nextStationVizMode && locText && locText.trim() !== '') {
+        // Calculate train progress position
+        var trainPosPct = 50;
+        if (lineCode === 'EAL' && !isStopped) {
+            var startDist = parseInt(info.startDistance);
+            var targetDist = parseInt(info.targetDistance);
+            if (!isNaN(startDist) && !isNaN(targetDist) && (startDist + targetDist) > 0) {
+                trainPosPct = Math.min(Math.max((startDist / (startDist + targetDist)) * 100, 2), 98);
+            }
+        }
+        var trainSvg = '<svg viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg">'
+            + '<rect x="0" y="1" width="15" height="9" rx="2" fill="currentColor"/>'
+            + '<rect x="1" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
+            + '<rect x="5.5" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
+            + '<rect x="10" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
+            + '<circle cx="3" cy="11" r="2" fill="currentColor" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>'
+            + '<circle cx="10" cy="11" r="2" fill="currentColor" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>'
+            + '<polygon points="15,4 18,6 15,8" fill="currentColor"/>'
+            + '</svg>';
+
+        if (isStopped) {
+            html += '<div class="row2-viz row2-viz-stopped">';
+            html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
+            html += '<div class="row2-viz-dot row2-viz-dot-center"></div>';
+            html += '<span class="row2-viz-label row2-viz-label-center">' + (vizCurrLabel || vizNextLabel) + '</span>';
+            html += '</div>';
+        } else {
+            html += '<div class="row2-viz row2-viz-moving">';
+            html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
+            html += '<div class="row2-viz-dot row2-viz-dot-left"></div>';
+            html += '<div class="row2-viz-dot row2-viz-dot-right row2-viz-dot-flash"></div>';
+            html += '<div class="row2-viz-train" style="left:' + trainPosPct + '%;color:' + vizLineColour + '">' + trainSvg + '</div>';
+            if (info.trainSpeed && info.trainSpeed > 0) {
+                html += '<span class="row2-viz-speed">' + info.trainSpeed + ' km/h</span>';
+            }
+            html += '<span class="row2-viz-label row2-viz-label-left">' + vizCurrLabel + '</span>';
+            html += '<span class="row2-viz-label row2-viz-label-right">' + vizNextLabel + '</span>';
+            html += '</div>';
+        }
+    } else if (trainInfoHtml) {
+        // Non-viz mode: show text info in left column
+        html += '<div class="row2-info">' + trainInfoHtml + '</div>';
+    }
+    html += '</div>'; // row2-left-col
+
+    // RIGHT column (50%): door badge on top, train info below (both right-aligned)
+    html += '<div class="row2-right-col">';
+    html += '<div class="row2-door-slot">' + doorBadgeHtml + '</div>';
+    if (nextStationVizMode && trainInfoHtml) {
+        html += '<div class="row2-traininfo">' + trainInfoHtml + '</div>';
+    }
+    html += '</div>'; // row2-right-col
+
+    html += '</div>'; // row2-info-row
 
     // Trainload cars row (lower)
     html += '<div class="trainload-cars">';
-    html += '<span class="trainload-direction">&larr;</span>';
+    //html += '<span class="trainload-direction">&larr;</span>';
 
     // Determine NSL first-class car position based on td direction
     var firstClassCarNo = -1;
     var carLoadsOrdered = info.carLoads;
     var platform = parseInt(etaRow.getAttribute('data-platform')) || 1;
     var isUp = (platform % 2 === 1);
-    if (lineCode === 'EAL' || lineCode === 'NSL') {
+    if (lineCode === 'EAL') {
         // Determine direction from trainload API station sequence; fall back to td last digit
         var isUp;
         var ealDirResolved = false;
@@ -2367,15 +2512,16 @@ function populateRow2(row2El) {
         // Determine color class and display value
         var colorClass;
         var loadVal;
-        if (lineCode === 'EAL' || lineCode === 'NSL') {
+        if (lineCode === 'EAL') {
             // NSL: classify by passengerLoad thresholds
             loadVal = car.passengerCount >= 0 ? car.passengerCount : 0;
+            colorClass = 'car-rect-eal '; 
             if (loadVal === undefined || loadVal === null || loadVal < 0) {
-                colorClass = 'car-rect-empty';
+                colorClass += 'car-rect-empty';
             } else if (isFirstClass) {
-                colorClass = loadVal < 70 ? 'car-rect-low' : (loadVal < 150 ? 'car-rect-mid' : 'car-rect-high');
+                colorClass += loadVal < 70 ? 'car-rect-low' : (loadVal < 150 ? 'car-rect-mid' : 'car-rect-high');
             } else {
-                colorClass = loadVal < 110 ? 'car-rect-low' : (loadVal < 250 ? 'car-rect-mid' : 'car-rect-high');
+                colorClass += loadVal < 110 ? 'car-rect-low' : (loadVal < 250 ? 'car-rect-mid' : 'car-rect-high');
             }
         } else if (lineCode === 'TML') {
             // TML: passengerCount with thresholds 120/230
@@ -2583,9 +2729,26 @@ function make7SegDigit(d, color) {
     svg += '</svg>';
     return svg;
 }
+/*
+// Render a placeholder 7-segment display with all digits off (for openDataLines rows without a matched td)
+function renderHiddenTrainCode() {
+    var html = '<span class="train-type-badge train-type-unknown"></span>';
+    html += '<div class="train-code train-code-hidden" data-td="">';
+    html += make7SegDigit(' ') + make7SegDigit(' ') + make7SegDigit(' ');
+    html += '</div>';
+    return html;
+}*/
 
 function renderTrainCode(td, lineCode) {
-    if (!td) return '<div class="train-code" data-td=""></div>';
+    //if (!td) return '<div class="train-code" data-td=""></div>';
+    var typeBadgeNew = 'unknown';
+    if (!td) {
+        var html = '<span class="train-type-badge train-type-unknown"></span>';
+        html += '<div class="train-code train-code-hidden" data-td="">';
+        html += make7SegDigit(' ') + make7SegDigit(' ') + make7SegDigit(' ');
+        html += '</div>';
+        return html;
+    }
     var nums = td.replace(/[^0-9]/g, '');
     while (nums.length < 3) nums = '0' + nums;
     nums = nums.slice(-3);
@@ -2648,7 +2811,6 @@ function startCountdownTimers() {
 }
 
 function updateCountdowns() {
-    if (!lastUpdateTime) return;
     var now = new Date();
     var elems = document.querySelectorAll('.eta-time-countdown');
     elems.forEach(function (el) {
@@ -2665,5 +2827,75 @@ function updateCountdowns() {
             var s = secs % 60;
             el.textContent = m + ':' + String(s).padStart(2, '0');
         }
+    });
+}
+
+// ============================================
+// Settings Panel
+// ============================================
+function initSettingsPanel() {
+    // Sync mode switch state
+    var modeInput = document.getElementById('settings-mode-input');
+    if (modeInput) {
+        modeInput.checked = (masterMode === 'D');
+    }
+    // Sync viz switch state
+    var vizInput = document.getElementById('settings-viz-input');
+    if (vizInput) {
+        vizInput.checked = nextStationVizMode;
+    }
+}
+
+function toggleSettingsPanel() {
+    var panel = document.getElementById('settings-panel');
+    var overlay = document.getElementById('settings-overlay');
+    var isOpen = !panel.classList.contains('hidden');
+    if (isOpen) {
+        closeSettingsPanel();
+    } else {
+        // Sync states before opening
+        initSettingsPanel();
+        panel.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(function () {
+            panel.classList.add('open');
+            overlay.classList.add('open');
+        });
+    }
+}
+
+function closeSettingsPanel() {
+    var panel = document.getElementById('settings-panel');
+    var overlay = document.getElementById('settings-overlay');
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    setTimeout(function () {
+        panel.classList.add('hidden');
+        overlay.classList.add('hidden');
+    }, 300);
+}
+
+function settingsToggleTheme() {
+    var isDark = document.body.classList.toggle('dark-mode');
+    try { localStorage.setItem("mtreta_theme", isDark ? "dark" : "light"); } catch(e) {}
+    // Re-render ETA to update inline row colors
+    if (currentStationCode) { fetchETASilent(currentStationCode); }
+}
+
+function settingsToggleMode() {
+    var modeInput = document.getElementById('settings-mode-input');
+    masterMode = modeInput.checked ? 'D' : 'I';
+    saveMasterMode();
+    updateMasterSwitch();
+    if (currentStationCode) fetchETAInternal(currentStationCode, false);
+}
+
+function settingsToggleViz() {
+    var vizInput = document.getElementById('settings-viz-input');
+    nextStationVizMode = vizInput.checked;
+    try { localStorage.setItem("mtreta_nextstationviz", nextStationVizMode ? "true" : "false"); } catch(e) {}
+    // Re-render expanded rows if any are open
+    document.querySelectorAll('.eta-row2:not(.hidden)').forEach(function (row2El) {
+        populateRow2(row2El);
     });
 }
