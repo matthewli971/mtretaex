@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.14";
+const APP_VERSION = "v0.14.1";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -2276,6 +2276,14 @@ function populateRow2(row2El) {
 
     var html = '';
 
+
+    var lineStationCodeMap = stationCodeMap[lineCode] || null;
+    var currStaCode = lineStationCodeMap ? lineStationCodeMap[info.currentStation] : info.currentStation;
+    var currStaObj = '';
+    var nextStaObj = '';
+    var nextStaCode = '';
+    var locText = '';
+
     // Build door badge HTML (used in right column)
     var doorBadgeHtml = '';
     if (isFirstRow && info.doorStatus !== undefined && info.doorStatus !== null) {
@@ -2287,13 +2295,6 @@ function populateRow2(row2El) {
         }
         doorBadgeHtml = '<span class="door-badge ' + doorClass + '">' + doorText + '</span>';
     }
-
-    var lineStationCodeMap = stationCodeMap[lineCode] || null;
-    var currStaCode = lineStationCodeMap ? lineStationCodeMap[info.currentStation] : info.currentStation;
-    var currStaObj = '';
-    var nextStaObj = '';
-    var nextStaCode = '';
-    var locText = '';
 
     // NSL: show currentStation > nextStation (or 停站中 if startDistance == 0)
     if ((lineCode === 'EAL') && info.currentStation) {
@@ -2343,9 +2344,12 @@ function populateRow2(row2El) {
     var vizNextLabel = nextStaObj ? (nextStaObj.name_chi || nextStaCode) : (nextStaCode || '');
     if (lineCode === 'EAL' && info.startDistance !== undefined && info.startDistance !== null && (info.startDistance === 0 || info.startDistance === '0')) {
         isStopped = true;
-    } else if (lineCode === 'TML' && info.currentStation && info.nextStation && resolveStationCode(currStaCode) === resolveStationCode(nextStaCode)) {
+    } else if (lineCode === 'TML' 
+        && info.currentStation && info.nextStation && resolveStationCode(currStaCode) === resolveStationCode(nextStaCode)) {
         isStopped = true;
-    } else if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL' || lineCode === 'SIL' || lineCode === 'TCL') && info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' && resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
+    } else if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL' || lineCode === 'SIL' || lineCode === 'TCL') 
+        && info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' 
+        && resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
         isStopped = true;
     }
 
@@ -2401,7 +2405,7 @@ function populateRow2(row2El) {
     html += '<div class="' + leftColClass + '">';
     if (nextStationVizMode && locText && locText.trim() !== '') {
         // Calculate train progress position
-        var trainPosPct = 50;
+        var trainPosPct = null;
         if (lineCode === 'EAL' && !isStopped) {
             var startDist = parseInt(info.startDistance);
             var targetDist = parseInt(info.targetDistance);
@@ -2409,15 +2413,6 @@ function populateRow2(row2El) {
                 trainPosPct = Math.min(Math.max((startDist / (startDist + targetDist)) * 100, 2), 98);
             }
         }
-        var trainSvg = '<svg viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg">'
-            + '<rect x="0" y="1" width="15" height="9" rx="2" fill="currentColor"/>'
-            + '<rect x="1" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
-            + '<rect x="5.5" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
-            + '<rect x="10" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
-            + '<circle cx="3" cy="11" r="2" fill="currentColor" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>'
-            + '<circle cx="10" cy="11" r="2" fill="currentColor" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>'
-            + '<polygon points="15,4 18,6 15,8" fill="currentColor"/>'
-            + '</svg>';
 
         if (isStopped) {
             html += '<div class="row2-viz row2-viz-stopped">';
@@ -2430,7 +2425,10 @@ function populateRow2(row2El) {
             html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
             html += '<div class="row2-viz-dot row2-viz-dot-left"></div>';
             html += '<div class="row2-viz-dot row2-viz-dot-right row2-viz-dot-flash"></div>';
-            html += '<div class="row2-viz-train" style="left:' + trainPosPct + '%;color:' + vizLineColour + '">' + trainSvg + '</div>';
+            if (trainPosPct !== null) {
+                html += '<div class="row2-viz-train" style="left:' + trainPosPct + '%;color:' + vizLineColour + '">' + trainSvg + '</div>';
+            }
+            html += '<div class="row2-viz-line-arrow">' + arrowSvg + '</div>';
             if (info.trainSpeed && info.trainSpeed > 0) {
                 html += '<span class="row2-viz-speed">' + info.trainSpeed + ' km/h</span>';
             }
@@ -2444,7 +2442,7 @@ function populateRow2(row2El) {
     }
     html += '</div>'; // row2-left-col
 
-    // RIGHT column (50%): door badge on top, train info below (both right-aligned)
+    // RIGHT column: door badge on top, train info below (both right-aligned)
     html += '<div class="row2-right-col">';
     html += '<div class="row2-door-slot">' + doorBadgeHtml + '</div>';
     if (nextStationVizMode && trainInfoHtml) {

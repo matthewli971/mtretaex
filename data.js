@@ -8,6 +8,21 @@
 // Home station setting (change this to set default station)
 var HOME_STATION = "ADM";
 
+var trainSvg = '<svg viewBox="0 0 18 12" xmlns="http://www.w3.org/2000/svg">'
+             + '<rect x="0" y="1" width="15" height="9" rx="2" fill="currentColor"/>'
+             + '<rect x="1" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
+             + '<rect x="5.5" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
+             + '<rect x="10" y="2.5" width="3.5" height="3" rx="0.5" fill="rgba(0,0,0,0.4)"/>'
+             + '<circle cx="3" cy="11" r="2" fill="currentColor" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>'
+             + '<circle cx="10" cy="11" r="2" fill="currentColor" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>'
+             + '<polygon points="15,4 18,6 15,8" fill="currentColor"/>'
+             + '</svg>';
+
+            // Arrow icon — centered between the two station dots for all lines
+var arrowSvg = '<svg viewBox="-600 -500 1200 1000" xmlns="http://www.w3.org/2000/svg">'
+             + '<polygon points="-600,100 200,100 -200,500 100,500 600,0 100,-500 -200,-500 200,-100 -600,-100" fill="currentColor"/>'
+             + '</svg>';
+
 // All MTR stations
 // Fields: station_id, station_code, name_chi, name_eng, lines[], station_colour, station_font_colour
 var stationsData = [

@@ -336,3 +336,8 @@ Please help update the row2 behaviour :
 - Left column: visualized next station element, set the width to 50% of the column
 - Right column: Top row put the "Door open/Door Close" (fix position) then put the train ID/Train consist information at the right. Both elements align to right
 2. Please align the train load element to align at center
+
+Please help update according to follows:
+1. In visualization mode I updated the dot position to shift right 16px for left dot and shift left for right dot Please help to update the css to fit the location of the train object
+2. I added the arrow svg in the lib. Please help to set the arrow with light green same as refresh button (var(--color-accent)), with 3px black margin, and put the arrow to the center of the line if the train is going to the next station. Please apply this for all lines
+3. Please make the speed mark slightly upper (3px)
