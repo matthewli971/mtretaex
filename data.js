@@ -222,6 +222,145 @@ var stationCodeMap = {
   }
 };
 
+var stationOrderMap = {
+  "KTL": {
+    'WHA': 1,
+    'HOM': 2,
+    'YMT': 3,
+    'MOK': 4,
+    'PRE': 5,
+    'SKM': 6,
+    'KOT': 7,
+    'LOF': 8,
+    'WTS': 9,
+    'DIH': 10,
+    'CHH': 11,
+    'KOB': 12,
+    'NTK': 13,
+    'KWT': 14,
+    'LAT': 15,
+    'YAT': 16,
+    'TIK': 17
+  },
+  "TWL": {
+    'CEN': 1,
+    'ADM': 2,
+    'TST': 3,
+    'JOR': 4,
+    'YMT': 5,
+    'MOK': 6,
+    'PRE': 7,
+    'SSP': 8,
+    'CSW': 9,
+    'LCK': 10,
+    'MEF': 11,
+    'LAK': 12,
+    'KWF': 13,
+    'KWH': 14,
+    'TWH': 15,
+    'TSW': 16
+  },
+  "ISL": {
+    'KET': 1,
+    'HKU': 2,
+    'SYP': 3,
+    'SHW': 4,
+    'CEN': 5,
+    'ADM': 6,
+    'WAC': 7,
+    'CAB': 8,
+    'TIH': 9,
+    'FOH': 10,
+    'NOP': 11,
+    'QUB': 12,
+    'TAK': 13,
+    'SWH': 14,
+    'SKW': 15,
+    'HFC': 16,
+    'CHW': 17
+  },
+  "TKL": {
+    'NOP': 1,
+    'QUB': 2,
+    'YAT': 3,
+    'TIK': 4,
+    'TKO': 5,
+    'HAH': 6,
+    'POA': 7,
+    'LHP': 8
+  },
+  "SIL": {
+    'ADM': 1,
+    'OCP': 2,
+    'WCH': 3,
+    'LET': 4,
+    'SOH': 5
+  },
+  "TCL": {
+    'HOK': 1,
+    'KOW': 2,
+    'OLY': 3,
+    'NAC': 4,
+    'LAK': 5,
+    'TSY': 6,
+    'SUN': 7,
+    'TUC': 8
+  },
+  "AEL": {
+    'HOK': 1,
+    'KOW': 2,
+    'TSY': 3,
+    'AIR': 4,
+    'AWE': 5
+  },
+  "EAL": {
+    '29': 1,  // ADM
+    '22': 2,  // EXC
+    '1': 3,   // HUH
+    '2': 4,   // MKK
+    '3': 5,   // KOT
+    '4': 6,   // TAW
+    '5': 7,   // SHT
+    '6': 8,   // FOT
+    '7': 9,   // RAC
+    '10': 10, // TWO
+    '11': 11, // FAN
+    '12': 12, // SHS
+    '18': 13, // KTU
+    '13': 14, // LOW
+    '14': 15, // LMC
+  },
+  "TML": {
+    '29': 1,   // WKS
+    '28': 2,   // MOS
+    '27': 3,   // HEO
+    '26': 4,   // TSH
+    '25': 5,   // SHM
+    '24': 6,   // CIO
+    '23': 7,   // STW
+    '22': 8,   // CKT
+    '21': 9,   // TAW
+    '66': 10,  // HIK
+    '65': 11,  // DIH
+    '64': 12,  // KAT
+    '63': 13,  // SUW
+    '62': 14,  // TKW
+    '61': 15,  // HOM
+    '1':  16,  // HUH
+    '14': 17,  // ETS
+    '50': 18,  // AUS
+    '41': 19,  // NAC
+    '42': 20,  // MEF
+    '43': 21,  // TWW
+    '44': 22,  // KSR
+    '45': 23,  // YUL
+    '46': 24,  // LOP
+    '47': 25,  // TIS
+    '48': 26,  // SIH
+    '49': 27   // TUM
+  }
+}
+
 // TML station order for direction calculation (higher number = toward TUM/upline)
 var nslStationOrder = {
   '29': 1,  // ADM
