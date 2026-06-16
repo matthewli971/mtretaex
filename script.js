@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.14.1";
+const APP_VERSION = "v0.14.2";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -2404,36 +2404,65 @@ function populateRow2(row2El) {
     }
     html += '<div class="' + leftColClass + '">';
     if (nextStationVizMode && locText && locText.trim() !== '') {
-        // Calculate train progress position
-        var trainPosPct = null;
+        // Detect multi-hop (train is not yet at the station segment reaching the viewer)
+        var isMultiHop = false;
+        if (nextStaCode && nextStaCode !== 'NA' && nextStaCode !== '-') {
+            if (resolveStationCode(nextStaCode) !== resolveStationCode(currentStationCode)) {
+                isMultiHop = true;
+            }
+        }
+
+        // Calculate train progress position (0-100 scale on the segment)
+        var segmentPct = null;
         if (lineCode === 'EAL' && !isStopped) {
             var startDist = parseInt(info.startDistance);
             var targetDist = parseInt(info.targetDistance);
             if (!isNaN(startDist) && !isNaN(targetDist) && (startDist + targetDist) > 0) {
-                trainPosPct = Math.min(Math.max((startDist / (startDist + targetDist)) * 100, 2), 98);
+                segmentPct = (startDist / (startDist + targetDist)) * 100;
             }
         }
+        
+        // Map segment progress to total line width progress
+        var trainPosPct = null;
+        if (segmentPct !== null) {
+            trainPosPct = isMultiHop ? (segmentPct / 2) : segmentPct;
+        }
+        var arrowPct = isMultiHop ? 25 : 50;
 
         if (isStopped) {
             html += '<div class="row2-viz row2-viz-stopped">';
+            html += '<div class="row2-viz-group">';
             html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
             html += '<div class="row2-viz-dot row2-viz-dot-center"></div>';
+            html += '</div>';
             html += '<span class="row2-viz-label row2-viz-label-center">' + (vizCurrLabel || vizNextLabel) + '</span>';
             html += '</div>';
         } else {
             html += '<div class="row2-viz row2-viz-moving">';
+            html += '<div class="row2-viz-group">';
             html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
             html += '<div class="row2-viz-dot row2-viz-dot-left"></div>';
-            html += '<div class="row2-viz-dot row2-viz-dot-right row2-viz-dot-flash"></div>';
+            if (isMultiHop) {
+                html += '<div class="row2-viz-dot row2-viz-dot-mid row2-viz-dot-flash"></div>';
+                html += '<div class="row2-viz-dot row2-viz-dot-right"></div>';
+            } else {
+                html += '<div class="row2-viz-dot row2-viz-dot-right row2-viz-dot-flash"></div>';
+            }
             if (trainPosPct !== null) {
-                html += '<div class="row2-viz-train" style="left:' + trainPosPct + '%;color:' + vizLineColour + '">' + trainSvg + '</div>';
+                html += '<div class="row2-viz-train" style="--train-pct:' + trainPosPct + ';color:' + vizLineColour + '">' + trainSvg + '</div>';
             }
-            html += '<div class="row2-viz-line-arrow">' + arrowSvg + '</div>';
+            html += '<div class="row2-viz-line-arrow" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
             if (info.trainSpeed && info.trainSpeed > 0) {
-                html += '<span class="row2-viz-speed">' + info.trainSpeed + ' km/h</span>';
+                html += '<span class="row2-viz-speed" style="--arrow-pct:' + arrowPct + '%">' + info.trainSpeed + ' km/h</span>';
             }
+            html += '</div>'; // end row2-viz-group
             html += '<span class="row2-viz-label row2-viz-label-left">' + vizCurrLabel + '</span>';
-            html += '<span class="row2-viz-label row2-viz-label-right">' + vizNextLabel + '</span>';
+            if (isMultiHop) {
+                html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
+                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+            } else {
+                html += '<span class="row2-viz-label row2-viz-label-right">' + vizNextLabel + '</span>';
+            }
             html += '</div>';
         }
     } else if (trainInfoHtml) {

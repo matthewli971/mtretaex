@@ -341,3 +341,9 @@ Please help update according to follows:
 1. In visualization mode I updated the dot position to shift right 16px for left dot and shift left for right dot Please help to update the css to fit the location of the train object
 2. I added the arrow svg in the lib. Please help to set the arrow with light green same as refresh button (var(--color-accent)), with 3px black margin, and put the arrow to the center of the line if the train is going to the next station. Please apply this for all lines
 3. Please make the speed mark slightly upper (3px)
+
+In some cases the trains maybe several stations apart (i.e. next station not current station) as image show. In these cases please add an extra "if" handling for these cases and put the train actual next station at the centre of the line and add a dot corresponding to that station, then set the right dot description to "当駅" with yellow text color same as the "当駅始発" class, then update the arrow position and train distance indicator (i think similar divided by 2 is ok, please help me check)
+
+Is it possible to update the logic of updating the logic of row2-biz-line and row2-biz-dot to put the line, line dot, line arrow and train as a new div group and control the margin together? This may simplify the complicated calculations on the "left" config ion css and for easier editing  when new elements added. 
+
+Please handle the case for stopping at 

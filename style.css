@@ -889,16 +889,28 @@ html, body {
     display: flex;
     align-items: center;
 }
-.row2-viz-line {
+
+/* New wrapper group to handle component margins (16px left/right) */
+.row2-viz-group {
     position: absolute;
     left: 16px;
     right: 16px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.row2-viz-line {
+    position: absolute;
+    left: 0;
+    right: 0;
     height: var(--line-bar-height);
     border-radius: 3px;
     top: 50%;
     transform: translateY(-50%);
     margin-top: -8px;
 }
+
 .row2-viz-dot {
     position: absolute;
     width: var(--font-size-trainload-info);
@@ -910,31 +922,40 @@ html, body {
     transform: translate(-50%, calc(-50% - 8px));
     z-index: 2;
 }
+
 .row2-viz-dot-left {
-    left: 16px;
+    left: 0%;
 }
+
+.row2-viz-dot-mid {
+    left: 50%;
+}
+
 .row2-viz-dot-right {
-    left: calc(100% - 16px);
+    left: 100%;
 }
+
 .row2-viz-dot-center {
     left: 50%;
     animation: vizDotFlash 2s infinite;
     animation-timing-function: steps(1, start);
 }
+
 .row2-viz-dot-flash {
     animation: vizDotFlash 1s infinite;
     animation-timing-function: steps(1, start);
 }
+
 @keyframes vizDotFlash {
     0%, 100% { background: #fff; }
     50% { background: #ffd700; }
 }
+
 /* Train icon on the progress line */
 .row2-viz-train {
     position: absolute;
     top: 50%;
-    left: 16px;
-    right: 16px;
+    left: calc(var(--train-pct, 50) * 1%);
     transform: translate(-50%, calc(-50% - 20px));
     z-index: 3;
     display: flex;
@@ -946,11 +967,11 @@ html, body {
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
-/* Arrow icon — centered on the line between the two station dots */
+/* Arrow icon — positioned via --arrow-pct */
 .row2-viz-line-arrow {
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: var(--arrow-pct, 50%);
     transform: translate(-50%, calc(-50% - 8px));
     z-index: 3;
     display: flex;
@@ -967,7 +988,7 @@ html, body {
 
 .row2-viz-speed {
     position: absolute;
-    left: 50%;
+    left: var(--arrow-pct, 50%);
     bottom: 3px;
     transform: translateX(-50%);
     font-size: var(--font-size-trainload-info);
@@ -975,6 +996,7 @@ html, body {
     z-index: 2;
     white-space: nowrap;
 }
+
 .row2-viz-label {
     position: absolute;
     top: 50%;
@@ -983,18 +1005,30 @@ html, body {
     color: var(--color-text-dark);
     white-space: nowrap;
 }
+
 .row2-viz-label-left {
     left: 0%;
     transform: translateY(calc(-50% + 12px));
 }
+
+.row2-viz-label-mid {
+    left: 50%;
+    transform: translate(-50%, calc(-50% + 12px));
+}
+
 .row2-viz-label-right {
     right: 0%;
-    left: auto;
     transform: translateY(calc(-50% + 12px));
 }
+
 .row2-viz-label-center {
     left: 50%;
     transform: translate(-50%, calc(-50% + 12px));
+}
+
+.row2-viz-label-this-station {
+    color: var(--color-origin-self);
+    font-weight: bold;
 }
 
 .trainload-cars {

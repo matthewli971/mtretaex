@@ -249,6 +249,25 @@ var nslStationCodeMap = {
   '82': 'TEST'
 };
 
+// TML station order for direction calculation (higher number = toward TUM/upline)
+var nslStationOrder = {
+  '29': 1,  // ADM
+  '22': 2,  // EXC
+  '1': 3,   // HUH
+  '2': 4,   // MKK
+  '3': 5,   // KOT
+  '4': 6,   // TAW
+  '5': 7,   // SHT
+  '6': 8,   // FOT
+  '7': 9,   // RAC
+  '10': 10, // TWO
+  '11': 11, // FAN
+  '12': 12, // SHS
+  '18': 13, // KTU
+  '13': 14, // LOW
+  '14': 15, // LMC
+};
+
 var nslOriginMap = { 
   'A': 'SHT', 
   'B': 'LMC', 
@@ -335,6 +354,66 @@ var tmlStationOrder = {
   '48': 26,  // SIH
   '49': 27   // TUM
 };
+/*
+var tmlTravelTimePeak = {
+  1:  { upTravelTimeSec: 118, upDwellTimeSec: 24,   downTravelTimeSec: 138,  downDwellTimeSec: null }, // WKS
+  2:  { upTravelTimeSec: 118, upDwellTimeSec: 24,   downTravelTimeSec: 108,  downDwellTimeSec: 25 },   // MOS
+  3:  { upTravelTimeSec: 108, upDwellTimeSec: 24,   downTravelTimeSec: 111,  downDwellTimeSec: 25 },   // HEO
+  4:  { upTravelTimeSec: 107, upDwellTimeSec: 24,   downTravelTimeSec: 183,  downDwellTimeSec: 25 },   // TSH
+  5:  { upTravelTimeSec: 183, upDwellTimeSec: 24,   downTravelTimeSec: 76,   downDwellTimeSec: 25 },   // SHM
+  6:  { upTravelTimeSec: 76,  upDwellTimeSec: 25,   downTravelTimeSec: 97,   downDwellTimeSec: 25 },   // CIO
+  7:  { upTravelTimeSec: 97,  upDwellTimeSec: 25,   downTravelTimeSec: 91,   downDwellTimeSec: 25 },   // STW
+  8:  { upTravelTimeSec: 91,  upDwellTimeSec: 25,   downTravelTimeSec: 85,   downDwellTimeSec: 24 },   // CKT
+  9:  { upTravelTimeSec: 85,  upDwellTimeSec: 38,   downTravelTimeSec: 119,  downDwellTimeSec: 24 },   // TAW
+  10: { upTravelTimeSec: 119, upDwellTimeSec: 28,   downTravelTimeSec: 234,  downDwellTimeSec: 30 },   // HIK
+  11: { upTravelTimeSec: 240, upDwellTimeSec: 38,   downTravelTimeSec: 119,  downDwellTimeSec: 24 },   // DIH
+  12: { upTravelTimeSec: 119, upDwellTimeSec: 24,   downTravelTimeSec: 91,   downDwellTimeSec: 24 },   // KAT
+  13: { upTravelTimeSec: 91,  upDwellTimeSec: 24,   downTravelTimeSec: 110,  downDwellTimeSec: 38 },   // SUW
+  14: { upTravelTimeSec: 110, upDwellTimeSec: 24,   downTravelTimeSec: 103,  downDwellTimeSec: 24 },   // TKW
+  15: { upTravelTimeSec: 106, upDwellTimeSec: 38,   downTravelTimeSec: 92,   downDwellTimeSec: 24 },   // HOM
+  16: { upTravelTimeSec: 92,  upDwellTimeSec: 38,   downTravelTimeSec: 142,  downDwellTimeSec: 24 },   // HUH
+  17: { upTravelTimeSec: 142, upDwellTimeSec: 25,   downTravelTimeSec: 131,  downDwellTimeSec: 38 },   // ETS
+  18: { upTravelTimeSec: 147, upDwellTimeSec: 24,   downTravelTimeSec: 142,  downDwellTimeSec: 38 },   // AUS
+  19: { upTravelTimeSec: 142, upDwellTimeSec: 33,   downTravelTimeSec: 153,  downDwellTimeSec: 26 },   // NAC
+  20: { upTravelTimeSec: 156, upDwellTimeSec: 24,   downTravelTimeSec: 253,  downDwellTimeSec: 37 },   // MEF
+  21: { upTravelTimeSec: 253, upDwellTimeSec: 24,   downTravelTimeSec: 334,  downDwellTimeSec: 28 },   // TWW
+  22: { upTravelTimeSec: 331, upDwellTimeSec: 24,   downTravelTimeSec: 181,  downDwellTimeSec: 28 },   // KSR
+  23: { upTravelTimeSec: 183, upDwellTimeSec: 26,   downTravelTimeSec: 92,   downDwellTimeSec: 25 },   // YUL
+  24: { upTravelTimeSec: 91,  upDwellTimeSec: 23,   downTravelTimeSec: 143,  downDwellTimeSec: 26 },   // LOP
+  25: { upTravelTimeSec: 145, upDwellTimeSec: 28,   downTravelTimeSec: 237,  downDwellTimeSec: 24 },   // TIS
+  26: { upTravelTimeSec: 243, upDwellTimeSec: 28,   downTravelTimeSec: 138,  downDwellTimeSec: 41 },   // SIH
+  27: { upTravelTimeSec: 143, upDwellTimeSec: null, downTravelTimeSec: null, downDwellTimeSec: 25 }    // TUM
+};
+
+var tmlTravelTimeNonPeak = {
+  1:  { upTravelTimeSec: null, upDwellTimeSec: 24,   downTravelTimeSec: 174,  downDwellTimeSec: null }, // WKS
+  2:  { upTravelTimeSec: 118,  upDwellTimeSec: 24,   downTravelTimeSec: 108,  downDwellTimeSec: 26 },   // MOS
+  3:  { upTravelTimeSec: 107,  upDwellTimeSec: 24,   downTravelTimeSec: 109,  downDwellTimeSec: 26 },   // HEO
+  4:  { upTravelTimeSec: 107,  upDwellTimeSec: 24,   downTravelTimeSec: 183,  downDwellTimeSec: 26 },   // TSH
+  5:  { upTravelTimeSec: 183,  upDwellTimeSec: 25,   downTravelTimeSec: 76,   downDwellTimeSec: 26 },   // SHM
+  6:  { upTravelTimeSec: 76,   upDwellTimeSec: 25,   downTravelTimeSec: 97,   downDwellTimeSec: 25 },   // CIO
+  7:  { upTravelTimeSec: 97,   upDwellTimeSec: 25,   downTravelTimeSec: 91,   downDwellTimeSec: 25 },   // STW
+  8:  { upTravelTimeSec: 91,   upDwellTimeSec: 25,   downTravelTimeSec: 85,   downDwellTimeSec: 24 },   // CKT
+  9:  { upTravelTimeSec: 85,   upDwellTimeSec: 38,   downTravelTimeSec: 119,  downDwellTimeSec: 24 },   // TAW
+  10: { upTravelTimeSec: 119,  upDwellTimeSec: 25,   downTravelTimeSec: 242,  downDwellTimeSec: 24 },   // HIK
+  11: { upTravelTimeSec: 243,  upDwellTimeSec: 38,   downTravelTimeSec: 118,  downDwellTimeSec: 24 },   // DIH
+  12: { upTravelTimeSec: 119,  upDwellTimeSec: 25,   downTravelTimeSec: 91,   downDwellTimeSec: 24 },   // KAT
+  13: { upTravelTimeSec: 91,   upDwellTimeSec: 25,   downTravelTimeSec: 100,  downDwellTimeSec: 35 },   // SUW
+  14: { upTravelTimeSec: 110,  upDwellTimeSec: 25,   downTravelTimeSec: 103,  downDwellTimeSec: 24 },   // TKW
+  15: { upTravelTimeSec: 106,  upDwellTimeSec: 38,   downTravelTimeSec: 91,   downDwellTimeSec: 24 },   // HOM
+  16: { upTravelTimeSec: 92,   upDwellTimeSec: 38,   downTravelTimeSec: 142,  downDwellTimeSec: 25 },   // HUH
+  17: { upTravelTimeSec: 142,  upDwellTimeSec: 28,   downTravelTimeSec: 131,  downDwellTimeSec: 38 },   // ETS
+  18: { upTravelTimeSec: 147,  upDwellTimeSec: 25,   downTravelTimeSec: 141,  downDwellTimeSec: 38 },   // AUS
+  19: { upTravelTimeSec: 142,  upDwellTimeSec: 28,   downTravelTimeSec: 153,  downDwellTimeSec: 27 },   // NAC
+  20: { upTravelTimeSec: 156,  upDwellTimeSec: 26,   downTravelTimeSec: 253,  downDwellTimeSec: 33 },   // MEF
+  21: { upTravelTimeSec: 253,  upDwellTimeSec: 26,   downTravelTimeSec: 345,  downDwellTimeSec: 25 },   // TWW
+  22: { upTravelTimeSec: 342,  upDwellTimeSec: 27,   downTravelTimeSec: 181,  downDwellTimeSec: 25 },   // KSR
+  23: { upTravelTimeSec: 187,  upDwellTimeSec: 26,   downTravelTimeSec: 92,   downDwellTimeSec: 25 },   // YUL
+  24: { upTravelTimeSec: 93,   upDwellTimeSec: 26,   downTravelTimeSec: 147,  downDwellTimeSec: 24 },   // LOP
+  25: { upTravelTimeSec: 150,  upDwellTimeSec: 28,   downTravelTimeSec: 237,  downDwellTimeSec: 24 },   // TIS
+  26: { upTravelTimeSec: 243,  upDwellTimeSec: 28,   downTravelTimeSec: 142,  downDwellTimeSec: 24 },   // SIH
+  27: { upTravelTimeSec: 150,  upDwellTimeSec: null, downTravelTimeSec: null, downDwellTimeSec: 25 }    // TUM
+};*/
 
 // Platform groups: stations where platforms share same destinations
 // Format: { STATION_CODE: [[platformGroup_1], [platformGroup_2], ...] }
