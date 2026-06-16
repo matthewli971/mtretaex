@@ -209,44 +209,17 @@ var stationCodeMap = {
     '97': 'MOL'
   }, 
   "SIL": {
-			'26': 'ADM',
-			'27': 'ADM',
-			'28': 'OCP',
-			'29': 'OCP',
-			'30': 'WCH',
-			'31': 'WCH',
-			'32': 'LET',
-			'33': 'LET',
-			'34': 'SOH',
-			'35': 'SOH'
+    '26': 'ADM',
+    '27': 'ADM',
+    '28': 'OCP',
+    '29': 'OCP',
+    '30': 'WCH',
+    '31': 'WCH',
+    '32': 'LET',
+    '33': 'LET',
+    '34': 'SOH',
+    '35': 'SOH'
   }
-};
-
-// NSL (EAL) numeric station code mapping
-var nslStationCodeMap = {
-  '1': 'HUH',
-  '2': 'MKK',
-  '3': 'KOT',
-  '4': 'TAW',
-  '5': 'SHT',
-  '6': 'FOT',
-  '7': 'RAC',
-  '8': 'UNI',
-  '9': 'TAP',
-  '10': 'TWO',
-  '11': 'FAN',
-  '12': 'SHS',
-  '13': 'LOW',
-  '14': 'LMC',
-  '18': 'KTU',
-  '21': 'HUH',
-  '22': 'EXC',
-  '23': 'ADM',
-  '24': 'ADM Siding',
-  '91': 'HTD',
-  '92': 'HTD',
-  '81': 'TEST',
-  '82': 'TEST'
 };
 
 // TML station order for direction calculation (higher number = toward TUM/upline)
@@ -286,43 +259,6 @@ var nslOriginMap = {
 };
 
 var nslTermini = ['LOW', 'LMC', 'ADM'];
-
-var tmlStationCodeMap = {
-  '1': 'HUH',
-  '14': 'ETS',
-  '21': 'TAW',
-  '22': 'CKT',
-  '23': 'STW',
-  '24': 'CIO',
-  '25': 'SHM',
-  '26': 'TSH',
-  '27': 'HEO',
-  '28': 'MOS',
-  '29': 'WKS',
-  '41': 'NAC',
-  '42': 'MEF',
-  '43': 'TWW',
-  '44': 'KSR',
-  '45': 'YUL',
-  '46': 'LOP',
-  '47': 'TIS',
-  '48': 'SIH',
-  '49': 'TUM',
-  '50': 'AUS',
-  '61': 'HOM',
-  '62': 'TKW',
-  '63': 'SUW',
-  '64': 'KAT',
-  '65': 'DIH',
-  '66': 'HIK',
-  '80': 'DEP',
-  '91': 'DEP',
-  '92': 'OUT',
-  '93': 'SPC',
-  '94': 'TES',
-  '95': 'WR',
-  '97': 'MOL'
-};
 
 // TML station order for direction calculation (higher number = toward TUM/upline)
 var tmlStationOrder = {

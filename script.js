@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.14.2";
+const APP_VERSION = "v0.14.3";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1274,11 +1274,11 @@ function getTmlPositionLookup() {
     cache.data.forEach(function (train) {
         if (!train.nextStationCode && !train.currentStationCode) return;
 
-        var tmlStationCodeNewMap = stationCodeMap[tmlLineCode];
+        var tmlStationCodeMap = stationCodeMap[tmlLineCode];
         // Resolve station codes to abbreviations
-        var nextStaAbbr = (typeof tmlStationCodeNewMap !== 'undefined') ? tmlStationCodeNewMap[train.nextStationCode] : null;
-        var currStaAbbr = (typeof tmlStationCodeNewMap !== 'undefined') ? tmlStationCodeNewMap[train.currentStationCode] : null;
-        var destStaAbbr = (typeof tmlStationCodeNewMap !== 'undefined') ? tmlStationCodeNewMap[train.destinationStationCode] : null;
+        var nextStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.nextStationCode] : null;
+        var currStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.currentStationCode] : null;
+        var destStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[train.destinationStationCode] : null;
 
         // Direction: use precomputed isUpline
         var direction = train.isUpline ? 'up' : 'down';
@@ -1332,6 +1332,7 @@ function getTmlPositionLookup() {
 
 // Build a reverse map from station abbreviation to its TML numeric code
 function getTmlReverseCodeMap() {
+    var tmlStationCodeMap = stationCodeMap['TML'];
     if (typeof tmlStationCodeMap === 'undefined') return {};
     var rev = {};
     Object.keys(tmlStationCodeMap).forEach(function (numCode) {
@@ -1430,17 +1431,11 @@ function getTmlTrainsForStation(stationAbbr, direction, etaDests, etaTtnts) {
             if (trainDestResolved === etaDestResolved) {
                 // Check if train's nextStation is PAST the target station
                 // If so, only allow match when ETA ttnt <= 0 (train already at/departed station)
+                var tmlStationCodeMap = stationCodeMap['TML'];
                 var nextStaAbbr = (typeof tmlStationCodeMap !== 'undefined') ? tmlStationCodeMap[trainInfo.nextStation] : null;
                 var nextStaIdx = nextStaAbbr ? stationIndex[nextStaAbbr] : undefined;
                 if (nextStaIdx !== undefined && !isNaN(etaTtnt) && etaTtnt >= 1) {
-                    var isPast = false;
-                    if (direction === 'up') {
-                        // Upline: toward TUM (decreasing idx). "Past" = nextStation idx < targetIdx
-                        isPast = (nextStaIdx < targetIdx);
-                    } else {
-                        // Downline: toward WKS (increasing idx). "Past" = nextStation idx > targetIdx
-                        isPast = (nextStaIdx > targetIdx);
-                    }
+                    var isPast = direction === 'up' ? (nextStaIdx < targetIdx) : (nextStaIdx > targetIdx);
                     if (isPast) {
                         // Train has passed the station but ETA >= 1min — skip this train
                         continue;
@@ -2329,6 +2324,7 @@ function populateRow2(row2El) {
         nextStaObj = stationByCode[resolveStationCode(info.nextStation)];
         var currStaLabel = currStaObj ? currStaObj.name_chi : '';
         var nextStaLabel = nextStaObj ? nextStaObj.name_chi : info.nextStation;
+        nextStaCode = nextStaObj.station_code;
         if (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' &&
             resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
             locText = nextStaLabel + ' (停站中)';
@@ -2496,8 +2492,8 @@ function populateRow2(row2El) {
         var ealDirResolved = false;
         if (info.currentStation && info.nextStation) {
             var ealLineStations = (lineByCode['EAL'] || {}).stations || [];
-            var currAbbr = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.currentStation]) || info.currentStation;
-            var nextAbbr = (typeof nslStationCodeMap !== 'undefined' && nslStationCodeMap[info.nextStation]) || info.nextStation;
+            var currAbbr = (typeof lineStationCodeMap !== 'undefined' && lineStationCodeMap[info.currentStation]) || info.currentStation;
+            var nextAbbr = (typeof lineStationCodeMap !== 'undefined' && lineStationCodeMap[info.nextStation]) || info.nextStation;
             var currIdx = ealLineStations.indexOf(currAbbr);
             var nextIdx = ealLineStations.indexOf(nextAbbr);
             if (currIdx !== -1 && nextIdx !== -1 && currIdx !== nextIdx) {
