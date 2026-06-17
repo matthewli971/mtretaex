@@ -128,12 +128,12 @@
     <div id="settings-overlay" class="hidden" onclick="closeSettingsPanel()"></div>
     <div id="settings-panel" class="hidden">
         <div class="settings-header">
-            <span class="settings-title">Settings</span>
+            <span class="settings-title">設定</span>
             <button class="settings-close" onclick="closeSettingsPanel()" aria-label="Close settings">&times;</button>
         </div>
         <div class="settings-body">
             <div class="settings-item">
-                <span class="settings-item-label">Colour Background</span>
+                <span class="settings-item-label">背景顏色</span>
                 <div id="settings-theme-group" class="settings-theme-toggle" onclick="settingsToggleTheme()">
                     <button class="sun-btn" type="button" aria-label="Light mode">
                         <svg class="sun-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -156,14 +156,14 @@
                 </div>
             </div>
             <div class="settings-item">
-                <span class="settings-item-label">ETA Mode</span>
+                <span class="settings-item-label">到站時間預報模式</span>
                 <label class="settings-switch settings-switch-mode">
                     <input type="checkbox" id="settings-mode-input" onchange="settingsToggleMode()">
                     <span class="settings-switch-slider" data-on="D" data-off="I"></span>
                 </label>
             </div>
             <div class="settings-item">
-                <span class="settings-item-label">Next Station Display Visualization</span>
+                <span class="settings-item-label">視覺化車站顯示</span>
                 <label class="settings-switch settings-switch-viz">
                     <input type="checkbox" id="settings-viz-input" onchange="settingsToggleViz()">
                     <span class="settings-switch-slider" data-on="I" data-off="O"></span>

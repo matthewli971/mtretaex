@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.14.3";
+const APP_VERSION = "v0.14.5";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -2400,9 +2400,52 @@ function populateRow2(row2El) {
     }
     html += '<div class="' + leftColClass + '">';
     if (nextStationVizMode && locText && locText.trim() !== '') {
+        // Detect station sequence distance for special stopped-at-station cases
+        var stationDist = null;
+        var orderMap = stationOrderMap[lineCode];
+        if (orderMap) {
+            var viewOrderRank = null;
+            var trainOrderRank = null;
+            if (lineCode === 'EAL' || lineCode === 'TML') {
+                trainOrderRank = orderMap[info.currentStation];
+                var mapForLine = stationCodeMap[lineCode];
+                for (var id in mapForLine) {
+                    if (mapForLine[id] === currentStationCode) { viewOrderRank = orderMap[id]; break; }
+                }
+            } else {
+                viewOrderRank = orderMap[currentStationCode];
+                trainOrderRank = orderMap[info.currentStation];
+            }
+            if (viewOrderRank !== null && viewOrderRank !== undefined && trainOrderRank !== null && trainOrderRank !== undefined) {
+                var sortedRanks = Object.values(orderMap).sort((a,b) => a - b);
+                var distinctRanks = [...new Set(sortedRanks)];
+                var vIdx = distinctRanks.indexOf(viewOrderRank);
+                var tIdx = distinctRanks.indexOf(trainOrderRank);
+                if (vIdx !== -1 && tIdx !== -1) { stationDist = Math.abs(vIdx - tIdx); }
+            }
+        }
+
+        // Detect if train is stationary elsewhere
+        var isStoppedElsewhere = false;
+        if (stationDist !== null && !isStopped) {
+            var isGenericStopped = (info.doorStatus === true);
+            if (info.doorStatus === undefined || info.doorStatus === null) {
+                isGenericStopped = (info.currentStation && info.nextStation && resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation));
+            }
+            if (isGenericStopped) isStoppedElsewhere = true;
+        }
+
+        var isStoppedAtStart = null;
+        if (currentStationCode === currStaCode) {
+            isStoppedAtStart = true;
+            isStopped = true;
+        }
+
         // Detect multi-hop (train is not yet at the station segment reaching the viewer)
         var isMultiHop = false;
-        if (nextStaCode && nextStaCode !== 'NA' && nextStaCode !== '-') {
+        if (isStoppedElsewhere) {
+            isMultiHop = (stationDist >= 2);
+        } else if (nextStaCode && nextStaCode !== 'NA' && nextStaCode !== '-') {
             if (resolveStationCode(nextStaCode) !== resolveStationCode(currentStationCode)) {
                 isMultiHop = true;
             }
@@ -2410,7 +2453,9 @@ function populateRow2(row2El) {
 
         // Calculate train progress position (0-100 scale on the segment)
         var segmentPct = null;
-        if (lineCode === 'EAL' && !isStopped) {
+        if (isStoppedElsewhere) {
+            segmentPct = 0; // At the dot
+        } else if (lineCode === 'EAL' && !isStopped) {
             var startDist = parseInt(info.startDistance);
             var targetDist = parseInt(info.targetDistance);
             if (!isNaN(startDist) && !isNaN(targetDist) && (startDist + targetDist) > 0) {
@@ -2425,42 +2470,63 @@ function populateRow2(row2El) {
         }
         var arrowPct = isMultiHop ? 25 : 50;
 
+        html += '<div class="row2-viz">';
         if (isStopped) {
-            html += '<div class="row2-viz row2-viz-stopped">';
             html += '<div class="row2-viz-group">';
             html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
+            //if (isStoppedAtStart) { //NOT YET FINISHED!!!
+            //    html += '<span class="row2-viz-label row2-viz-label-left row2-viz-label-this-station">当駅</span>';
+            //} else {
+
+            //}
+
             html += '<div class="row2-viz-dot row2-viz-dot-center"></div>';
             html += '</div>';
             html += '<span class="row2-viz-label row2-viz-label-center">' + (vizCurrLabel || vizNextLabel) + '</span>';
-            html += '</div>';
         } else {
-            html += '<div class="row2-viz row2-viz-moving">';
             html += '<div class="row2-viz-group">';
             html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
-            html += '<div class="row2-viz-dot row2-viz-dot-left"></div>';
+            
+            var leftDotClass = 'row2-viz-dot row2-viz-dot-left';
+            if (isStoppedElsewhere) leftDotClass += ' row2-viz-dot-stopped';
+            html += '<div class="' + leftDotClass + '"></div>';
+
             if (isMultiHop) {
-                html += '<div class="row2-viz-dot row2-viz-dot-mid row2-viz-dot-flash"></div>';
+                var midDotClass = 'row2-viz-dot row2-viz-dot-mid';
+                if (!isStoppedElsewhere) midDotClass += ' row2-viz-dot-flash';
+                html += '<div class="' + midDotClass + '"></div>';
                 html += '<div class="row2-viz-dot row2-viz-dot-right"></div>';
             } else {
                 html += '<div class="row2-viz-dot row2-viz-dot-right row2-viz-dot-flash"></div>';
             }
+
             if (trainPosPct !== null) {
                 html += '<div class="row2-viz-train" style="--train-pct:' + trainPosPct + ';color:' + vizLineColour + '">' + trainSvg + '</div>';
             }
-            html += '<div class="row2-viz-line-arrow" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
+            
+            var arrowClass = 'row2-viz-line-arrow';
+            if (isStoppedElsewhere) arrowClass += ' row2-viz-arrow-blink';
+            html += '<div class="' + arrowClass + '" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
+            
             if (info.trainSpeed && info.trainSpeed > 0) {
                 html += '<span class="row2-viz-speed" style="--arrow-pct:' + arrowPct + '%">' + info.trainSpeed + ' km/h</span>';
             }
             html += '</div>'; // end row2-viz-group
             html += '<span class="row2-viz-label row2-viz-label-left">' + vizCurrLabel + '</span>';
-            if (isMultiHop) {
+
+            if (isStoppedElsewhere && stationDist >= 2) {
+                html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
+                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+            } else if (isStoppedElsewhere && stationDist === 1) {
+                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+            } else if (isMultiHop) {
                 html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
                 html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
             } else {
                 html += '<span class="row2-viz-label row2-viz-label-right">' + vizNextLabel + '</span>';
             }
-            html += '</div>';
         }
+        html += '</div>';
     } else if (trainInfoHtml) {
         // Non-viz mode: show text info in left column
         html += '<div class="row2-info">' + trainInfoHtml + '</div>';
@@ -2794,7 +2860,7 @@ function renderTrainCode(td, lineCode) {
 }
 
 // ============================================
-// Helper: Lighten a hex colour by a percentage
+// Helper: Lighten a hex fy a percentage
 // ============================================
 function lightenColor(hex, percent) {
     hex = hex.replace('#', '');

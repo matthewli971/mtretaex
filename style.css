@@ -41,6 +41,7 @@
     --color-dropdown-bg:      #ffffff;   /* Dropdown background */
     --color-dropdown-hover:   #e8f0fe;   /* Dropdown item hover */
     --color-origin-self:      #7a3800;   /* [當駅始発] text color (light mode: brown) */
+    --color-station-indicator: #ffd700;  /* Station indicator dot color */
 
     /* === Typography === */
     --font-family:            'MyriadMM', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
@@ -948,7 +949,7 @@ html, body {
 
 @keyframes vizDotFlash {
     0%, 100% { background: #fff; }
-    50% { background: #ffd700; }
+    50% { background: var(--color-station-indicator); }
 }
 
 /* Train icon on the progress line */
@@ -1031,6 +1032,18 @@ html, body {
     font-weight: bold;
 }
 
+@keyframes vizArrowBlink {
+    0%, 100% { color: #65fa6a; }
+    50% { color: #ffffff; }
+}
+.row2-viz-arrow-blink {
+    animation: vizArrowBlink 1s infinite;
+    animation-timing-function: steps(1, start);
+}
+.row2-viz-dot-stopped {
+    background-color: var(--color-station-indicator) !important;
+}
+
 .trainload-cars {
     display: flex;
     gap: 2px;
@@ -1061,7 +1074,7 @@ html, body {
 }
 
 .car-rect.first-class {
-    border: 3px solid #FFD700;
+    border: 3px solid var(--color-station-indicator);
 }
 .car-rect-empty  { background-color: #ffffff; color: #333; }
 .car-rect-low    { background-color: #4CAF50; color: #fff; }
