@@ -758,7 +758,7 @@ html, body {
     transform: translateX(1.4em);
 }
 
-/* Mode switch colors - I mode (unchecked) is blue */
+/* Mode switch colors - D mode (unchecked) is blue */
 .settings-switch-mode .settings-switch-slider {
     background-color: #2196f3;
 }

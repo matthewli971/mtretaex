@@ -346,4 +346,12 @@ In some cases the trains maybe several stations apart (i.e. next station not cur
 
 Is it possible to update the logic of updating the logic of row2-biz-line and row2-biz-dot to put the line, line dot, line arrow and train as a new div group and control the margin together? This may simplify the complicated calculations on the "left" config ion css and for easier editing  when new elements added. 
 
-Please handle the case for stopping at 
+Please help add the function of trains stopped at a station that is stopped but not in current station, maybe in last station or previous stations. I have added the stationOrderMap to show the sequence of all lines. Please apply this mode by first checking doorStatus (true = door opened > run), if thre is not doorstatus in trainload api items then check if train currentStation == nextStation. For lines not included in the map (e.g. DRL) please simply ignore the new logic. I set the same sequence for stations in branch lines(EAL SHS -> LOW / LMC, TKL TKO -> HAH+POA / LHP), so please update the var according to the code design. Please add handling to following case:
+- Train in 1 station before > Set the left dot to stay at yellow, set the arrow blink between current green and white, then update the right dot description to "当駅" with yellow bold (same as current design)
+- Train in 2 or more stations before > Set middle dot with description of the next station of current station, arrow between train currentStation and tran next station (i.e. between left and middle dot, 25%), then set  the arrow blink between current green and white, after that set right dot description to "当駅" with yellow bold (same as current design)
+
+Please add handling for trainload data containing currentSta = currentStation(station in display) and nextSta is the next station after current station in display. In this case please set the behaviour to left station show yellow bold "当駅" text, then station dot show still yellow and arrow flashing between grreen and white
+
+1. on settings toggle button please switch the side of d mode and I mode (D on left, I on right) . Please keep the colour position (D as blue, I as green)
+2. Please set default visualization mode on
+

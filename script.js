@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.14.5";
+const APP_VERSION = "v0.14.6";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -40,7 +40,7 @@ let countdownTimer = null;
 let masterMode = 'I';
 
 let railwayPlasticMode = false;
-let nextStationVizMode = false;
+let nextStationVizMode = true;
 
 // ============================================
 // Initialisation
@@ -708,8 +708,7 @@ function loadLineModeState() {
 function updateMasterSwitch() {
     var el = document.getElementById('settings-mode-input');
     if (!el) return;
-    var isD = masterMode === 'D';
-    el.checked = isD;
+    el.checked = (masterMode === 'I');
 }
 
 function showLoader() {
@@ -2514,16 +2513,18 @@ function populateRow2(row2El) {
             html += '</div>'; // end row2-viz-group
             html += '<span class="row2-viz-label row2-viz-label-left">' + vizCurrLabel + '</span>';
 
-            if (isStoppedElsewhere && stationDist >= 2) {
-                html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
-                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
-            } else if (isStoppedElsewhere && stationDist === 1) {
-                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
-            } else if (isMultiHop) {
-                html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
-                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+            if (isStoppedElsewhere) {
+                if (stationDist >= 2) {
+                    html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
+                    html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+                } else if (stationDist === 1) {
+                    html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+                }
             } else {
-                html += '<span class="row2-viz-label row2-viz-label-right">' + vizNextLabel + '</span>';
+                if (isMultiHop) {
+                    html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
+                }
+                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
             }
         }
         html += '</div>';
@@ -2926,7 +2927,8 @@ function initSettingsPanel() {
     // Sync mode switch state
     var modeInput = document.getElementById('settings-mode-input');
     if (modeInput) {
-        modeInput.checked = (masterMode === 'D');
+        // Now: Checked means 'I', Unchecked means 'D'
+        modeInput.checked = (masterMode === 'I');
     }
     // Sync viz switch state
     var vizInput = document.getElementById('settings-viz-input');
@@ -2973,7 +2975,7 @@ function settingsToggleTheme() {
 
 function settingsToggleMode() {
     var modeInput = document.getElementById('settings-mode-input');
-    masterMode = modeInput.checked ? 'D' : 'I';
+    masterMode = modeInput.checked ? 'I' : 'D';
     saveMasterMode();
     updateMasterSwitch();
     if (currentStationCode) fetchETAInternal(currentStationCode, false);
