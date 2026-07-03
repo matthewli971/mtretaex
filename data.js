@@ -327,8 +327,8 @@ var stationOrderMap = {
     '11': 10, // FAN
     '12': 11, // SHS
   /*  '18': 12, // KTU*/
-    '13': 13, // LOW
-    '14': 13, // LMC
+    '13': 12, // LOW, set to 13 after KTU opened
+    '14': 12, // LMC, set to 13 after KTU opened
   },
   "TML": {
     '29': 1,   // WKS

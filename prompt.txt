@@ -355,3 +355,12 @@ Please add handling for trainload data containing currentSta = currentStation(st
 1. on settings toggle button please switch the side of d mode and I mode (D on left, I on right) . Please keep the colour position (D as blue, I as green)
 2. Please set default visualization mode on
 
+Please help to update the app according to following:
+1. In line visualization, when the train is stopped, it may not be stopped at the current station user viewing. Please help to update the code to support showing next station. Please analyze the stationOrderMap and modify it if needed. 
+- For stations that is 1 station apart (current station: FOH, train currentSta: NOP), set left dot showing train currentSta to yellow, put the green arrow to the middle then set the arrow to blink between green and white, set the right dot at current station ("当駅") in white and show the "当駅" text in yellow (refer to image 1)
+- For stations that is 2 stations spart (current station: FOH, train currentSta: QUB), set left dot showing train currentSta to yellow, put the green arrow to the 25%(between left and middle) then set the arrow to blink between green and white, set a train dot in the middle of train currentSta and current Station with station name marked below (if current Station FOH, train currentSta is QUB, add dot on middle marked with "北角"(QUB[>NOP]>FOH)), set the right dot at current station ("当駅") in white and show the "当駅" text in yellow (refer to image 3)
+- For stations that is 3 or more stations spart (current station: FOH, train currentSta: TAK), set left dot showing train currentSta to yellow, put the green arrow to the 25%(between left and middle) then set the arrow to blink between green and white, add a new rounded square at the middle of the line showing how many stations in the middle of train currentSta and current Station (if current Station FOH, train currentSta is TAK, show "2" in the square (TAK>[QUB>NOP]>FOH)), set the right dot at current station ("当駅") in white and show the "当駅" text in yellow (refer to image 3)
+Please handle for following branch lines:
+EAL: 1. ...-UNI-FOT-SHT-... ; 2. ...-UNI-RAC-SHT-...
+EAL: 1. LMC-SHS-... ; 2. LOW-SHS-...
+TKL: 1. POA-HAH-TKO-... ; 2. LHP-TKO-...

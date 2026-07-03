@@ -1041,7 +1041,26 @@ html, body {
     animation-timing-function: steps(1, start);
 }
 .row2-viz-dot-stopped {
-    background-color: var(--color-station-indicator) !important;
+    background-color: #ffd700 !important;
+}
+
+.row2-viz-mid-badge {
+    position: absolute;
+    width: 24px;
+    height: 18px;
+    border-radius: 4px;
+    background-color: var(--color-bg-page);
+    border: 2.5px solid var(--viz-line-color, #444);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(-50% - 8px));
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--font-size-trainload-info) * 0.9);
+    font-weight: bold;
+    color: var(--color-text-dark);
 }
 
 .trainload-cars {
