@@ -327,7 +327,7 @@ var stationOrderMap = {
     '11': 10, // FAN
     '12': 11, // SHS
   /*  '18': 12, // KTU*/
-    '13': 12, // LOW, set to 13 after KTU opened
+    '13': 12,
     '14': 12, // LMC, set to 13 after KTU opened
   },
   "TML": {
@@ -359,7 +359,7 @@ var stationOrderMap = {
     '48': 26,  // SIH
     '49': 27   // TUM
   }
-}
+};
 
 // TML station order for direction calculation (higher number = toward TUM/upline)
 var nslStationOrder = {

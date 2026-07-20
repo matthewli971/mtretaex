@@ -1557,6 +1557,24 @@ body.dark-mode .eta-row-odd {
         --car-rect-width: 5vw;
     }
 
+    #header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    #header-left {
+        width: auto;
+        flex: 1;
+    }
+
+    #header-right {
+        width: auto;
+        flex-shrink: 0;
+        justify-content: flex-end;
+        gap: var(--spacing-xl);
+    }
+
     .eta-row .eta-time {
         min-width: 17%;
     }
@@ -1647,24 +1665,6 @@ body.dark-mode .eta-row-odd {
         
         /* Trainload car visualization */
         --car-rect-width: 46px;
-    }
-
-    #header {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    #header-left {
-        width: auto;
-        flex: 1;
-    }
-
-    #header-right {
-        width: auto;
-        flex-shrink: 0;
-        justify-content: flex-end;
-        gap: var(--spacing-xl);
     }
     
     .car-rect.car-rect-eal {

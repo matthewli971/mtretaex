@@ -3,6 +3,11 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.15
+- **Visualization Mode Update**: Updated back end behaviour
+- **Data Library Update**: Add station sequence for all lines for showing how many stations left to current station
+- **Settings Page Update**: Data mode switch update
+
 ### v0.14
 - **UI Update**: Put config items in settings page indicated with a spala logo
 - **Car Rectangle UI fix**: Avoid car rectangles goes to the second row which affect readability

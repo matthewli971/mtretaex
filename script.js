@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.14.8";
+const APP_VERSION = "v0.15";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1656,6 +1656,21 @@ function updateTrainEnrichment() {
                 }
             }
 
+            // Departed check reactively: if train at current station and TTNT is 0 or 1, mark as departed
+            var ttntAttr = row.getAttribute('data-ttnt');
+            var ttntVal = ttntAttr ? parseInt(ttntAttr, 10) : -1;
+            if (info && info.currentStation && info.currentStation === currentStationCode && ttntVal <= 1) {
+                var destChiEl = row1.querySelector('.eta-dest-chi');
+                var etaTimeEl = row1.querySelector('.eta-time');
+                if (destChiEl && !destChiEl.classList.contains('eta-dest-noop')) {
+                    destChiEl.classList.add('eta-dest-departed');
+                }
+                if (etaTimeEl) {
+                    etaTimeEl.classList.add('eta-time-muted');
+                    etaTimeEl.innerHTML = '<span class="eta-time-departing">已離站</span>';
+                }
+            }
+
             // Door status: only show on first row of each platform
             var platform = row.getAttribute('data-platform');
             var isFirstForPlatform = platform && !platformDoorShown[platform];
@@ -1703,6 +1718,7 @@ function processETAData(data) {
 
     // Collect all trains grouped by line then platform
     const lineGroups = {};
+    const enrichmentLookup = getTrainInfoByTd();
 
     Object.keys(data.line).forEach(function (lineCode) {
         const mappedLine = mapLineCode(lineCode);
@@ -1721,9 +1737,18 @@ function processETAData(data) {
                 var ttntNum = parseInt(ttnt, 10);
                 // Filter out -1 min trains unless ttd is valid (originating trains)
                 if (ttntNum < 0) {
-                    var ttdNum = parseInt(train.ttd, 10);
-                    if (isNaN(ttdNum) || ttdNum < 0) return;
-                    ttnt = train.ttd; // use departure time for originating trains
+                    var ttaNum = parseInt(train.tta, 10);
+                    if (isNaN(ttaNum) || ttaNum < 0) return;
+                    ttnt = train.tta; // use departure time for originating trains
+                }
+
+                // Enrichment lookup
+                var enrichment = null;
+                if (train.td) {
+                    var tdNum = train.td.replace(/[^0-9]/g, '');
+                    while (tdNum.length < 3) tdNum = '0' + tdNum;
+                    tdNum = tdNum.slice(-3);
+                    enrichment = enrichmentLookup[mappedLine + '_' + tdNum];
                 }
 
                 lineGroups[mappedLine].push({
@@ -1734,7 +1759,8 @@ function processETAData(data) {
                     tta: train.tta,
                     ttd: train.ttd,
                     td: train.td || "",
-                    routeCode: train.routeCode || null,
+                    routeCode: train.routeCode || (enrichment ? enrichment.routeCode : null),
+                    currentStation: enrichment ? enrichment.currentStation : null,
                     _odSupplemented: train._odSupplemented || false
                 });
             });
@@ -1896,9 +1922,22 @@ function processETAData(data) {
             }
 
             var isViaRac = (lineCode === 'EAL') && train.td && /[BGKN]/i.test(train.td) && !isNoop;
-            var isDeparted = (train.ttnt === 0 || train.ttnt === "0") && lastUpdateTime && (new Date() - lastUpdateTime) > 30000;
+            
+            // Departed logic: 
+            // 1. ttnt === 0 and elapsed > 30s
+            // 2. currentStationCode === train.currentStation (from enrichment)
+            var isDeparted = false;
+            if ((train.ttnt === 0 || train.ttnt === "0") && lastUpdateTime && (new Date() - lastUpdateTime) > 30000) {
+                isDeparted = true;
+            }
+            // if currentStationCode === train.currentStation, treated as the train departed from the current station
+            // Only update if TTNT is 1 or 0 to avoid showing at other lines/stations incorrectly
+            var ttntVal = parseInt(train.ttnt, 10);
+            if (currentStationCode && train.currentStation && currentStationCode === train.currentStation && ttntVal <= 1) {
+                isDeparted = true;
+            }
 
-            var timeDisplay = formatTrainTime(train, isNoop || isUnknownDest);
+            var timeDisplay = formatTrainTime(train, isNoop || isUnknownDest, isDeparted);
             var isFullDMode = (masterMode === 'D');
             var isOpenDataModeLine = (typeof openDataLines !== 'undefined' && openDataLines.indexOf(lineCode) !== -1);
             var tdHtml;
@@ -2396,6 +2435,9 @@ function populateRow2(row2El) {
         trainInfoHtml += '<span class="row2-info-item">Consist: ' + trainConsistText + '</span>';
     }
 
+    var viewStaObj = currentStationCode ? stationByCode[currentStationCode] : null;
+    var viewStaLabel = viewStaObj ? viewStaObj.name_chi : currentStationCode;
+
     // ── Row 1: two-column layout ──────────────────────────────────────────────
     html += '<div class="row2-info-row">';
 
@@ -2476,13 +2518,13 @@ function populateRow2(row2El) {
         var arrowPct = isMultiHop && !trainStopAtCurrStation ? 25 : 50;
 
         html += '<div class="row2-viz">';
-        if (isStoppedAtStart || isStopped) {
             html += '<div class="row2-viz-group">';
             html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
+        if (isStoppedAtStart || isStopped) {
             if (trainStopAtCurrStation) {
                 html += '<div class="row2-viz-dot row2-viz-dot-center"></div>';
                 html += '</div>';
-                html += '<span class="row2-viz-label row2-viz-label-center row2-viz-label-this-station">' + vizCurrLabel + ' [当駅]</span>';
+                html += '<span class="row2-viz-label row2-viz-label-center row2-viz-label-this-station">' + viewStaLabel + ' [当駅]</span>';
             }
             else {
                 var leftDotClass = 'row2-viz-dot row2-viz-dot-left row2-viz-dot-stopped';
@@ -2492,12 +2534,9 @@ function populateRow2(row2El) {
                 html += '<div class="row2-viz-line-arrow row2-viz-arrow-blink" style="--arrow-pct:50%">' + arrowSvg + '</div>';
                 html += '</div>'; // end row2-viz-group
                 html += '<span class="row2-viz-label row2-viz-label-left">' + vizCurrLabel + '</span>';
-                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+                html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">' + viewStaLabel + ' [当駅]</span>';
             }
         } else {
-            html += '<div class="row2-viz-group">';
-            html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
-            
             var leftDotClass = 'row2-viz-dot row2-viz-dot-left';
             if (isStoppedElsewhere) leftDotClass += ' row2-viz-dot-stopped';
             html += '<div class="' + leftDotClass + '"></div>';
@@ -2524,7 +2563,7 @@ function populateRow2(row2El) {
             }
             html += '</div>'; // end row2-viz-group
             if (trainStopAtCurrStation) {
-                html += '<span class="row2-viz-label row2-viz-label-left row2-viz-label-this-station">' + vizCurrLabel + ' [当駅]</span>';
+                html += '<span class="row2-viz-label row2-viz-label-left row2-viz-label-this-station">' + viewStaLabel + ' [当駅]</span>';
             } else {
                 html += '<span class="row2-viz-label row2-viz-label-left">' + vizCurrLabel + '</span>';
             }
@@ -2534,7 +2573,7 @@ function populateRow2(row2El) {
                     html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
                 } 
                 if (stationDist >= 1) {
-                    html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+                    html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">' + viewStaLabel + ' [当駅]</span>';
                 }
             } else {
                 if (trainStopAtCurrStation) {
@@ -2543,7 +2582,7 @@ function populateRow2(row2El) {
                     if (isMultiHop) {
                         html += '<span class="row2-viz-label row2-viz-label-mid">' + vizNextLabel + '</span>';
                     }
-                    html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">当駅</span>';
+                    html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">' + viewStaLabel + ' [当駅]</span>';
                 }
             }
         }
@@ -2733,10 +2772,15 @@ function parseTimeValue(train) {
 // ============================================
 // Helper: Format train arrival time display
 // ============================================
-function formatTrainTime(train, isMuted) {
+function formatTrainTime(train, isMuted, isDepartedForce) {
     var val = train.ttnt;
     var mutedClass = isMuted ? ' eta-time-muted-text' : '';
     var odClass = train._odSupplemented ? ' eta-time-od-supplemented' : '';
+    
+    if (isDepartedForce) {
+        return '<span class="eta-time-departing' + odClass + mutedClass + '">已離站</span>';
+    }
+
     // Check if departing (0)
     if (val === 0 || val === "0") {
         // If current time - last update time > 30s, show 已離站
