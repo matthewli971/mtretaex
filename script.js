@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.15";
+const APP_VERSION = "v0.15.1";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1943,11 +1943,8 @@ function processETAData(data) {
             var tdHtml;
             if (isFullDMode) {
                 tdHtml = '';
-            //} else if (isOpenDataModeLine) {
-            //    // openDataLines in I-mode: show 7-seg if td matched from I-mode, otherwise dimmed placeholder
-            //    tdHtml = train.td ? renderTrainCode(train.td, lineCode) : renderHiddenTrainCode();
             } else {
-                tdHtml = renderTrainCode(train.td, lineCode);
+                tdHtml = renderTrainCode(train.td, lineCode, isVVTrain);
             }
             var rowClass = (rowIndex % 2 === 0) ? 'eta-row-even' : 'eta-row-odd';
             var isDark = document.body.classList.contains('dark-mode');
@@ -2012,9 +2009,6 @@ function processETAData(data) {
                 rowHtml += '<span class="eta-dest-origin' + originExtraClass + '">[' + destOriginHtml + '始発]</span>';
             }
             rowHtml += '</div>';
-            if (isVVTrain) {
-                rowHtml += '<img src="lib/chai.png" class="eta-chai-badge">';
-            }
             rowHtml += tdHtml;
             rowHtml += '<div class="eta-platform-badge" style="background-color:' + colour + '">' + train.platform + '</div>';
             rowHtml += '<div class="eta-time' + ((isNoop || isUnknownDest || isVVTrain) ? ' eta-time-muted' : (isDeparted ? ' eta-time-muted' : '')) + '">' + timeDisplay + '</div>'
@@ -2808,20 +2802,29 @@ function getSpecialTrainOrigin(lineCode, trainTd, platformNum) {
     if (typeof specialTrains === 'undefined' || !specialTrains[lineCode]) return null;
     var now = new Date();
     var dayOfWeek = now.getDay();
+    if (dayOfWeek === 0) dayOfWeek = 7; // Map Sunday from 0 to 7
     var specialsNew = specialTrains[lineCode];
     var lineData = linesOperationData[lineCode];
     var specialTrainShowBeforeMins = (lineData != null && lineData.journey_time != null) ? lineData.journey_time : DEFAULT_SPECIAL_TRAIN_SHOW_BEFORE_MINS;
     var specialTrainShowAfterMins  = (lineData != null && lineData.journey_time != null) ? lineData.journey_time  : DEFAULT_SPECIAL_TRAIN_SHOW_AFTER_MINS;
     var normalizedTd = String(parseInt((trainTd || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(2, '0').slice(-2);
-    var isUp = (parseInt(platformNum, 10) % 2 === 1);
-    var specials = isUp ? specialsNew.up : specialsNew.down;
-    for (var i = 0; i < specials.length; i++) {
-        var s = specials[i];
+    
+    var allSpecials = [];
+    if (specialsNew.up) allSpecials = allSpecials.concat(specialsNew.up);
+    if (specialsNew.down) allSpecials = allSpecials.concat(specialsNew.down);
+
+    for (var i = 0; i < allSpecials.length; i++) {
+        var s = allSpecials[i];
         if ((s.td !== normalizedTd) || (s.operating_days && s.operating_days.indexOf(dayOfWeek) === -1)) continue;
         var depParts = s.departure_time.split(':');
         var depMin = parseInt(depParts[0], 10) * 60 + parseInt(depParts[1], 10);
         var nowMin = now.getHours() * 60 + now.getMinutes();
-        if (nowMin >= depMin - specialTrainShowBeforeMins && nowMin <= depMin + specialTrainShowAfterMins) {
+        
+        // Handle cross-midnight comparison safely using modulo
+        var diff = (nowMin - depMin + 1440) % 1440;
+        // diff is the minutes passed since departure time.
+        // If it's a very large number (e.g. 1420), it means 'now' is BEFORE departure (e.g. 20 mins before).
+        if (diff <= specialTrainShowAfterMins || diff >= (1440 - specialTrainShowBeforeMins)) {
             return s.origin_station_code;
         }
     }
@@ -2890,11 +2893,14 @@ function renderHiddenTrainCode() {
     return html;
 }*/
 
-function renderTrainCode(td, lineCode) {
+function renderTrainCode(td, lineCode, isVVTrain) {
     //if (!td) return '<div class="train-code" data-td=""></div>';
     var typeBadgeNew = 'unknown';
     if (!td) {
         var html = '<span class="train-type-badge train-type-unknown"></span>';
+        if (isVVTrain) {
+            html = '<span class="train-type-badge train-type-vv"><img src="lib/chai.png" class="eta-chai-badge"></span>';
+        }
         html += '<div class="train-code train-code-hidden" data-td="">';
         html += make7SegDigit(' ') + make7SegDigit(' ') + make7SegDigit(' ');
         html += '</div>';
@@ -2908,7 +2914,9 @@ function renderTrainCode(td, lineCode) {
     var key = lineCode ? lineCode + '_' + nums : null;
     var info = key ? lookupWithIslFallback(lookup, lineCode, nums) : null;
     var typeBadge = '';
-    if (info && info.trainType) {
+    if (isVVTrain) {
+        typeBadge = '<span class="train-type-badge train-type-vv"><img src="lib/chai.png" class="eta-chai-badge"></span>';
+    } else if (info && info.trainType) {
         typeBadge = '<span class="train-type-badge train-type-' + info.trainType.toLowerCase() + '" onclick="toggleRow2(this)">' + info.trainType + '</span>';
     } else {
         typeBadge = '<span class="train-type-badge train-type-unknown"></span>';

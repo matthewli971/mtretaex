@@ -1199,14 +1199,15 @@ html, body {
 }
 
 /* VV badge Chai icon */
+.train-type-vv {
+    background-color: transparent !important;
+    padding-top: 0 !important;
+}
 .eta-chai-badge {
-    width: 6vw;
-    height: 6vw;
-    min-height: 28px;
-    max-height: 28px;
+    max-width: 110%;
+    max-height: 110%;
     object-fit: contain;
     flex-shrink: 0;
-    margin-right: 2px;
 }
 
 .eta-row .eta-time {
