@@ -2795,6 +2795,16 @@ function formatTrainTime(train, isMuted, isDepartedForce) {
     if (isNaN(mins)) {
         return '<span class="eta-time-departing' + mutedClass + odClass + '">' + escapeHtml(String(val)) + '</span>';
     }
+
+    if (mins > 60) {
+        var refTime = new Date();
+        var arrivalTime = new Date(refTime.getTime() + mins * 60000);
+        var h = arrivalTime.getHours();
+        var m = arrivalTime.getMinutes();
+        var mStr = (m < 10 ? '0' : '') + m;
+        return '<span class="eta-time-value' + odClass + mutedClass + '">' + h + ':' + mStr + '</span>';
+    }
+
     return '<span class="eta-time-value' + odClass + mutedClass + '">' + mins + '</span><span class="eta-time-unit' + mutedClass + '"> min</span>';
 }
 
