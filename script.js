@@ -2366,7 +2366,7 @@ function populateRow2(row2El) {
         nextStaObj = stationByCode[resolveStationCode(info.nextStation)];
         var currStaLabel = currStaObj ? currStaObj.name_chi : '';
         var nextStaLabel = nextStaObj ? nextStaObj.name_chi : info.nextStation;
-        nextStaCode = nextStaObj.station_code;
+        nextStaCode = nextStaObj ? nextStaObj.station_code : 'N/A';
         if (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' &&
             resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
             locText = nextStaLabel + ' (停站中)';
