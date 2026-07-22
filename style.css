@@ -1044,6 +1044,28 @@ html, body {
     background-color: #ffd700 !important;
 }
 
+.row2-viz-station-count {
+    position: absolute;
+    width: 22px;
+    height: 20px;
+    border-radius: 4px;
+    background-color: var(--color-bg-page);
+    border: 2.5px solid;
+    top: 50%;
+    transform: translate(-50%, calc(-50% - 8px));
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--font-size-trainload-info) * 1);
+    font-weight: bold;
+    color: #ffffff;
+}
+
+body:not(.dark-mode) .row2-viz-station-count {
+    color: var(--color-text-dark);
+}
+
 .row2-viz-mid-badge {
     position: absolute;
     width: 24px;

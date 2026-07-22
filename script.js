@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.15.1";
+const APP_VERSION = "v0.15.2";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -2402,9 +2402,10 @@ function populateRow2(row2El) {
         }
     }
     
+    var trainConsistText = '';
     if (lineCode === 'TML' && info.currentStation) {
         if (info.trainId) {
-            trainInfoHtml += '<span class="row2-info-item">Train #' + info.trainId + '</span>';
+            trainConsistText = 'Train #' + info.trainId;
         }
     } else if (lineCode === 'EAL') {
         var ealTd = etaRow.getAttribute('data-td') || '';
@@ -2416,17 +2417,16 @@ function populateRow2(row2El) {
                     ealTrainLabel += '(T' + Math.floor(tidNum / 3) + ')';
                 }
             }
-            trainInfoHtml += '<span class="row2-info-item">Train #' + ealTrainLabel + '</span>';
+            trainConsistText = 'Train #' + ealTrainLabel;
         }
     }
-    var trainConsistText = '';
     if (lineCode === 'TKL' || (info.trainConsist && info.trainConsist === '-')) {
-        trainConsistText = info.trainId ? info.trainId : '';
-    } else {
-        trainConsistText = info.trainConsist ? info.trainConsist : '';
+        trainConsistText = 'Consist: ' + (info.trainId ? info.trainId : '');
+    } else if (info.trainConsist && info.trainConsist !== '') {
+        trainConsistText = 'Consist: ' + (info.trainConsist ? info.trainConsist : '');
     }
     if (trainConsistText && trainConsistText.trim() !== '') {
-        trainInfoHtml += '<span class="row2-info-item">Consist: ' + trainConsistText + '</span>';
+        trainInfoHtml += '<span class="row2-info-item">' + trainConsistText + '</span>';
     }
 
     var viewStaObj = currentStationCode ? stationByCode[currentStationCode] : null;
@@ -2438,9 +2438,12 @@ function populateRow2(row2El) {
     // LEFT column (50%): visualization or plain text
     html += '<div class="' + (nextStationVizMode ? 'row2-left-col' : 'row2-left-col row2-left-col-viz') + '">';
 
+    // Variables for station count visualization for now
+    var stationDist = null;
+    var remainingStationsPct = 75;
+
     if (nextStationVizMode && locText && locText.trim() !== '') {
         // Detect station sequence distance for special stopped-at-station cases
-        var stationDist = null;
         var orderMap = stationOrderMap[lineCode];
         if (orderMap) {
             var viewOrderRank = null;
@@ -2457,10 +2460,9 @@ function populateRow2(row2El) {
             }
             if (viewOrderRank !== null && viewOrderRank !== undefined && trainOrderRank !== null && trainOrderRank !== undefined) {
                 var sortedRanks = [...new Set(Object.values(orderMap))].sort((a,b) => a - b);
-                console.log(trainInfoHtml, 'viewOrderRank:', viewOrderRank, 'trainOrderRank:', trainOrderRank, 'sortedRanks:', sortedRanks);
                 var vIdx = sortedRanks.indexOf(viewOrderRank);
                 var tIdx = sortedRanks.indexOf(trainOrderRank);
-                if (vIdx !== -1 && tIdx !== -1) { stationDist = Math.abs(vIdx - tIdx); }
+                if (vIdx !== -1 && tIdx !== -1) { stationDist = Math.abs(tIdx - vIdx); }
             }
         }
 
@@ -2512,8 +2514,14 @@ function populateRow2(row2El) {
         var arrowPct = isMultiHop && !trainStopAtCurrStation ? 25 : 50;
 
         html += '<div class="row2-viz">';
-            html += '<div class="row2-viz-group">';
-            html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
+        html += '<div class="row2-viz-group">';
+        html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
+
+        if (stationDist !== null && stationDist > 2) {
+            var remainingStations = (info.currentStation === info.nextStation) ? stationDist : (stationDist - 1);
+            html += '<div class="row2-viz-station-count" style="left: ' + remainingStationsPct + '%; border-color: ' + vizLineColour + ';">' + remainingStations + '</div>';
+        }
+
         if (isStoppedAtStart || isStopped) {
             if (trainStopAtCurrStation) {
                 html += '<div class="row2-viz-dot row2-viz-dot-center"></div>';
