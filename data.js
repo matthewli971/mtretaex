@@ -314,7 +314,7 @@ var stationOrderMap = {
     'AWE': 5
   },
   "EAL": {
-    '29': 1,  // ADM
+    '23': 1,  // ADM
     '22': 2,  // EXC
     '21': 3,   // HUH
     '2': 4,   // MKK
@@ -323,13 +323,14 @@ var stationOrderMap = {
     '5': 7,   // SHT
     '6': 8,   // FOT
     '7': 8,   // RAC
-    '8' : 8,  // UNI
-    '10': 9,  // TWO
-    '11': 10, // FAN
-    '12': 11, // SHS
-  /*  '18': 12, // KTU*/
-    '13': 12,
-    '14': 12, // LMC, set to 13 after KTU opened
+    '8' : 9,  // UNI
+    '9': 10,  // TAP
+    '10': 11,  // TWO
+    '11': 12, // FAN
+    '12': 13, // SHS
+  /*  '18': 14, // KTU*/
+    '13': 14, //LOW
+    '14': 14, // LMC, set to 14 after KTU opened
   },
   "TML": {
     '29': 1,   // WKS

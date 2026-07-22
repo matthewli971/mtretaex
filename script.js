@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.15.2";
+const APP_VERSION = "v0.15.3";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1978,7 +1978,7 @@ function processETAData(data) {
                     }
                 }
             } else if (lineCode === 'KTL' && !destOriginHtml) {
-                if (train.routeCode == 24) {
+                if (train.routeCode === 24) {
                     var homSta = stationByCode['HOM'];
                     if (homSta) {
                         destOriginHtml = (currentStationCode === 'HOM') ? '當駅' : homSta.name_chi;
@@ -2517,8 +2517,9 @@ function populateRow2(row2El) {
         html += '<div class="row2-viz-group">';
         html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
 
+        console.log(vizCurrLabel + '(' + orderMap[info.currentStation] + ') > ' + currentStationCode + '(' + orderMap[currentStationCode] + ') : ' + stationDist);
         if (stationDist !== null && stationDist > 2) {
-            var remainingStations = (info.currentStation === info.nextStation) ? stationDist : (stationDist - 1);
+            var remainingStations = (info.currentStation === info.nextStation) ? (stationDist - 1) : (stationDist - 2);
             html += '<div class="row2-viz-station-count" style="left: ' + remainingStationsPct + '%; border-color: ' + vizLineColour + ';">' + remainingStations + '</div>';
         }
 
