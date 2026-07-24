@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.15.3";
+const APP_VERSION = "v0.15.4";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -1955,6 +1955,10 @@ function processETAData(data) {
             var destInnerHtml = destChi;
             var destOriginHtml = '';
             var isOriginSelf = false;
+            
+            // Define direction (up/down)
+            var direction = (train.platform % 2 === 1) ? 'up' : 'down';
+
             if (isViaRac && currentStationCode !== 'RAC') {
                 destInnerHtml += '<span class="eta-dest-via"> 經馬場</span>';
             }
@@ -1963,8 +1967,9 @@ function processETAData(data) {
                 var ealSeq = (lineByCode['EAL'] || {}).stations || [];
                 var currSeqIdx = ealSeq.indexOf(currentStationCode);
                 var destSeqIdx = ealSeq.indexOf(resolveStationCode(train.destination));
-                var nslIsDownLine = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
-                var trainCodeLetter = train.td.charAt(nslIsDownLine ? 1 : 0).toUpperCase();
+                var isUpLine = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
+                direction = isUpLine ? 'up' : 'down';
+                var trainCodeLetter = train.td.charAt(isUpLine ? 1 : 0).toUpperCase();
                 var originCode = nslOriginMap[trainCodeLetter];
                 if (originCode) {
                     var originSta = stationByCode[originCode];
@@ -1985,7 +1990,8 @@ function processETAData(data) {
                         if (currentStationCode === 'HOM') isOriginSelf = true;
                     }
                 }
-            } else if (!destOriginHtml && typeof specialTrains !== 'undefined' && specialTrains[lineCode]) {
+            } 
+            if (!destOriginHtml && typeof specialTrains !== 'undefined' && specialTrains[lineCode]) {
                 var spOriginCode = getSpecialTrainOrigin(lineCode, train.td || '', train.platform);
                 if (spOriginCode) {
                     var spOriginSta = stationByCode[spOriginCode];
@@ -2460,6 +2466,7 @@ function populateRow2(row2El) {
             }
             if (viewOrderRank !== null && viewOrderRank !== undefined && trainOrderRank !== null && trainOrderRank !== undefined) {
                 var sortedRanks = [...new Set(Object.values(orderMap))].sort((a,b) => a - b);
+                console.log(trainInfoHtml, 'viewOrderRank:', viewOrderRank, 'trainOrderRank:', trainOrderRank, 'sortedRanks:', sortedRanks);
                 var vIdx = sortedRanks.indexOf(viewOrderRank);
                 var tIdx = sortedRanks.indexOf(trainOrderRank);
                 if (vIdx !== -1 && tIdx !== -1) { stationDist = Math.abs(tIdx - vIdx); }
@@ -2827,10 +2834,9 @@ function getSpecialTrainOrigin(lineCode, trainTd, platformNum) {
     var specialTrainShowBeforeMins = (lineData != null && lineData.journey_time != null) ? lineData.journey_time : DEFAULT_SPECIAL_TRAIN_SHOW_BEFORE_MINS;
     var specialTrainShowAfterMins  = (lineData != null && lineData.journey_time != null) ? lineData.journey_time  : DEFAULT_SPECIAL_TRAIN_SHOW_AFTER_MINS;
     var normalizedTd = String(parseInt((trainTd || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(2, '0').slice(-2);
-    
-    var allSpecials = [];
-    if (specialsNew.up) allSpecials = allSpecials.concat(specialsNew.up);
-    if (specialsNew.down) allSpecials = allSpecials.concat(specialsNew.down);
+
+    var direction = (platformNum % 2 === 1) ? 'up' : 'down';
+    var allSpecials = specialsNew[direction] || [];
 
     for (var i = 0; i < allSpecials.length; i++) {
         var s = allSpecials[i];
