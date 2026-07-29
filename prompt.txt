@@ -366,3 +366,6 @@ EAL: 1. LMC-SHS-... ; 2. LOW-SHS-...
 TKL: 1. POA-HAH-TKO-... ; 2. LHP-TKO-...
 
 For visualization mode, please help to create a rounded square box with border same as route colour and white number text on location. Please locate the element at the 75% of the line first. for showing how many stations left to current station. In current stage please add variable to set the number and position, and hard-code the text to "2" and position to "left: 75%" first
+
+Please help to update the ETA refresh logic to remove blinking when the ETA UI is refreshing. Please put the refreshing circle at the left of the settings button and add a light green tick (same colour as the refresh button) when refresh done for 2 seconds.
+Please make the green tick bolder, and reserve a fixeded position of the tick to avoid shift of last-update-times class shifting when showing the loading circle and green tick

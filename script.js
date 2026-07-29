@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.15.4";
+const APP_VERSION = "v0.15.6";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -41,6 +41,7 @@ let masterMode = 'I';
 
 let railwayPlasticMode = false;
 let nextStationVizMode = true;
+let nextStationVizArrowMode = true;
 
 // ============================================
 // Initialisation
@@ -82,7 +83,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Load next station visualization preference
     try {
-        nextStationVizMode = localStorage.getItem("mtreta_nextstationviz") === "true";
+        var savedViz = localStorage.getItem("mtreta_nextstationviz");
+        nextStationVizMode = (savedViz === null) ? true : (savedViz === "true");
+        
+        var savedVizArrow = localStorage.getItem("mtreta_dynamic_arrow");
+        nextStationVizArrowMode = (savedVizArrow === null) ? true : (savedVizArrow === "true");
     } catch(e) {}
 
     // Initialize settings panel
@@ -491,10 +496,26 @@ function fetchETASilent(stationCode) {
 
 function fetchETAInternal(stationCode, withLoader) {
     if (withLoader) showLoader();
+    else showHeaderRefresh();
+    
+    function finishFetch(success) {
+        if (withLoader) hideLoader();
+        if (success) {
+            hideHeaderRefresh();
+        } else {
+            // Immediately hide children without green tick if failed
+            var ind = document.getElementById("header-refresh-indicator");
+            if (ind) {
+                ind.querySelector(".header-loader-spinner").classList.add("hidden");
+                ind.querySelector(".header-tick").classList.add("hidden");
+            }
+        }
+    }
+
     // If master mode is D, skip the internal API and use OpenData only
     if (masterMode === 'D') {
         fetchOpenDataETA(stationCode, function (odData, sysTime) {
-            if (withLoader) hideLoader();
+            finishFetch(true);
             var data = { line: {} };
             if (sysTime) data.sys_time = sysTime;
             mergeOpenDataIntoETA(data, odData);
@@ -507,7 +528,6 @@ function fetchETAInternal(stationCode, withLoader) {
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-            if (withLoader) hideLoader();
             if (xhr.status === 200) {
                 try {
                     const data = JSON.parse(xhr.responseText);
@@ -527,13 +547,16 @@ function fetchETAInternal(stationCode, withLoader) {
                                 if (odSysTime) data._odSysTime = odSysTime;
                             }
                             processETAData(data);
+                            finishFetch(true);
                         });
                     } else {
                         processETAData(data);
+                        finishFetch(true);
                     }
                 } catch (e) {
                     console.error("Failed to parse ETA response:", e);
                     document.getElementById("last-update-time").textContent = "-- : -- : --";
+                    finishFetch(false);
                     if (withLoader) {
                         document.getElementById("eta-container").innerHTML =
                             '<div style="padding:20px;color:#fff;text-align:center;">無法解析數據</div>';
@@ -542,6 +565,7 @@ function fetchETAInternal(stationCode, withLoader) {
             } else {
                 console.error("API error:", xhr.status);
                 document.getElementById("last-update-time").textContent = "-- : -- : --";
+                finishFetch(false);
                 if (withLoader) {
                     document.getElementById("eta-container").innerHTML =
                         '<div style="padding:20px;color:#fff;text-align:center;">無法取得數據 (HTTP ' + xhr.status + ')</div>';
@@ -709,6 +733,25 @@ function updateMasterSwitch() {
     var el = document.getElementById('settings-mode-input');
     if (!el) return;
     el.checked = (masterMode === 'I');
+}
+
+function showHeaderRefresh() {
+    var ind = document.getElementById("header-refresh-indicator");
+    if (!ind) return;
+    ind.querySelector(".header-loader-spinner").classList.remove("hidden");
+    ind.querySelector(".header-tick").classList.add("hidden");
+    if (window.headerRefreshTimeout) clearTimeout(window.headerRefreshTimeout);
+}
+
+function hideHeaderRefresh() {
+    var ind = document.getElementById("header-refresh-indicator");
+    if (!ind) return;
+    ind.querySelector(".header-loader-spinner").classList.add("hidden");
+    ind.querySelector(".header-tick").classList.remove("hidden");
+    
+    window.headerRefreshTimeout = setTimeout(function() {
+        ind.querySelector(".header-tick").classList.add("hidden");
+    }, 2000);
 }
 
 function showLoader() {
@@ -1696,15 +1739,23 @@ function processETAData(data) {
     if (data._hasOdSupplement && data._odSysTime) {
         // Stale internal data — show OpenData sys_time in yellow
         var t = new Date(data._odSysTime);
-        lastUpdateTime = t;
-        updateEl.textContent = formatTimeHHMMSS(t);
+        if (!isNaN(t.getTime())) {
+            lastUpdateTime = t;
+            updateEl.textContent = formatTimeHHMMSS(t);
+        } else {
+            updateEl.textContent = "--:--:--";
+        }
         updateEl.classList.add('eta-update-od-supplemented');
     } else {
         var timeSource = data.gen_time || data.sys_time;
         if (timeSource) {
             var t = new Date(timeSource);
-            lastUpdateTime = t;
-            updateEl.textContent = formatTimeHHMMSS(t);
+            if (!isNaN(t.getTime())) {
+                lastUpdateTime = t;
+                updateEl.textContent = formatTimeHHMMSS(t);
+            } else {
+                updateEl.textContent = "--:--:--";
+            }
         }
         // Fresh internal data — remove yellow highlight
         updateEl.classList.remove('eta-update-od-supplemented');
@@ -1735,6 +1786,10 @@ function processETAData(data) {
             trains.forEach(function (train) {
                 var ttnt = train.ttnt;
                 var ttntNum = parseInt(ttnt, 10);
+                
+                // Filter out stale trains: ttnt <= 0 and tta is "-"
+                if (ttntNum <= 0 && train.tta === "-") return;
+
                 // Filter out -1 min trains unless ttd is valid (originating trains)
                 if (ttntNum < 0) {
                     var ttaNum = parseInt(train.tta, 10);
@@ -2466,10 +2521,13 @@ function populateRow2(row2El) {
             }
             if (viewOrderRank !== null && viewOrderRank !== undefined && trainOrderRank !== null && trainOrderRank !== undefined) {
                 var sortedRanks = [...new Set(Object.values(orderMap))].sort((a,b) => a - b);
-                console.log(trainInfoHtml, 'viewOrderRank:', viewOrderRank, 'trainOrderRank:', trainOrderRank, 'sortedRanks:', sortedRanks);
                 var vIdx = sortedRanks.indexOf(viewOrderRank);
                 var tIdx = sortedRanks.indexOf(trainOrderRank);
                 if (vIdx !== -1 && tIdx !== -1) { stationDist = Math.abs(tIdx - vIdx); }
+                if (stationDist !== null && stationDist > 1) {
+                    console.log(trainConsistText, vizCurrLabel + '(' + tIdx + ') > ' + stationByCode[currentStationCode].name_chi + '(' + vIdx + ') : ' + stationDist);
+                    console.log('sortedRanks:', sortedRanks);
+                }
             }
         }
 
@@ -2508,13 +2566,24 @@ function populateRow2(row2El) {
             var startDist = parseInt(info.startDistance);
             var targetDist = parseInt(info.targetDistance);
             if (!isNaN(startDist) && !isNaN(targetDist) && (startDist + targetDist) > 0) {
-                segmentPct = (startDist / (startDist + targetDist)) * 100;
+                var totalDist = startDist + targetDist;
+                var speed = parseFloat(info.trainSpeed);
+                if (info.updatedTime && !isNaN(speed) && speed > 0) {
+                    var elapsedSecs = Math.max(0, (new Date() - info.updatedTime) / 1000);
+                    var speedMps = speed * 1000 / 3600;
+                    var addedDist = Math.floor(elapsedSecs * speedMps);
+                    if (0.8 > (startDist / totalDist)) {
+                        addedDist *= 0.8;
+                    }
+                    startDist = Math.min(startDist + addedDist, totalDist);
+                }
+                segmentPct = (startDist / totalDist) * 100;
             }
         }
         
         // Map segment progress to total line width progress
         var trainPosPct = null;
-        if (segmentPct !== null) {
+        if (segmentPct !== null && segmentPct > 0) {
             trainPosPct = isMultiHop ? (segmentPct / 2) : segmentPct;
         }
         var trainStopAtCurrStation = (currentStationCode === trainCurrentStationCode);
@@ -2524,9 +2593,13 @@ function populateRow2(row2El) {
         html += '<div class="row2-viz-group">';
         html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
 
-        console.log(vizCurrLabel + '(' + orderMap[info.currentStation] + ') > ' + currentStationCode + '(' + orderMap[currentStationCode] + ') : ' + stationDist);
-        if (stationDist !== null && stationDist > 2) {
-            var remainingStations = (info.currentStation === info.nextStation) ? (stationDist - 1) : (stationDist - 2);
+        var remainingStations = (info.currentStation === info.nextStation) ? stationDist : (stationDist - 1);
+        var arrowPositionPct = 50;
+        if (remainingStations !== null && remainingStations > 2) {
+            if ((isStoppedAtStart || isStopped) && !trainStopAtCurrStation) {
+                remainingStationsPct = 50;
+                arrowPositionPct = 25;
+            }
             html += '<div class="row2-viz-station-count" style="left: ' + remainingStationsPct + '%; border-color: ' + vizLineColour + ';">' + remainingStations + '</div>';
         }
 
@@ -2541,7 +2614,7 @@ function populateRow2(row2El) {
                 html += '<div class="' + leftDotClass + '"></div>';
                 html += '<div class="row2-viz-dot row2-viz-dot-right"></div>';
                 
-                html += '<div class="row2-viz-line-arrow row2-viz-arrow-blink" style="--arrow-pct:50%">' + arrowSvg + '</div>';
+                html += '<div class="row2-viz-line-arrow row2-viz-arrow-blink" style="--arrow-pct:' + arrowPositionPct + '%">' + arrowSvg + '</div>';
                 html += '</div>'; // end row2-viz-group
                 html += '<span class="row2-viz-label row2-viz-label-left">' + vizCurrLabel + '</span>';
                 html += '<span class="row2-viz-label row2-viz-label-right row2-viz-label-this-station">' + viewStaLabel + ' [当駅]</span>';
@@ -2557,15 +2630,34 @@ function populateRow2(row2El) {
                 html += '<div class="' + midDotClass + '"></div>';
                 html += '<div class="row2-viz-dot row2-viz-dot-right"></div>';
             } else {
-                html += '<div class="row2-viz-dot row2-viz-dot-right row2-viz-dot-flash"></div>';
+                var rightDotClass = 'row2-viz-dot row2-viz-dot-right';
+                if (!isStoppedElsewhere) rightDotClass += ' row2-viz-dot-flash';
+                html += '<div class="' + rightDotClass + '"></div>';
             }
 
             if (trainPosPct !== null) {
-                html += '<div class="row2-viz-train" style="--train-pct:' + trainPosPct + ';color:' + vizLineColour + '">' + trainSvg + '</div>';
+                var dynAttrs = '';
+                if (lineCode === 'EAL' && !isStopped) {
+                    var sDistOrig = parseInt(info.startDistance);
+                    var tDistOrig = parseInt(info.targetDistance);
+                    var spd = parseFloat(info.trainSpeed);
+                    if (info.updatedTime && !isNaN(sDistOrig) && !isNaN(tDistOrig) && !isNaN(spd) && spd > 0 && (sDistOrig + tDistOrig) > 0) {
+                        dynAttrs = ' data-start-dist="' + sDistOrig + '"' +
+                                   ' data-total-dist="' + (sDistOrig + tDistOrig) + '"' +
+                                   ' data-speed="' + spd + '"' +
+                                   ' data-updated-time="' + info.updatedTime.getTime() + '"' +
+                                   ' data-multi-hop="' + (isMultiHop ? 'true' : 'false') + '"';
+                    }
+                }
+                html += '<div class="row2-viz-train" style="--train-pct:' + trainPosPct + ';color:' + vizLineColour + '"' + dynAttrs + '>' + trainSvg + '</div>';
             }
             
             var arrowClass = 'row2-viz-line-arrow';
-            if (isStoppedElsewhere) arrowClass += ' row2-viz-arrow-blink';
+            if (isStoppedElsewhere) {
+                arrowClass += ' row2-viz-arrow-blink';
+            } else if (nextStationVizArrowMode) {
+                arrowClass += ' row2-viz-arrow-move';
+            }
             html += '<div class="' + arrowClass + '" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
             
             if (info.trainSpeed && info.trainSpeed > 0) {
@@ -2655,13 +2747,6 @@ function populateRow2(row2El) {
         }
     }
 
-    // TML: no reversal needed — always show car 1 to 8 from left
-    //var tmlIsUpline = true;
-    //if (lineCode === 'TML') {
-    //    var tmlPlatform = parseInt(etaRow.getAttribute('data-platform')) || 1;
-    //    tmlIsUpline = (tmlPlatform % 2 === 1);
-    //}
-
     carLoadsOrdered.forEach(function (car, idx) {
         // Check if this is the first-class car for NSL
         var carNo = idx + 1;
@@ -2732,7 +2817,13 @@ function populateRow2(row2El) {
         html += '<div class="car-rect ' + colorClass + (isFirstClass ? ' first-class' : '') + '">';
         html += '<span class="car-load-val">' + loadVal + '</span>';
         html += '</div>';
-        html += '<span class="car-num-label">' + carNo + '</span>';
+
+        var carLabel = carNo;
+        if (lineCode === 'EAL' && isFirstClass) {
+            carLabel += '(First)';
+        }
+        html += '<span class="car-num-label">' + carLabel + '</span>';
+
         if (railwayPlasticMode && carNoStr) {
             html += '<span class="car-num-label car-num-label-extra">' + carNoStr + '</span>';
         }
@@ -2747,6 +2838,7 @@ function populateRow2(row2El) {
 // Helper: Format Date to HH:MM:SS string
 // ============================================
 function formatTimeHHMMSS(date) {
+    if (!date || isNaN(date.getTime())) return "--:--:--";
     var hh = String(date.getHours()).padStart(2, "0");
     var mm = String(date.getMinutes()).padStart(2, "0");
     var ss = String(date.getSeconds()).padStart(2, "0");
@@ -2808,8 +2900,8 @@ function formatTrainTime(train, isMuted, isDepartedForce) {
     }
     // Otherwise show minutes
     var mins = parseInt(val, 10);
-    if (isNaN(mins)) {
-        return '<span class="eta-time-departing' + mutedClass + odClass + '">' + escapeHtml(String(val)) + '</span>';
+    if (!mins || isNaN(mins)) {
+        return '<span class="eta-time-departing' + odClass + mutedClass + '">' + escapeHtml(String(val)) + '</span>';
     }
 
     if (mins > 60) {
@@ -2834,7 +2926,7 @@ function getSpecialTrainOrigin(lineCode, trainTd, platformNum) {
     var specialTrainShowBeforeMins = (lineData != null && lineData.journey_time != null) ? lineData.journey_time : DEFAULT_SPECIAL_TRAIN_SHOW_BEFORE_MINS;
     var specialTrainShowAfterMins  = (lineData != null && lineData.journey_time != null) ? lineData.journey_time  : DEFAULT_SPECIAL_TRAIN_SHOW_AFTER_MINS;
     var normalizedTd = String(parseInt((trainTd || '').replace(/[^0-9]/g, ''), 10) || 0).padStart(2, '0').slice(-2);
-
+    
     var direction = (platformNum % 2 === 1) ? 'up' : 'down';
     var allSpecials = specialsNew[direction] || [];
 
@@ -3002,7 +3094,11 @@ function updateCountdowns() {
         // Countdown starts from 0:29 at ttnt=1, so we give it a full 30s to count down to 0:00
         var target = new Date(lastUpdateTime.getTime() + 30000);
         var diff = target - now;
-        if (diff <= 0) {
+
+        if (isNaN(diff)) {
+            el.textContent = '--:--';
+            el.classList.add('eta-time-departing');
+        } else if (diff <= 0) {
             el.textContent = '進站中';
             el.classList.add('eta-time-departing');
         } else {
@@ -3010,6 +3106,27 @@ function updateCountdowns() {
             var m = Math.floor(secs / 60);
             var s = secs % 60;
             el.textContent = m + ':' + String(s).padStart(2, '0');
+        }
+    });
+
+    // Update dynamic train visual positions per second based on speed
+    var nowMs = now.getTime();
+    document.querySelectorAll('.row2-viz-train[data-updated-time]').forEach(function(el) {
+        var startDist = parseInt(el.getAttribute('data-start-dist'), 10);
+        var totalDist = parseInt(el.getAttribute('data-total-dist'), 10);
+        var speed = parseFloat(el.getAttribute('data-speed'));
+        var updatedTime = parseInt(el.getAttribute('data-updated-time'), 10);
+        var isMultiHop = el.getAttribute('data-multi-hop') === 'true';
+
+        if (!isNaN(startDist) && !isNaN(totalDist) && !isNaN(speed) && !isNaN(updatedTime) && totalDist > 0) {
+            var elapsedSecs = Math.max(0, (nowMs - updatedTime) / 1000);
+            var speedMps = speed * 1000 / 3600;
+            var addedDist = Math.floor(elapsedSecs * speedMps);
+            var currentDist = Math.min(startDist + addedDist, totalDist);
+            var segmentPct = (currentDist / totalDist) * 100;
+            var trainPosPct = isMultiHop ? (segmentPct / 2) : segmentPct;
+            
+            el.style.setProperty('--train-pct', trainPosPct);
         }
     });
 }
@@ -3028,6 +3145,18 @@ function initSettingsPanel() {
     var vizInput = document.getElementById('settings-viz-input');
     if (vizInput) {
         vizInput.checked = nextStationVizMode;
+    }
+    
+    // Sync viz arrow switch state
+    var vizArrowInput = document.getElementById('settings-viz-arrow-input');
+    if (vizArrowInput) {
+        vizArrowInput.checked = nextStationVizArrowMode;
+    }
+    
+    // Toggle sub-category visibility based on viz mode
+    var vizCategory = document.getElementById('settings-viz-category');
+    if (vizCategory) {
+        vizCategory.style.display = nextStationVizMode ? 'flex' : 'none';
     }
 }
 
@@ -3079,6 +3208,23 @@ function settingsToggleViz() {
     var vizInput = document.getElementById('settings-viz-input');
     nextStationVizMode = vizInput.checked;
     try { localStorage.setItem("mtreta_nextstationviz", nextStationVizMode ? "true" : "false"); } catch(e) {}
+    
+    var vizCategory = document.getElementById('settings-viz-category');
+    if (vizCategory) {
+        vizCategory.style.display = nextStationVizMode ? 'flex' : 'none';
+    }
+
+    // Re-render expanded rows if any are open
+    document.querySelectorAll('.eta-row2:not(.hidden)').forEach(function (row2El) {
+        populateRow2(row2El);
+    });
+}
+
+function settingsToggleVizArrow() {
+    var vizArrowInput = document.getElementById('settings-viz-arrow-input');
+    nextStationVizArrowMode = vizArrowInput.checked;
+    try { localStorage.setItem("mtreta_dynamic_arrow", nextStationVizArrowMode ? "true" : "false"); } catch(e) {}
+    
     // Re-render expanded rows if any are open
     document.querySelectorAll('.eta-row2:not(.hidden)').forEach(function (row2El) {
         populateRow2(row2El);

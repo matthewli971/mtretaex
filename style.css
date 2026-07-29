@@ -805,7 +805,6 @@ html, body {
     flex-direction: column;
     padding: 0 var(--spacing-md);
     min-height: var(--eta-row-height);
-    animation: fadeIn 0.3s ease;
 }
 
 .eta-row1 {
@@ -966,6 +965,7 @@ html, body {
     height: 14px;
     color: #fff;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+    transition: left 2s linear;
 }
 
 /* Arrow icon — positioned via --arrow-pct */
@@ -1040,6 +1040,19 @@ html, body {
     animation: vizArrowBlink 1s infinite;
     animation-timing-function: steps(1, start);
 }
+
+@keyframes vizArrowMarquee {
+    0%, 19.99% { transform: translate(calc(-50% - 6px), calc(-50% - 8px)); }
+    20%, 39.99% { transform: translate(calc(-50% - 3px), calc(-50% - 8px)); }
+    40%, 59.99% { transform: translate(calc(-50% + 0px), calc(-50% - 8px)); }
+    60%, 79.99% { transform: translate(calc(-50% + 3px), calc(-50% - 8px)); }
+    80%, 100% { transform: translate(calc(-50% + 6px), calc(-50% - 8px)); }
+}
+.row2-viz-arrow-move {
+    animation: vizArrowMarquee 1s infinite;
+    animation-timing-function: steps(1, start);
+}
+
 .row2-viz-dot-stopped {
     background-color: #ffd700 !important;
 }
@@ -1399,6 +1412,31 @@ body.dark-mode .eta-time-od-supplemented {
     align-items: center;
     gap: 2px;
     margin-left: auto;
+}
+
+#header-refresh-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-refresh);
+    width: 1.2em; /* Reserve fixed horizontal space */
+    height: 1.2em;
+    margin-right: 2px;
+}
+
+.header-loader-spinner {
+    width: 60%;
+    height: 60%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.header-tick {
+    color: var(--color-accent); /* Light green tick matching refresh button */
+    stroke: var(--color-accent); /* Make the tick bolder */
+    stroke-width: 3;
 }
 
 /* Theme toggle buttons — shared base (all inactive by default) */
