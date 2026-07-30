@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.15.6";
+const APP_VERSION = "v0.15.7";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -2379,6 +2379,8 @@ function populateRow2(row2El) {
     var trainCurrentStationCode = lineStationCodeMap ? lineStationCodeMap[info.currentStation] : info.currentStation;
     var currStaObj = '';
     var nextStaObj = '';
+    var currStaLabel = '';
+    var nextStaLabel = '';
     var nextStaCode = '';
     var locText = '';
 
@@ -2395,28 +2397,30 @@ function populateRow2(row2El) {
     }
 
     // NSL: show currentStation > nextStation (or 停站中 if startDistance == 0)
-    if ((lineCode === 'EAL') && info.currentStation) {
+    if ((lineCode === 'EAL') && (info.currentStation || info.nextStation)) {
+        if (trainCurrentStationCode === undefined || trainCurrentStationCode === null || trainCurrentStationCode === '') {
+            trainCurrentStationCode = '';
+        }
         currStaObj = stationByCode[resolveStationCode(trainCurrentStationCode)];
-        var currStaLabel = currStaObj ? currStaObj.name_chi : trainCurrentStationCode;
+        currStaLabel = currStaObj ? currStaObj.name_chi : trainCurrentStationCode;
+        nextStaCode = lineStationCodeMap ? lineStationCodeMap[info.nextStation] : info.nextStation;
+        nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
         if (info.startDistance !== undefined && info.startDistance !== null && (info.startDistance === 0 || info.startDistance === '0')) {
             locText = currStaLabel + ' (停站中)';
         } else {
-            var nextStaLabel = '';
             if (info.nextStation) {
-                nextStaCode = lineStationCodeMap ? lineStationCodeMap[info.nextStation] : info.nextStation;
-                var nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
                 nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaCode;
             }
             locText = currStaLabel + (nextStaLabel ? ' > ' + nextStaLabel : '');
         }
     }
-    if ((lineCode === 'TML') && info.currentStation) {
+    if ((lineCode === 'TML') && (info.currentStation || info.nextStation)) {
         currStaObj = stationByCode[resolveStationCode(trainCurrentStationCode)];
-        var currStaLabel = currStaObj ? currStaObj.name_chi : trainCurrentStationCode;
-        var nextStaLabel = '';
+        currStaLabel = currStaObj ? currStaObj.name_chi : trainCurrentStationCode;
+        
         if (info.nextStation) {
             nextStaCode = lineStationCodeMap ? lineStationCodeMap[info.nextStation] : info.nextStation;
-            var nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
+            nextStaObj = stationByCode[resolveStationCode(nextStaCode)];
             nextStaLabel = nextStaObj ? nextStaObj.name_chi : nextStaCode;
         }
         locText = currStaLabel + (nextStaLabel ? ' > ' + nextStaLabel : '');
@@ -2425,9 +2429,9 @@ function populateRow2(row2El) {
     if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL' || lineCode === 'SIL' || lineCode === 'TCL') && info.nextStation) {
         currStaObj = (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-') ? stationByCode[resolveStationCode(info.currentStation)] : null;
         nextStaObj = stationByCode[resolveStationCode(info.nextStation)];
-        var currStaLabel = currStaObj ? currStaObj.name_chi : '';
-        var nextStaLabel = nextStaObj ? nextStaObj.name_chi : info.nextStation;
-        nextStaCode = nextStaObj ? nextStaObj.station_code : 'N/A';
+        currStaLabel = currStaObj ? currStaObj.name_chi : '';
+        nextStaLabel = nextStaObj ? nextStaObj.name_chi : info.nextStation;
+        nextStaCode = nextStaObj ? nextStaObj.station_code : trainCurrentStationCode;
         if (info.currentStation && info.currentStation !== 'NA' && info.currentStation !== '-' &&
             resolveStationCode(info.currentStation) === resolveStationCode(info.nextStation)) {
             locText = nextStaLabel + ' (停站中)';
@@ -2439,11 +2443,9 @@ function populateRow2(row2El) {
     // Determine stopped state and viz data
     var isStopped = false;
     var vizLineColour = getLineColour(lineCode);
-    var vizCurrLabel = currStaObj ? (currStaObj.name_chi || trainCurrentStationCode) : 'N/A';
+    var vizCurrLabel = currStaObj ? (currStaObj.name_chi || trainCurrentStationCode) : trainCurrentStationCode;
     var vizNextLabel = nextStaObj ? (nextStaObj.name_chi || nextStaCode) : (nextStaCode || '');
-    if (lineCode === 'EAL' && info.startDistance !== undefined && info.startDistance !== null && (info.startDistance === 0 || info.startDistance === '0')) {
-        isStopped = true;
-    } else if (lineCode === 'TML' 
+    if (lineCode === 'TML' 
         && info.currentStation && info.nextStation && resolveStationCode(trainCurrentStationCode) === resolveStationCode(nextStaCode)) {
         isStopped = true;
     } else if ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TKL' || lineCode === 'SIL' || lineCode === 'TCL') 
@@ -2508,16 +2510,15 @@ function populateRow2(row2El) {
         var orderMap = stationOrderMap[lineCode];
         if (orderMap) {
             var viewOrderRank = null;
-            var trainOrderRank = null;
+            var trainOrderRank = orderMap[info.nextStation];
             if (lineCode === 'EAL' || lineCode === 'TML') {
-                trainOrderRank = orderMap[info.currentStation];
                 var mapForLine = stationCodeMap[lineCode];
                 for (var id in mapForLine) {
                     if (mapForLine[id] === currentStationCode) { viewOrderRank = orderMap[id]; break; }
                 }
+                console.log(trainConsistText, currentStationCode, viewOrderRank, trainOrderRank, mapForLine);
             } else {
                 viewOrderRank = orderMap[currentStationCode];
-                trainOrderRank = orderMap[info.currentStation];
             }
             if (viewOrderRank !== null && viewOrderRank !== undefined && trainOrderRank !== null && trainOrderRank !== undefined) {
                 var sortedRanks = [...new Set(Object.values(orderMap))].sort((a,b) => a - b);
@@ -2525,8 +2526,7 @@ function populateRow2(row2El) {
                 var tIdx = sortedRanks.indexOf(trainOrderRank);
                 if (vIdx !== -1 && tIdx !== -1) { stationDist = Math.abs(tIdx - vIdx); }
                 if (stationDist !== null && stationDist > 1) {
-                    console.log(trainConsistText, vizCurrLabel + '(' + tIdx + ') > ' + stationByCode[currentStationCode].name_chi + '(' + vIdx + ') : ' + stationDist);
-                    console.log('sortedRanks:', sortedRanks);
+                    console.log(trainConsistText, vizNextLabel + '(' + tIdx + ') > ' + stationByCode[currentStationCode].name_chi + '(' + vIdx + ') : ' + stationDist);
                 }
             }
         }
@@ -2572,8 +2572,11 @@ function populateRow2(row2El) {
                     var elapsedSecs = Math.max(0, (new Date() - info.updatedTime) / 1000);
                     var speedMps = speed * 1000 / 3600;
                     var addedDist = Math.floor(elapsedSecs * speedMps);
-                    if (0.8 > (startDist / totalDist)) {
+                    if (0.8 < (startDist / totalDist)) {
                         addedDist *= 0.8;
+                    }
+                    else if (0.2 > (startDist / totalDist)) {
+                        addedDist *= 1.2;
                     }
                     startDist = Math.min(startDist + addedDist, totalDist);
                 }
@@ -2593,14 +2596,14 @@ function populateRow2(row2El) {
         html += '<div class="row2-viz-group">';
         html += '<div class="row2-viz-line" style="background-color:' + vizLineColour + '"></div>';
 
-        var remainingStations = (info.currentStation === info.nextStation) ? stationDist : (stationDist - 1);
+        //var remainingStations = (info.currentStation === info.nextStation) ? stationDist : (stationDist - 1);
         var arrowPositionPct = 50;
-        if (remainingStations !== null && remainingStations > 2) {
+        if (stationDist !== null && stationDist > 1) {
             if ((isStoppedAtStart || isStopped) && !trainStopAtCurrStation) {
                 remainingStationsPct = 50;
                 arrowPositionPct = 25;
             }
-            html += '<div class="row2-viz-station-count" style="left: ' + remainingStationsPct + '%; border-color: ' + vizLineColour + ';">' + remainingStations + '</div>';
+            html += '<div class="row2-viz-station-count" style="left: ' + remainingStationsPct + '%; border-color: ' + vizLineColour + ';">' + stationDist + '</div>';
         }
 
         if (isStoppedAtStart || isStopped) {

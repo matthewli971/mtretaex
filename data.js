@@ -316,7 +316,8 @@ var stationOrderMap = {
   "EAL": {
     '23': 1,  // ADM
     '22': 2,  // EXC
-    '21': 3,   // HUH
+    '1': 3,   // HUH
+    '21': 3,   // NHUH
     '2': 4,   // MKK
     '3': 5,   // KOT
     '4': 6,   // TAW
@@ -361,25 +362,6 @@ var stationOrderMap = {
     '48': 26,  // SIH
     '49': 27   // TUM
   }
-};
-
-// TML station order for direction calculation (higher number = toward TUM/upline)
-var nslStationOrder = {
-  '29': 1,  // ADM
-  '22': 2,  // EXC
-  '1': 3,   // HUH
-  '2': 4,   // MKK
-  '3': 5,   // KOT
-  '4': 6,   // TAW
-  '5': 7,   // SHT
-  '6': 8,   // FOT
-  '7': 9,   // RAC
-  '10': 10, // TWO
-  '11': 11, // FAN
-  '12': 12, // SHS
-  '18': 13, // KTU
-  '13': 14, // LOW
-  '14': 15, // LMC
 };
 
 var nslOriginMap = { 
@@ -501,7 +483,7 @@ var platformGroup = {
     "FOT": [[1, 2], [3, 4]],
     "SHT": [[1, 2], [3, 4]],
     "ADM": [[5, 6]],
-    "MKK": [[1, 2]],
+    "MKK": [[1, 2], [3]],
     "WKS": [[1, 2]],
     "TUM": [[1, 2]],
     "CEN": [[1, 2]],

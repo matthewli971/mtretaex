@@ -1042,11 +1042,16 @@ html, body {
 }
 
 @keyframes vizArrowMarquee {
-    0%, 19.99% { transform: translate(calc(-50% - 6px), calc(-50% - 8px)); }
-    20%, 39.99% { transform: translate(calc(-50% - 3px), calc(-50% - 8px)); }
-    40%, 59.99% { transform: translate(calc(-50% + 0px), calc(-50% - 8px)); }
-    60%, 79.99% { transform: translate(calc(-50% + 3px), calc(-50% - 8px)); }
-    80%, 100% { transform: translate(calc(-50% + 6px), calc(-50% - 8px)); }
+    0%, 9.99% { transform: translate(calc(-50% - 12px), calc(-50% - 8px)); }
+    10%, 19.99% { transform: translate(calc(-50% - 9px), calc(-50% - 8px)); }
+    20%, 29.99% { transform: translate(calc(-50% - 6px), calc(-50% - 8px)); }
+    30%, 39.99% { transform: translate(calc(-50% - 3px), calc(-50% - 8px)); }
+    40%, 49.99% { transform: translate(calc(-50%), calc(-50% - 8px)); }
+    50%, 59.99% { transform: translate(calc(-50% + 3px), calc(-50% - 8px)); }
+    60%, 69.99% { transform: translate(calc(-50% + 6px), calc(-50% - 8px)); }
+    70%, 79.99% { transform: translate(calc(-50% + 9px), calc(-50% - 8px)); }
+    80%, 89.99% { transform: translate(calc(-50% + 12px), calc(-50% - 8px)); }
+    90%, 100% { transform: translate(calc(-50% + 15px), calc(-50% - 8px)); }
 }
 .row2-viz-arrow-move {
     animation: vizArrowMarquee 1s infinite;
