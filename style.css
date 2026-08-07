@@ -66,6 +66,8 @@
     --font-size-car-num:      3.2vw;
     --font-size-trainload-info: 3.2vw;
 
+    --header-button-height: 35px;
+
     /* ETA Row visualization */
     --eta-row-height: 8.2vw;
 
@@ -232,7 +234,9 @@ html, body {
     color: var(--color-text-light);
     border: none;
     border-radius: var(--radius-sm);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: var(--spacing-xs);
+    width: var(--header-button-height);
+    height: var(--header-button-height);
     font-size: var(--font-size-refresh);
     cursor: pointer;
     display: flex;
@@ -255,6 +259,7 @@ html, body {
     padding: var(--spacing-xs) var(--spacing-md);
     font-size: var(--font-size-refresh);
     font-weight: bold;
+    height: var(--header-button-height);
     cursor: pointer;
     transition: background-color 0.2s;
 }
