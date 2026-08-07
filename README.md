@@ -3,6 +3,13 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.16
+- **Enhanced refreshing behaviour**: Updated silent refresh and show status next to settings icon instead of flashing when refreshing ETA
+- **Enhanced ETA Display for long-waiting trains**: For trains ETA more than 60mins, show the exact time instead of mins
+- **Statopm count**: Add station-distance indicators in line when train is 2 or more stations apart (x station to current station)
+- **Animated train arrows**: Arrow animations to indicate trains running. Can switch on/off in settings
+- **Enmhanced wide-screen layout**: Updated UI for wide screens, adjustable row display for super-wide screens
+
 ### v0.15
 - **Visualization Mode Update**: Updated back end behaviour
 - **Data Library Update**: Add station sequence for all lines for showing how many stations left to current station

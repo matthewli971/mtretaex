@@ -369,3 +369,6 @@ For visualization mode, please help to create a rounded square box with border s
 
 Please help to update the ETA refresh logic to remove blinking when the ETA UI is refreshing. Please put the refreshing circle at the left of the settings button and add a light green tick (same colour as the refresh button) when refresh done for 2 seconds.
 Please make the green tick bolder, and reserve a fixeded position of the tick to avoid shift of last-update-times class shifting when showing the loading circle and green tick
+
+
+Add aswitch in a settings page named "超闊螢幕行數顯示" between 到站時間預報模式 and 到站時間預報模式 , then re-use the switch updated above, with "2" and "4" options. Default settings is 4. After setting up, for super wide screens (min-width = 1760px), only split to 4 columns of the super wide screen when the switch is on "4" mode, when mode is "2", then keep the behaviour like min-width:1000

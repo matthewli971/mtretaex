@@ -165,10 +165,17 @@
             </div>
             <div class="settings-item">
                 <span class="settings-item-label">到站時間預報模式</span>
-                <label class="settings-switch settings-switch-mode">
-                    <input type="checkbox" id="settings-mode-input" onchange="settingsToggleMode()">
-                    <span class="settings-switch-slider" data-on="I" data-off="D"></span>
-                </label>
+                <div class="settings-mode-buttons" role="group" aria-label="到站時間預報模式">
+                    <button type="button" class="settings-mode-button" data-mode="1" onclick="settingsSetMode('D')">D</button>
+                    <button type="button" class="settings-mode-button" data-mode="2" onclick="settingsSetMode('I')">I</button>
+                </div>
+            </div>
+            <div class="settings-item">
+                <span class="settings-item-label">超闊螢幕行數顯示</span>
+                <div class="settings-mode-buttons settings-wide-buttons" role="group" aria-label="超闊螢幕行數顯示">
+                    <button type="button" class="settings-mode-button settings-wide-mode-button" data-mode="2" onclick="settingsSetSuperWideMode('2')">2</button>
+                    <button type="button" class="settings-mode-button settings-wide-mode-button" data-mode="4" onclick="settingsSetSuperWideMode('4')">4</button>
+                </div>
             </div>
             <div class="settings-item">
                 <span class="settings-item-label">視覺化車站顯示</span>

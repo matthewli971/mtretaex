@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.15.7";
+const APP_VERSION = "v0.16";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -42,6 +42,7 @@ let masterMode = 'I';
 let railwayPlasticMode = false;
 let nextStationVizMode = true;
 let nextStationVizArrowMode = true;
+let superWideColsMode = '4';
 
 // ============================================
 // Initialisation
@@ -88,6 +89,9 @@ document.addEventListener("DOMContentLoaded", function () {
         
         var savedVizArrow = localStorage.getItem("mtreta_dynamic_arrow");
         nextStationVizArrowMode = (savedVizArrow === null) ? true : (savedVizArrow === "true");
+
+        var savedSuperWideCols = localStorage.getItem("mtreta_superwide_cols");
+        superWideColsMode = (savedSuperWideCols === "2") ? "2" : "4";
     } catch(e) {}
 
     // Initialize settings panel
@@ -730,9 +734,14 @@ function loadLineModeState() {
 
 // Update master switch UI to reflect current state
 function updateMasterSwitch() {
-    var el = document.getElementById('settings-mode-input');
-    if (!el) return;
-    el.checked = (masterMode === 'I');
+    var buttons = document.querySelectorAll('.settings-mode-button:not(.settings-wide-mode-button)');
+    buttons.forEach(function (button) {
+        var modeNumber = button.getAttribute('data-mode');
+        var isActive = (modeNumber === '1' && masterMode === 'D') ||
+                       (modeNumber === '2' && masterMode === 'I');
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
 }
 
 function showHeaderRefresh() {
@@ -1672,7 +1681,7 @@ function updateTrainEnrichment() {
                         destEl.appendChild(originEl);
                     }
                     originEl.className = 'eta-dest-origin';
-                    originEl.textContent = '[' + tklOriginText + '始発]';
+                    originEl.textContent = '[' + tklOriginText + '発]';
                 } else if (originEl) {
                     originEl.parentNode.removeChild(originEl);
                 }
@@ -1694,7 +1703,7 @@ function updateTrainEnrichment() {
                         var isNoop = row.querySelector('.eta-dest-noop') !== null;
                         var originExtraClass = isNoop ? ' eta-dest-noop' : (ktlIsOriginSelf ? ' eta-dest-origin-self' : '');
                         originEl.className = 'eta-dest-origin' + originExtraClass;
-                        originEl.textContent = '[' + ktlOriginText + '始発]';
+                        originEl.textContent = '[' + ktlOriginText + '発]';
                     }
                 }
             }
@@ -2067,7 +2076,7 @@ function processETAData(data) {
             rowHtml += '<span class="eta-dest-chi' + destExtraClass + '">' + destInnerHtml + '</span>';
             if (destOriginHtml) {
                 var originExtraClass = isNoop ? ' eta-dest-noop' : (isOriginSelf ? ' eta-dest-origin-self' : '');
-                rowHtml += '<span class="eta-dest-origin' + originExtraClass + '">[' + destOriginHtml + '始発]</span>';
+                rowHtml += '<span class="eta-dest-origin' + originExtraClass + '">[' + destOriginHtml + '発]</span>';
             }
             rowHtml += '</div>';
             rowHtml += tdHtml;
@@ -2208,6 +2217,7 @@ function autoExpandRow2ForWideScreen() {
 function applySuperWideLayout() {
     var container = document.getElementById('eta-container');
     if (!container) return;
+    document.body.setAttribute('data-sw-cols-mode', superWideColsMode);
     // Remove previous super-wide attributes
     container.removeAttribute('data-sw-cols');
     var allSections = container.querySelectorAll('.line-section');
@@ -2216,7 +2226,7 @@ function applySuperWideLayout() {
         sec.removeAttribute('data-sw-span');
     });
 
-    if (window.innerWidth < 1760) return;
+    if (window.innerWidth < 1760 || superWideColsMode !== '4') return;
 
     var visibleSections = Array.prototype.slice.call(allSections).filter(function(sec) {
         return sec.style.display !== 'none';
@@ -2541,8 +2551,12 @@ function populateRow2(row2El) {
             }
         }
 
-        var isStoppedAtStart = (isStationary && stationDist === 0 && !isStopped);
-        var isStoppedElsewhere = (isStationary && stationDist !== null && stationDist > 0 && !isStopped);
+        // For EAL, stationDist is based on nextStation. When doors are open,
+        // nextStation is already the following stop, so use currentStation to
+        // keep a train stopped at the viewed station on the centre dot.
+        var trainStopAtCurrStation = (resolveStationCode(currentStationCode) === resolveStationCode(trainCurrentStationCode));
+        var isStoppedAtStart = (isStationary && (stationDist === 0 || trainStopAtCurrStation) && !isStopped);
+        var isStoppedElsewhere = (isStationary && !trainStopAtCurrStation && stationDist !== null && stationDist > 0 && !isStopped);
 
         if (isStoppedAtStart && !isStopped) {
             isStopped = true;
@@ -2589,7 +2603,6 @@ function populateRow2(row2El) {
         if (segmentPct !== null && segmentPct > 0) {
             trainPosPct = isMultiHop ? (segmentPct / 2) : segmentPct;
         }
-        var trainStopAtCurrStation = (currentStationCode === trainCurrentStationCode);
         var arrowPct = isMultiHop && !trainStopAtCurrStation ? 25 : 50;
 
         html += '<div class="row2-viz">';
@@ -2656,12 +2669,21 @@ function populateRow2(row2El) {
             }
             
             var arrowClass = 'row2-viz-line-arrow';
+            var isMovingArrow = false;
             if (isStoppedElsewhere) {
                 arrowClass += ' row2-viz-arrow-blink';
             } else if (nextStationVizArrowMode) {
                 arrowClass += ' row2-viz-arrow-move';
+                isMovingArrow = true;
             }
-            html += '<div class="' + arrowClass + '" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
+            if (isMovingArrow) {
+                html += '<div class="row2-viz-arrow-marquee" style="--arrow-pct:' + arrowPct + '%">';
+                html += '<div class="' + arrowClass + ' row2-viz-arrow-move-primary" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
+                html += '<div class="' + arrowClass + ' row2-viz-arrow-move-secondary" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
+                html += '</div>';
+            } else {
+                html += '<div class="' + arrowClass + '" style="--arrow-pct:' + arrowPct + '%">' + arrowSvg + '</div>';
+            }
             
             if (info.trainSpeed && info.trainSpeed > 0) {
                 html += '<span class="row2-viz-speed" style="--arrow-pct:' + arrowPct + '%">' + info.trainSpeed + ' km/h</span>';
@@ -3139,11 +3161,8 @@ function updateCountdowns() {
 // ============================================
 function initSettingsPanel() {
     // Sync mode switch state
-    var modeInput = document.getElementById('settings-mode-input');
-    if (modeInput) {
-        // Now: Checked means 'I', Unchecked means 'D'
-        modeInput.checked = (masterMode === 'I');
-    }
+    updateMasterSwitch();
+    updateSuperWideModeButtons();
     // Sync viz switch state
     var vizInput = document.getElementById('settings-viz-input');
     if (vizInput) {
@@ -3201,10 +3220,33 @@ function settingsToggleTheme() {
 
 function settingsToggleMode() {
     var modeInput = document.getElementById('settings-mode-input');
-    masterMode = modeInput.checked ? 'I' : 'D';
+    if (!modeInput) return;
+    settingsSetMode(modeInput.checked ? 'I' : 'D');
+}
+
+function settingsSetMode(mode) {
+    if (mode !== 'I' && mode !== 'D') return;
+    masterMode = mode;
     saveMasterMode();
     updateMasterSwitch();
     if (currentStationCode) fetchETAInternal(currentStationCode, false);
+}
+
+function updateSuperWideModeButtons() {
+    document.querySelectorAll('.settings-wide-mode-button').forEach(function (button) {
+        var isActive = button.getAttribute('data-mode') === superWideColsMode;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+}
+
+function settingsSetSuperWideMode(mode) {
+    if (mode !== '2' && mode !== '4') return;
+    superWideColsMode = mode;
+    try { localStorage.setItem('mtreta_superwide_cols', mode); } catch(e) {}
+    updateSuperWideModeButtons();
+    applySuperWideLayout();
+    autoExpandRow2ForWideScreen();
 }
 
 function settingsToggleViz() {

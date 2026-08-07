@@ -42,6 +42,9 @@
     --color-dropdown-hover:   #e8f0fe;   /* Dropdown item hover */
     --color-origin-self:      #7a3800;   /* [當駅始発] text color (light mode: brown) */
     --color-station-indicator: #ffd700;  /* Station indicator dot color */
+    --color-switch-on-main:   #5cb85c;   /* Switch ON color (main) */
+    --color-switch-on-sub:    #2196f3;    /* Switch ON color (alternate) */
+    --color-switch-off:       #777;  /* Switch OFF color */
 
     /* === Typography === */
     --font-family:            'MyriadMM', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
@@ -610,7 +613,7 @@ html, body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.35);
 }
 .mode-switch-input:checked + .mode-switch-slider {
-    background-color: #5cb85c;
+    background-color: var(--color-switch-on-main);
 }
 .mode-switch-input:checked + .mode-switch-slider::before {
     background-color: #fff;
@@ -728,7 +731,7 @@ html, body {
 .settings-switch-slider {
     position: absolute;
     inset: 0;
-    background-color: #555;
+    background-color: var(--color-switch-off);
     border-radius: 1em;
     transition: background-color 0.3s ease;
 }
@@ -751,7 +754,7 @@ html, body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .settings-switch input:checked + .settings-switch-slider {
-    background-color: #2196f3;
+    background-color: var(--color-switch-on-sub);
 }
 .settings-switch input:checked + .settings-switch-slider::before {
     content: attr(data-on);
@@ -760,15 +763,73 @@ html, body {
 
 /* Mode switch colors - D mode (unchecked) is blue */
 .settings-switch-mode .settings-switch-slider {
+    background-color: #000;
+    border: 1px solid #fff;
+    border-radius: 1px;
+    box-sizing: border-box;
+}
+.settings-switch-mode .settings-switch-slider::before {
+    top: 0.2em;
+    left: 0.2em;
+    border-radius: 3px;
     background-color: #2196f3;
+    color: #fff;
+    box-shadow: none;
 }
 .settings-switch-mode input:checked + .settings-switch-slider {
-    background-color: #5cb85c;
+    background-color: #000;
+}
+.settings-switch-mode input:checked + .settings-switch-slider::before {
+    background-color: var(--color-switch-on-main);
+}
+
+/* Split mode buttons: selecting D or I directly rather than toggling. */
+.settings-mode-buttons {
+    display: inline-flex;
+    align-items: stretch;
+    width: 4.8em;
+    height: 1.8em;
+    padding: 0px;
+    gap: 1px;
+    background-color: var(--color-text-white);
+    border: 2px solid var(--color-border);
+    border-radius: 5px;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.settings-mode-button {
+    flex: 1 1 0;
+    min-width: 0;
+    border: 0;
+    border-radius: 1px;
+    padding: 0;
+    background: transparent;
+    color: var(--color-text-dark);
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+}
+.settings-mode-button[data-mode="1"].active {
+    background-color: #2196f3;
+}
+.settings-mode-button[data-mode="2"].active {
+    background-color: var(--color-switch-on-main);
+}
+.settings-wide-mode-button[data-mode="2"].active {
+    background-color: #2196f3;
+}
+.settings-wide-mode-button[data-mode="4"].active {
+    background-color: var(--color-switch-on-main);
+}
+.settings-mode-button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
 }
 
 /* Viz switch colors */
 .settings-switch-viz .settings-switch-slider {
-    background-color: #888;
+    background-color: var(--color-switch-off);
 }
 .settings-switch-viz input:checked + .settings-switch-slider {
     background-color: #4caf50;
@@ -1042,20 +1103,36 @@ html, body {
 }
 
 @keyframes vizArrowMarquee {
-    0%, 9.99% { transform: translate(calc(-50% - 12px), calc(-50% - 8px)); }
-    10%, 19.99% { transform: translate(calc(-50% - 9px), calc(-50% - 8px)); }
-    20%, 29.99% { transform: translate(calc(-50% - 6px), calc(-50% - 8px)); }
-    30%, 39.99% { transform: translate(calc(-50% - 3px), calc(-50% - 8px)); }
-    40%, 49.99% { transform: translate(calc(-50%), calc(-50% - 8px)); }
-    50%, 59.99% { transform: translate(calc(-50% + 3px), calc(-50% - 8px)); }
-    60%, 69.99% { transform: translate(calc(-50% + 6px), calc(-50% - 8px)); }
-    70%, 79.99% { transform: translate(calc(-50% + 9px), calc(-50% - 8px)); }
-    80%, 89.99% { transform: translate(calc(-50% + 12px), calc(-50% - 8px)); }
-    90%, 100% { transform: translate(calc(-50% + 15px), calc(-50% - 8px)); }
+    /* Keep the next arrow entering before the current arrow fully clears the display. */
+    0% { transform: translate(calc(-50% - 15px), calc(-50% - 8px)); }
+    100% { transform: translate(calc(-50% + 45px), calc(-50% - 8px)); }
 }
+
+@keyframes vizArrowMarqueeSecondary {
+    /* Keep the second arrow 60px behind the primary arrow. */
+    0% { transform: translate(calc(-50% - 75px), calc(-50% - 8px)); }
+    100% { transform: translate(calc(-50% - 15px), calc(-50% - 8px)); }
+}
+
+.row2-viz-arrow-marquee {
+    position: absolute;
+    top: 0;
+    left: var(--arrow-pct, 50%);
+    width: 60px;
+    height: 100%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 3;
+}
+
 .row2-viz-arrow-move {
-    animation: vizArrowMarquee 1s infinite;
-    animation-timing-function: steps(1, start);
+    left: 50%;
+    animation: vizArrowMarquee 1.5s linear infinite;
+}
+
+.row2-viz-arrow-move-secondary {
+    animation: vizArrowMarqueeSecondary 1.5s linear infinite;
 }
 
 .row2-viz-dot-stopped {
@@ -1620,7 +1697,7 @@ body.dark-mode .eta-row-odd {
         --font-size-trainload-info: 14px;
         
         /* Trainload car visualization */
-        --car-rect-width: 5vw;
+        --car-rect-width: 5.3vw;
     }
 
     #header {
@@ -1641,6 +1718,19 @@ body.dark-mode .eta-row-odd {
         gap: var(--spacing-xl);
     }
 
+    #clock {
+        text-align: right;
+        grid-column: 3;
+        grid-row: 1;
+        justify-self: start;
+    }
+
+    #last-update-times {
+        grid-column: 4;
+        grid-row: 1;
+        justify-self: start;
+    }
+
     .eta-row .eta-time {
         min-width: 17%;
     }
@@ -1651,6 +1741,10 @@ body.dark-mode .eta-row-odd {
 
     .eta-dest-via {
         font-size: calc(var(--font-size-station-name) * 0.7);
+    }
+
+    .car-rect.first-class {
+        width: calc(var(--car-rect-width) * 0.88 + 4px);
     }
 
     .train-code {
@@ -1722,15 +1816,65 @@ body.dark-mode .eta-row-odd {
     }
 }
 
+@media (min-width: 1240px) {
+    /* Flatten the header only at the requested breakpoint. This keeps the
+       original header DOM and layout below 1240px while allowing the search
+       to sit between the clocks and action buttons on wide screens. */
+    #sticky-header-group {
+        display: grid;
+        grid-template-columns: auto minmax(400px, 1fr) auto auto auto;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background-color: var(--color-primary);
+        padding: var(--spacing-sm) 0 0;
+    }
+
+    #header {
+        display: contents;
+    }
+
+    #header-right {
+        display: contents;
+    }
+
+    #header-left {
+        grid-column: 1;
+        grid-row: 1;
+        width: auto;
+        margin-left: var(--spacing-lg);
+    }
+
+    #station-selector {
+        grid-column: 2;
+        grid-row: 1;
+        width: 400px;
+        min-width: 400px;
+        max-width: 500px;
+        justify-self: center;
+        padding: 0;
+        background-color: transparent;
+    }
+
+    #action-group {
+        grid-column: 5;
+        grid-row: 1;
+        margin-left: 0;
+        margin-right: var(--spacing-lg);
+    }
+
+    #station-info-bar {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+
 /* Wide screens (≥1000px): single-row header */
 @media (min-width: 1000px) {
     :root {
         --font-size-station-name: 24px;
         --font-size-trainload-info: 16px;
 
-        
-        /* Trainload car visualization */
-        --car-rect-width: 46px;
+        --car-rect-width: 48px;
     }
     
     .car-rect.car-rect-eal {
@@ -1742,7 +1886,7 @@ body.dark-mode .eta-row-odd {
 @media (min-width: 1760px) {
 
     /* Reduce car-rect for 3-4 col modes */
-    :root {
+    body[data-sw-cols-mode="4"] {
         --car-rect-width: 2.3vw;
     }
 
