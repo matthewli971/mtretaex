@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.16";
+const APP_VERSION = "v0.16.1";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -2362,7 +2362,11 @@ function populateRow2(row2El) {
         if (tmlInfo) info = tmlInfo;
     }
 
-    if (!info || !info.carLoads || !info.carLoads.length) {
+    var hasTrainLoadIdentifier = info && (
+        (info.trainId !== undefined && info.trainId !== null && String(info.trainId).trim() !== '' && String(info.trainId) !== '-') ||
+        (info.trainConsist !== undefined && info.trainConsist !== null && String(info.trainConsist).trim() !== '' && String(info.trainConsist) !== '-')
+    );
+    if (!info || (!info.carLoads || !info.carLoads.length) && !hasTrainLoadIdentifier) {
         row2El.classList.add('hidden');
         var row1El = row2El.previousElementSibling;
         if (row1El && row1El.classList.contains('eta-row1')) {
@@ -2476,7 +2480,7 @@ function populateRow2(row2El) {
     }
     
     var trainConsistText = '';
-    if (lineCode === 'TML' && info.currentStation) {
+    if (lineCode === 'TML') {
         if (info.trainId) {
             trainConsistText = 'Train #' + info.trainId;
         }
@@ -2494,9 +2498,12 @@ function populateRow2(row2El) {
         }
     }
     if (lineCode === 'TKL' || (info.trainConsist && info.trainConsist === '-')) {
-        trainConsistText = 'Consist: ' + (info.trainId ? info.trainId : '');
+        if (info.trainId) trainConsistText = 'Consist: ' + info.trainId;
     } else if (info.trainConsist && info.trainConsist !== '') {
         trainConsistText = 'Consist: ' + (info.trainConsist ? info.trainConsist : '');
+    }
+    if (!trainConsistText && info.trainId) {
+        trainConsistText = 'Train #' + info.trainId;
     }
     if (trainConsistText && trainConsistText.trim() !== '') {
         trainInfoHtml += '<span class="row2-info-item">' + trainConsistText + '</span>';

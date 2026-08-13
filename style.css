@@ -48,38 +48,38 @@
 
     /* === Typography === */
     --font-family:            'MyriadMM', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
-    --font-size-title:        6vw;
-    --font-size-clock:        7.6vw;
-    --font-size-last-update:  3.5vw;
-    --font-size-refresh:      4.8vw;
-    --font-size-search:       4vw;
-    --font-size-dropdown:     3.8vw;
-    --font-size-curr-station: 4.8vw;
-    --font-size-line-bar:     4vw;
-    --font-size-station-name: 5vw;
-    --font-size-eta:          5.5vw;
-    --font-size-eta-unit:     3vw;
-    --font-size-platform:     5.2vw;
-    --font-size-station-info: 3.2vw;
-    --font-size-train-type:   4.5vw;
-    --font-size-car-rect:     4.1vw;
-    --font-size-car-num:      3.2vw;
-    --font-size-trainload-info: 3.2vw;
+    --font-size-title:        6.3vw;
+    --font-size-clock:        7.9vw;
+    --font-size-last-update:  3.8vw;
+    --font-size-refresh:      5vw;
+    --font-size-search:       4.3vw;
+    --font-size-dropdown:     4.1vw;
+    --font-size-curr-station: 5.1vw;
+    --font-size-line-bar:     4.2vw;
+    --font-size-station-name: 5.3vw;
+    --font-size-eta:          5.8vw;
+    --font-size-eta-unit:     3.3vw;
+    --font-size-platform:     5.5vw;
+    --font-size-station-info: 3.5vw;
+    --font-size-train-type:   4.8vw;
+    --font-size-car-rect:     4.4vw;
+    --font-size-car-num:      3.5vw;
+    --font-size-trainload-info: 3.5vw;
 
     --header-button-height: 35px;
 
     /* ETA Row visualization */
-    --eta-row-height: 8.2vw;
+    --eta-row-height: 8.4vw;
 
     /* Next station visualization */
-    --line-bar-height: 1.7vw;
+    --line-bar-height: 2vw;
 
     /* Trainload car visualization */
-    --car-rect-width: 10.2vw;
-    --car-rect-height: 5.5vw;
+    --car-rect-width: 10.7vw;
+    --car-rect-height: 6.2vw;
 
     /* Train type badge visualization */
-    --train-type-badge-size: 5.2vw;
+    --train-type-badge-size: 5.3vw;
 
     /* === Spacing === */
     --spacing-xs:  4px;
@@ -1642,7 +1642,7 @@ body.dark-mode .eta-row-odd {
    ============================================ */
 
 /* Tablet and above (≥480px): fixed text sizes */
-@media (min-width: 480px) {
+@media (min-width: 460px) {
     :root {
         --font-size-title:        29px;
         --font-size-clock:        36px;
@@ -1821,6 +1821,21 @@ body.dark-mode .eta-row-odd {
     }
 }
 
+/* Wide screens (≥1000px): single-row header */
+@media (min-width: 1000px) {
+    :root {
+        --font-size-station-name: 24px;
+        --font-size-trainload-info: 16px;
+
+        --car-rect-width: 48px;
+    }
+    
+    .car-rect.car-rect-eal {
+        width: var(--car-rect-width);
+    }
+}
+
+
 @media (min-width: 1240px) {
     /* Flatten the header only at the requested breakpoint. This keeps the
        original header DOM and layout below 1240px while allowing the search
@@ -1872,21 +1887,6 @@ body.dark-mode .eta-row-odd {
         width: 100%;
     }
 }
-
-/* Wide screens (≥1000px): single-row header */
-@media (min-width: 1000px) {
-    :root {
-        --font-size-station-name: 24px;
-        --font-size-trainload-info: 16px;
-
-        --car-rect-width: 48px;
-    }
-    
-    .car-rect.car-rect-eal {
-        width: var(--car-rect-width);
-    }
-}
-
 /* Super-wide (≥1760px): 3/4 column layout for multi-line stations */
 @media (min-width: 1760px) {
 
