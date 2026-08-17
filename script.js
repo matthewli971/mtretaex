@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.16.2";
+const APP_VERSION = "v0.16.3";
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -51,64 +51,69 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("app-version").textContent = APP_VERSION;
     startClock();
     setupEventListeners();
-    loadStaticData();
-    buildStationList();
-    loadLineModeState();
 
-    // Check URL params for pre-selected station
-    const params = new URLSearchParams(window.location.search);
-    const preStation = params.get("station");
-    if (preStation && stationByCode[preStation.toUpperCase()]) {
-        selectStation(preStation.toUpperCase());
-    } else {
-        // Try localStorage for last used station
-        var savedStation = null;
-        try { savedStation = localStorage.getItem(STORAGE_KEY_STATION); } catch(e) {}
-        if (savedStation && stationByCode[savedStation]) {
-            selectStation(savedStation);
-        } else if (typeof HOME_STATION !== "undefined" && stationByCode[HOME_STATION]) {
-            selectStation(HOME_STATION);
-        }
-    }
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            loadStaticData();
+            buildStationList();
+            loadLineModeState();
 
-    // Theme: apply saved preference (default: dark), then mark as loaded
-    var savedTheme = null;
-    try { savedTheme = localStorage.getItem("mtreta_theme"); } catch(e) {}
-    if (savedTheme === "light") {
-        document.body.classList.remove("dark-mode");
-    } else {
-        document.body.classList.add("dark-mode");
-    }
-    // Signal that theme has been resolved — CSS active states now apply
-    document.body.classList.add("theme-loaded");
+            // Check URL params for pre-selected station
+            const params = new URLSearchParams(window.location.search);
+            const preStation = params.get("station");
+            if (preStation && stationByCode[preStation.toUpperCase()]) {
+                selectStation(preStation.toUpperCase());
+            } else {
+                // Try localStorage for last used station
+                var savedStation = null;
+                try { savedStation = localStorage.getItem(STORAGE_KEY_STATION); } catch(e) {}
+                if (savedStation && stationByCode[savedStation]) {
+                    selectStation(savedStation);
+                } else if (typeof HOME_STATION !== "undefined" && stationByCode[HOME_STATION]) {
+                    selectStation(HOME_STATION);
+                }
+            }
 
-    // Load next station visualization preference
-    try {
-        var savedViz = localStorage.getItem("mtreta_nextstationviz");
-        nextStationVizMode = (savedViz === null) ? true : (savedViz === "true");
+            // Theme: apply saved preference (default: dark), then mark as loaded
+            var savedTheme = null;
+            try { savedTheme = localStorage.getItem("mtreta_theme"); } catch(e) {}
+            if (savedTheme === "light") {
+                document.body.classList.remove("dark-mode");
+            } else {
+                document.body.classList.add("dark-mode");
+            }
+            // Signal that theme has been resolved — CSS active states now apply
+            document.body.classList.add("theme-loaded");
+
+            // Load next station visualization preference
+            try {
+                var savedViz = localStorage.getItem("mtreta_nextstationviz");
+                nextStationVizMode = (savedViz === null) ? true : (savedViz === "true");
         
-        var savedVizArrow = localStorage.getItem("mtreta_dynamic_arrow");
-        nextStationVizArrowMode = (savedVizArrow === null) ? true : (savedVizArrow === "true");
+                var savedVizArrow = localStorage.getItem("mtreta_dynamic_arrow");
+                nextStationVizArrowMode = (savedVizArrow === null) ? true : (savedVizArrow === "true");
 
-        var savedSuperWideCols = localStorage.getItem("mtreta_superwide_cols");
-        superWideColsMode = (savedSuperWideCols === "2") ? "2" : "4";
-    } catch(e) {}
+                var savedSuperWideCols = localStorage.getItem("mtreta_superwide_cols");
+                superWideColsMode = (savedSuperWideCols === "2") ? "2" : "4";
+            } catch(e) {}
 
-    // Initialize settings panel
-    initSettingsPanel();
+            // Initialize settings panel
+            initSettingsPanel();
 
-    // Resize handler for responsive layout changes
-    window.addEventListener('resize', function () {
-        applySuperWideLayout();
-        autoExpandRow2ForWideScreen();
-    });
+            // Resize handler for responsive layout changes
+            window.addEventListener('resize', function () {
+                applySuperWideLayout();
+                autoExpandRow2ForWideScreen();
+            });
 
-    // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./service-worker.js').catch(function (err) {
-            console.warn('Service worker registration failed:', err);
+            // Register service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./service-worker.js').catch(function (err) {
+                    console.warn('Service worker registration failed:', err);
+                });
+            }
         });
-    }
+    });
 });
 
 // ============================================
