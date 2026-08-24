@@ -180,6 +180,24 @@ html, body {
     white-space: nowrap;
 }
 
+#day-countdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    height: var(--header-button-height);
+    padding: 4px 6px;
+    box-sizing: border-box;
+    border: 2px solid currentColor;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-light);
+    font-size: var(--font-size-refresh);
+    font-weight: bold;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
 #clock .clock-sec {
     font-size: calc(var(--font-size-clock) * 0.7);
     opacity: 0.8;
@@ -1133,11 +1151,11 @@ html, body {
 
 .row2-viz-arrow-move {
     left: 50%;
-    animation: vizArrowMarquee 1.5s linear infinite;
+    animation: vizArrowMarquee 1s linear infinite;
 }
 
 .row2-viz-arrow-move-secondary {
-    animation: vizArrowMarqueeSecondary 1.5s linear infinite;
+    animation: vizArrowMarqueeSecondary 1s linear infinite;
 }
 
 .row2-viz-dot-stopped {
@@ -1330,6 +1348,7 @@ body:not(.dark-mode) .row2-viz-station-count {
     max-height: 110%;
     object-fit: contain;
     flex-shrink: 0;
+    pointer-events: none;
 }
 
 .eta-row .eta-time {
@@ -1399,6 +1418,11 @@ body:not(.dark-mode) .row2-viz-station-count {
     margin-right: var(--spacing-xs);
     flex-shrink: 0;
     cursor: pointer;
+    border: 0;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    color: inherit;
 }
 
 .train-type-c { background-color: #2196F3; color: #fff; }
@@ -1409,7 +1433,16 @@ body:not(.dark-mode) .row2-viz-station-count {
 .train-type-s { background-color: #5bc0de; color: #fff; }
 .train-type-19 { background-color: #d40026; border-bottom: 4px solid #092869; color: #fff; width: calc(var(--train-type-badge-size) * 1.2);}
 .train-type-a { background-color: #666666; color: #fff; }
-.train-type-unknown { cursor: default; }
+.train-type-unknown {
+    background-color: transparent;
+    color: transparent;
+    cursor: default;
+}
+
+.train-type-badge:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
 
 /* Door Status Indicator */
 .door-status {
@@ -1841,7 +1874,7 @@ body.dark-mode .eta-row-odd {
        to sit between the clocks and action buttons on wide screens. */
     #sticky-header-group {
         display: grid;
-        grid-template-columns: auto minmax(400px, 1fr) auto auto auto;
+        grid-template-columns: auto minmax(400px, 1fr) auto auto auto auto;
         align-items: center;
         gap: var(--spacing-sm);
         background-color: var(--color-primary);
@@ -1875,10 +1908,25 @@ body.dark-mode .eta-row-odd {
     }
 
     #action-group {
-        grid-column: 5;
+        grid-column: 6;
         grid-row: 1;
         margin-left: 0;
         margin-right: var(--spacing-lg);
+    }
+
+    #day-countdown {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    #clock {
+        grid-column: 4;
+        grid-row: 1;
+    }
+
+    #last-update-times {
+        grid-column: 5;
+        grid-row: 1;
     }
 
     #station-info-bar {

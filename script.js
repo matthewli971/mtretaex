@@ -3,7 +3,9 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.16.3";
+const APP_VERSION = "v0.16.4";
+const HONG_KONG_TIME_ZONE = 'Asia/Hong_Kong';
+const COUNTDOWN_TARGET_DATE = '2026-09-16';
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -149,7 +151,11 @@ function pwaInstallClick() {
 // ============================================
 function startClock() {
     updateClock();
-    clockTimer = setInterval(updateClock, 1000);
+    updateDayCountdown();
+    clockTimer = setInterval(function () {
+        updateClock();
+        updateDayCountdown();
+    }, 1000);
 }
 
 // ============================================
@@ -168,6 +174,37 @@ function updateClock() {
     const ss = String(now.getSeconds()).padStart(2, "0");
     document.getElementById("clock").innerHTML =
         hh + ": " + mm + '<span class="clock-sec">: ' + ss + "</span>";
+}
+
+function updateDayCountdown() {
+    const countdown = document.getElementById('day-countdown');
+    if (!countdown) return;
+
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: HONG_KONG_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(
+        parts
+            .filter(part => part.type !== 'literal')
+            .map(part => [part.type, part.value])
+    );
+    const todayUtc = Date.UTC(
+        Number(values.year),
+        Number(values.month) - 1,
+        Number(values.day)
+    );
+    const targetUtc = Date.parse(`${COUNTDOWN_TARGET_DATE}T00:00:00Z`);
+
+    if (!Number.isFinite(targetUtc) || !Number.isFinite(todayUtc)) {
+        countdown.textContent = '';
+        return;
+    }
+
+    const daysUntil = Math.ceil((targetUtc - todayUtc) / (24 * 60 * 60 * 1000));
+    countdown.textContent = daysUntil > 0 ? String(daysUntil) : '';
 }
 
 // ============================================
@@ -1745,6 +1782,53 @@ function updateTrainEnrichment() {
 }
 
 // ============================================
+// EAL grouped-station direction helpers
+// ============================================
+function getEalGroupedStationDirection(lineCode, stationCode, platform) {
+    if (lineCode !== 'EAL') return null;
+    if (EAL_GROUPED_DIRECTION_STATIONS.indexOf(stationCode) === -1 ||
+        typeof platformGroup === 'undefined') {
+        return null;
+    }
+
+    var groups = platformGroup[stationCode];
+    var platformNum = parseInt(platform, 10);
+    if (!Array.isArray(groups) || isNaN(platformNum)) return null;
+
+    var groupIndex = groups.findIndex(function (group) {
+        return Array.isArray(group) && group.indexOf(platformNum) !== -1;
+    });
+    if (groupIndex === 0) return 'up';
+    if (groupIndex === 1) return 'down';
+    return null;
+}
+
+function getEalTrainSequenceNumber(td) {
+    var numericParts = String(td || '').match(/\d+/g);
+    if (!numericParts || numericParts.length === 0) return null;
+
+    var sequence = parseInt(numericParts[numericParts.length - 1], 10);
+    return isNaN(sequence) ? null : sequence;
+}
+
+function getEalTdDirection(td) {
+    var sequence = getEalTrainSequenceNumber(td);
+    if (sequence === null) return null;
+    return sequence % 2 === 1 ? 'up' : 'down';
+}
+
+function shouldKeepEalGroupedTrain(lineCode, stationCode, platform, td) {
+    var groupDirection = getEalGroupedStationDirection(lineCode, stationCode, platform);
+    if (!groupDirection) return true;
+
+    var tdDirection = getEalTdDirection(td);
+    // OpenData rows do not contain td. Keep those rows instead of removing
+    // the entire EAL display when the user is in D mode.
+    if (!tdDirection) return true;
+    return groupDirection === tdDirection;
+}
+
+// ============================================
 // Process & Render ETA Data
 // ============================================
 function processETAData(data) {
@@ -1798,17 +1882,31 @@ function processETAData(data) {
             const trains = platforms[platformNum];
             if (!Array.isArray(trains)) return;
             trains.forEach(function (train) {
+                if (!shouldKeepEalGroupedTrain(mappedLine, currentStationCode, platformNum, train.td)) {
+                    return;
+                }
+
+                var isEalTtTrain = mappedLine === 'EAL' && train.td &&
+                    String(train.td).toUpperCase().indexOf('TT') === 0;
                 var ttnt = train.ttnt;
                 var ttntNum = parseInt(ttnt, 10);
                 
                 // Filter out stale trains: ttnt <= 0 and tta is "-"
-                if (ttntNum <= 0 && train.tta === "-") return;
+                var ttdNum = parseInt(train.ttd, 10);
+                if (ttntNum <= 0 && train.tta === "-" &&
+                    !(isEalTtTrain && !isNaN(ttdNum) && ttdNum >= 0)) return;
 
                 // Filter out -1 min trains unless ttd is valid (originating trains)
                 if (ttntNum < 0) {
-                    var ttaNum = parseInt(train.tta, 10);
-                    if (isNaN(ttaNum) || ttaNum < 0) return;
-                    ttnt = train.tta; // use departure time for originating trains
+                    var fallbackEta = isEalTtTrain ? train.ttd : train.tta;
+                    var fallbackEtaNum = parseInt(fallbackEta, 10);
+                    // Some TT records have no ttd value; retain the normal tta fallback.
+                    if (isEalTtTrain && (isNaN(fallbackEtaNum) || fallbackEtaNum < 0)) {
+                        fallbackEta = train.tta;
+                        fallbackEtaNum = parseInt(fallbackEta, 10);
+                    }
+                    if (isNaN(fallbackEtaNum) || fallbackEtaNum < 0) return;
+                    ttnt = fallbackEta;
                 }
 
                 // Enrichment lookup
@@ -1828,6 +1926,7 @@ function processETAData(data) {
                     tta: train.tta,
                     ttd: train.ttd,
                     td: train.td || "",
+                    ealDirection: getEalGroupedStationDirection(mappedLine, currentStationCode, platformNum),
                     routeCode: train.routeCode || (enrichment ? enrichment.routeCode : null),
                     currentStation: enrichment ? enrichment.currentStation : null,
                     _odSupplemented: train._odSupplemented || false
@@ -1970,6 +2069,8 @@ function processETAData(data) {
             var isUnknownDest = false;
 
             var isVVTrain = (lineCode === 'EAL' && train.td && train.td.toUpperCase().indexOf('VV') === 0);
+            var isTTTrain = (lineCode === 'EAL' && train.td && train.td.toUpperCase().indexOf('TT') === 0);
+            var isNotInServiceTrain = isVVTrain || isTTTrain;
 
             if (lineCode === 'EAL' && train.td && train.td.toUpperCase().indexOf('TT') === 0) {
                 destChi = "不 載 客 列 車";
@@ -2013,7 +2114,7 @@ function processETAData(data) {
             if (isFullDMode) {
                 tdHtml = '';
             } else {
-                tdHtml = renderTrainCode(train.td, lineCode, isVVTrain);
+                tdHtml = renderTrainCode(train.td, lineCode, isNotInServiceTrain);
             }
             var rowClass = (rowIndex % 2 === 0) ? 'eta-row-even' : 'eta-row-odd';
             var isDark = document.body.classList.contains('dark-mode');
@@ -2026,18 +2127,25 @@ function processETAData(data) {
             var isOriginSelf = false;
             
             // Define direction (up/down)
-            var direction = (train.platform % 2 === 1) ? 'up' : 'down';
+            var ealGroupDirection = train.ealDirection ||
+                getEalGroupedStationDirection(lineCode, currentStationCode, train.platform);
+            var direction = ealGroupDirection || ((train.platform % 2 === 1) ? 'up' : 'down');
 
             if (isViaRac && currentStationCode !== 'RAC') {
                 destInnerHtml += '<span class="eta-dest-via"> 經馬場</span>';
             }
 
             if (lineCode === 'EAL' && train.td && train.td.length >= 2/* && !isNoop*/) {
-                var ealSeq = (lineByCode['EAL'] || {}).stations || [];
-                var currSeqIdx = ealSeq.indexOf(currentStationCode);
-                var destSeqIdx = ealSeq.indexOf(resolveStationCode(train.destination));
-                var isUpLine = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
-                direction = isUpLine ? 'up' : 'down';
+                var isUpLine;
+                if (ealGroupDirection) {
+                    isUpLine = ealGroupDirection === 'up';
+                } else {
+                    var ealSeq = (lineByCode['EAL'] || {}).stations || [];
+                    var currSeqIdx = ealSeq.indexOf(currentStationCode);
+                    var destSeqIdx = ealSeq.indexOf(resolveStationCode(train.destination));
+                    isUpLine = (currSeqIdx !== -1 && destSeqIdx !== -1 && destSeqIdx < currSeqIdx);
+                    direction = isUpLine ? 'up' : 'down';
+                }
                 var trainCodeLetter = train.td.charAt(isUpLine ? 1 : 0).toUpperCase();
                 var originCode = nslOriginMap[trainCodeLetter];
                 if (originCode) {
@@ -2075,7 +2183,10 @@ function processETAData(data) {
                 }
             }
 
-            var rowHtml = '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '"' + gridColAttr + '>';
+            var ealDirectionAttr = (lineCode === 'EAL' && ealGroupDirection)
+                ? ' data-eal-direction="' + ealGroupDirection + '"'
+                : '';
+            var rowHtml = '<div class="eta-row ' + rowClass + '"' + rowStyle + ' data-td="' + (train.td || '') + '" data-line="' + lineCode + '" data-platform="' + train.platform + '" data-dest="' + (train.destination || '') + '" data-ttnt="' + (train.ttnt || '') + '"' + ealDirectionAttr + gridColAttr + '>';
             rowHtml += '<div class="eta-row1">';
             rowHtml += '<div class="eta-dest">';
             rowHtml += '<span class="eta-dest-chi' + destExtraClass + '">' + destInnerHtml + '</span>';
@@ -2203,8 +2314,10 @@ function autoExpandRow2ForWideScreen() {
             seenGroups[groupKey] = true;
 
             var badge = etaRow.querySelector('.train-type-badge');
-            // If no badge or badge is unknown placeholder, no trainload data — stop here
-            if (!badge || badge.classList.contains('train-type-unknown') || !badge.textContent.trim()) return;
+            var hasChaiBadge = badge && badge.classList.contains('train-type-vv');
+            // Expand known type badges and chai controls; stop at an unknown placeholder.
+            if (!badge || badge.classList.contains('train-type-unknown') ||
+                (!badge.textContent.trim() && !hasChaiBadge)) return;
 
             var row2 = etaRow.querySelector('.eta-row2');
             var row1 = etaRow.querySelector('.eta-row1');
@@ -2367,11 +2480,39 @@ function populateRow2(row2El) {
         if (tmlInfo) info = tmlInfo;
     }
 
+    var etaDestination = etaRow.getAttribute('data-dest') || '';
+    var isEalTtTrain = lineCode === 'EAL' && /^TT/i.test(td);
+    var isEalNonPassengerTrain = lineCode === 'EAL' && (
+        isEalTtTrain ||
+        etaDestination.indexOf('NO_') === 0 ||
+        (currentStationCode && resolveStationCode(etaDestination) === resolveStationCode(currentStationCode))
+    );
+    // TT/non-passenger EAL records may not exist in the trainload API. Keep an
+    // ETA-only info object so their train number/consist text remains visible.
+    if (!info && isEalNonPassengerTrain) {
+        info = {
+            trainId: '',
+            trainConsist: '',
+            currentStation: null,
+            nextStation: null,
+            origin: null,
+            destination: null,
+            doorStatus: null,
+            trainSpeed: 0,
+            startDistance: null,
+            targetDistance: null,
+            updatedTime: null,
+            line: 'EAL',
+            carLoads: []
+        };
+    }
+
     var hasTrainLoadIdentifier = info && (
         (info.trainId !== undefined && info.trainId !== null && String(info.trainId).trim() !== '' && String(info.trainId) !== '-') ||
         (info.trainConsist !== undefined && info.trainConsist !== null && String(info.trainConsist).trim() !== '' && String(info.trainConsist) !== '-')
     );
-    if (!info || (!info.carLoads || !info.carLoads.length) && !hasTrainLoadIdentifier) {
+    var hasEtaOnlyIdentifier = isEalNonPassengerTrain && td.trim() !== '';
+    if (!info || ((!info.carLoads || !info.carLoads.length) && !hasTrainLoadIdentifier && !hasEtaOnlyIdentifier)) {
         row2El.classList.add('hidden');
         var row1El = row2El.previousElementSibling;
         if (row1El && row1El.classList.contains('eta-row1')) {
@@ -2743,19 +2884,25 @@ function populateRow2(row2El) {
     html += '</div>'; // row2-info-row
 
     // Trainload cars row (lower)
-    html += '<div class="trainload-cars">';
+    var hasCarLoads = info.carLoads && info.carLoads.length > 0;
+    if (hasCarLoads) html += '<div class="trainload-cars">';
     //html += '<span class="trainload-direction">&larr;</span>';
 
     // Determine NSL first-class car position based on td direction
     var firstClassCarNo = -1;
-    var carLoadsOrdered = info.carLoads;
+    var carLoadsOrdered = info.carLoads || [];
     var platform = parseInt(etaRow.getAttribute('data-platform')) || 1;
     var isUp = (platform % 2 === 1);
     if (lineCode === 'EAL') {
-        // Determine direction from trainload API station sequence; fall back to td last digit
-        var isUp;
-        var ealDirResolved = false;
-        if (info.currentStation && info.nextStation) {
+        // Grouped EAL stations use the same direction as the main row.
+        var ealGroupDirection = etaRow.getAttribute('data-eal-direction') ||
+            getEalGroupedStationDirection(lineCode, currentStationCode, platform);
+        var ealDirResolved = !!ealGroupDirection;
+        if (ealDirResolved) {
+            isUp = ealGroupDirection === 'up';
+        } else if (info.currentStation && info.nextStation) {
+            // For other EAL stations, determine direction from the trainload
+            // API station sequence.
             var ealLineStations = (lineByCode['EAL'] || {}).stations || [];
             var currAbbr = (typeof lineStationCodeMap !== 'undefined' && lineStationCodeMap[info.currentStation]) || info.currentStation;
             var nextAbbr = (typeof lineStationCodeMap !== 'undefined' && lineStationCodeMap[info.nextStation]) || info.nextStation;
@@ -2767,20 +2914,19 @@ function populateRow2(row2El) {
             }
         }
         if (!ealDirResolved) {
-            // Fallback: use last digit of td numeric portion
-            var tdNums = td.replace(/[^0-9]/g, '');
-            var lastDigit = tdNums.length > 0 ? parseInt(tdNums[tdNums.length - 1]) : 0;
-            isUp = (lastDigit % 2 === 1);
+            // Fallback: use the numeric sequence in td.
+            var ealSequence = getEalTrainSequenceNumber(td);
+            isUp = ealSequence === null ? false : ealSequence % 2 === 1;
         }
         firstClassCarNo = isUp ? 4 : 6; // up=car4, down=car6
         // Down line: carLoads[0]=car9, carLoads[8]=car1 — reverse for correct display order
         if (!isUp) {
-            carLoadsOrdered = info.carLoads.slice().reverse();
+            carLoadsOrdered = carLoadsOrdered.slice().reverse();
         }
     // TWL/TCL: up line (odd platform) is inverted — reverse carLoads for upline
     } else if (lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TCL') {
         if (isUp) {
-            carLoadsOrdered = info.carLoads.slice().reverse();
+            carLoadsOrdered = carLoadsOrdered.slice().reverse();
         }
     }
 
@@ -2866,7 +3012,7 @@ function populateRow2(row2El) {
         }
         html += '</div>';
     });
-    html += '</div>';
+    if (hasCarLoads) html += '</div>';
 
     row2El.innerHTML = html;
 }
@@ -3047,13 +3193,13 @@ function renderHiddenTrainCode() {
     return html;
 }*/
 
-function renderTrainCode(td, lineCode, isVVTrain) {
+function renderTrainCode(td, lineCode, isNotInServiceTrain) {
     //if (!td) return '<div class="train-code" data-td=""></div>';
     var typeBadgeNew = 'unknown';
     if (!td) {
         var html = '<span class="train-type-badge train-type-unknown"></span>';
-        if (isVVTrain) {
-            html = '<span class="train-type-badge train-type-vv"><img src="lib/chai.png" class="eta-chai-badge"></span>';
+        if (isNotInServiceTrain) {
+            html = '<button type="button" class="train-type-badge train-type-vv" onclick="toggleRow2(this)" aria-label="Show train details"><img src="lib/chai.png" class="eta-chai-badge" alt="" draggable="false"></button>';
         }
         html += '<div class="train-code train-code-hidden" data-td="">';
         html += make7SegDigit(' ') + make7SegDigit(' ') + make7SegDigit(' ');
@@ -3068,8 +3214,8 @@ function renderTrainCode(td, lineCode, isVVTrain) {
     var key = lineCode ? lineCode + '_' + nums : null;
     var info = key ? lookupWithIslFallback(lookup, lineCode, nums) : null;
     var typeBadge = '';
-    if (isVVTrain) {
-        typeBadge = '<span class="train-type-badge train-type-vv"><img src="lib/chai.png" class="eta-chai-badge"></span>';
+    if (isNotInServiceTrain) {
+        typeBadge = '<button type="button" class="train-type-badge train-type-vv" onclick="toggleRow2(this)" aria-label="Show train details"><img src="lib/chai.png" class="eta-chai-badge" alt="" draggable="false"></button>';
     } else if (info && info.trainType) {
         typeBadge = '<span class="train-type-badge train-type-' + info.trainType.toLowerCase() + '" onclick="toggleRow2(this)">' + info.trainType + '</span>';
     } else {

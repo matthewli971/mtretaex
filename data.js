@@ -494,6 +494,8 @@ var platformGroup = {
     "CHH": [[1, 2], [3, 4]]
 };
 
+const EAL_GROUPED_DIRECTION_STATIONS = ['TAP', 'FOT', 'SHT', 'MKK'];
+
 // ============================================
 // Per-line API configuration
 // Each entry defines how to call the ETA API for a specific line.
