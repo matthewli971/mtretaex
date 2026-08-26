@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.16.4";
+const APP_VERSION = "v0.16.5";
 const HONG_KONG_TIME_ZONE = 'Asia/Hong_Kong';
 const COUNTDOWN_TARGET_DATE = '2026-09-16';
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
@@ -42,7 +42,6 @@ let countdownTimer = null;
 let masterMode = 'I';
 
 let railwayPlasticMode = false;
-let nextStationVizMode = true;
 let nextStationVizArrowMode = true;
 let superWideColsMode = '4';
 
@@ -87,11 +86,8 @@ document.addEventListener("DOMContentLoaded", function () {
             // Signal that theme has been resolved — CSS active states now apply
             document.body.classList.add("theme-loaded");
 
-            // Load next station visualization preference
+            // Load dynamic arrow and super-wide layout preferences
             try {
-                var savedViz = localStorage.getItem("mtreta_nextstationviz");
-                nextStationVizMode = (savedViz === null) ? true : (savedViz === "true");
-        
                 var savedVizArrow = localStorage.getItem("mtreta_dynamic_arrow");
                 nextStationVizArrowMode = (savedVizArrow === null) ? true : (savedVizArrow === "true");
 
@@ -2616,14 +2612,6 @@ function populateRow2(row2El) {
 
     // Build train ID / consist HTML (for right column)
     var trainInfoHtml = '';
-    if (!nextStationVizMode) {
-        if (locText && locText.trim() !== '') {
-            trainInfoHtml += '<span class="row2-info-item row2-loc-item">' + locText + '</span>';
-        }
-        if (info.trainSpeed && info.trainSpeed > 0) {
-            trainInfoHtml += '<span class="row2-info-item">' + info.trainSpeed + ' km/h</span>';
-        }
-    }
     
     var trainConsistText = '';
     if (lineCode === 'TML') {
@@ -2661,14 +2649,14 @@ function populateRow2(row2El) {
     // ── Row 1: two-column layout ──────────────────────────────────────────────
     html += '<div class="row2-info-row">';
 
-    // LEFT column (50%): visualization or plain text
-    html += '<div class="' + (nextStationVizMode ? 'row2-left-col' : 'row2-left-col row2-left-col-viz') + '">';
+    // LEFT column: next-station visualization
+    html += '<div class="row2-left-col">';
 
     // Variables for station count visualization for now
     var stationDist = null;
     var remainingStationsPct = 75;
 
-    if (nextStationVizMode && locText && locText.trim() !== '') {
+    if (locText && locText.trim() !== '') {
         // Detect station sequence distance for special stopped-at-station cases
         var orderMap = stationOrderMap[lineCode];
         if (orderMap) {
@@ -2867,16 +2855,13 @@ function populateRow2(row2El) {
             }
         }
         html += '</div>';
-    } else if (trainInfoHtml) {
-        // Normal mode: show train load text info in left column
-        html += '<div class="row2-info">' + trainInfoHtml + '</div>';
     }
     html += '</div>'; // row2-left-col
 
     // RIGHT column: door badge on top, train info below (both right-aligned)
     html += '<div class="row2-right-col">';
     html += '<div class="row2-door-slot">' + doorBadgeHtml + '</div>';
-    if (nextStationVizMode && trainInfoHtml) {
+    if (trainInfoHtml) {
         html += '<div class="row2-traininfo">' + trainInfoHtml + '</div>';
     }
     html += '</div>'; // row2-right-col
@@ -3321,22 +3306,11 @@ function initSettingsPanel() {
     // Sync mode switch state
     updateMasterSwitch();
     updateSuperWideModeButtons();
-    // Sync viz switch state
-    var vizInput = document.getElementById('settings-viz-input');
-    if (vizInput) {
-        vizInput.checked = nextStationVizMode;
-    }
     
     // Sync viz arrow switch state
     var vizArrowInput = document.getElementById('settings-viz-arrow-input');
     if (vizArrowInput) {
         vizArrowInput.checked = nextStationVizArrowMode;
-    }
-    
-    // Toggle sub-category visibility based on viz mode
-    var vizCategory = document.getElementById('settings-viz-category');
-    if (vizCategory) {
-        vizCategory.style.display = nextStationVizMode ? 'flex' : 'none';
     }
 }
 
@@ -3405,22 +3379,6 @@ function settingsSetSuperWideMode(mode) {
     updateSuperWideModeButtons();
     applySuperWideLayout();
     autoExpandRow2ForWideScreen();
-}
-
-function settingsToggleViz() {
-    var vizInput = document.getElementById('settings-viz-input');
-    nextStationVizMode = vizInput.checked;
-    try { localStorage.setItem("mtreta_nextstationviz", nextStationVizMode ? "true" : "false"); } catch(e) {}
-    
-    var vizCategory = document.getElementById('settings-viz-category');
-    if (vizCategory) {
-        vizCategory.style.display = nextStationVizMode ? 'flex' : 'none';
-    }
-
-    // Re-render expanded rows if any are open
-    document.querySelectorAll('.eta-row2:not(.hidden)').forEach(function (row2El) {
-        populateRow2(row2El);
-    });
 }
 
 function settingsToggleVizArrow() {

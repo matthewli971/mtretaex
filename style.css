@@ -850,14 +850,6 @@ html, body {
     outline-offset: -2px;
 }
 
-/* Viz switch colors */
-.settings-switch-viz .settings-switch-slider {
-    background-color: var(--color-switch-off);
-}
-.settings-switch-viz input:checked + .settings-switch-slider {
-    background-color: #4caf50;
-}
-
 /* Settings theme toggle (sun/moon icons) */
 .settings-theme-toggle {
     display: flex;
@@ -918,7 +910,7 @@ html, body {
     color: var(--color-text-dark);
 }
 
-/* LEFT column: visualization or text info (50% width) */
+/* LEFT column: next-station visualization */
 .row2-left-col {
     width: 70%;
     min-width: 0;
@@ -950,19 +942,6 @@ html, body {
     gap: 2px;
     font-size: var(--font-size-trainload-info);
     color: var(--color-text-dark);
-}
-
-.row2-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-items: center;
-}
-
-/* Train ID / Consist right-aligned */
-.row2-info-right {
-    margin-left: auto;
-    text-align: right;
 }
 
 /* Next Station Visualization — fills left column */
@@ -1259,21 +1238,8 @@ body:not(.dark-mode) .row2-viz-station-count {
     align-self: center;
 }
 
-.row2-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: var(--font-size-trainload-info);
-    color: var(--color-text-dark);
-    flex-wrap: wrap;
-}
-
 .row2-info-item {
     white-space: nowrap;
-}
-
-.row2-loc-item {
-    font-size: calc(var(--font-size-trainload-info) * 0.8);
 }
 
 /* Door status badge in row2 */
