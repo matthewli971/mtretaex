@@ -3,6 +3,9 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.17
+- **Train information table**: Show train list in operation, with information including train consist, train current location and train type
+
 ### v0.16
 - **Enhanced refreshing behaviour**: Updated silent refresh and show status next to settings icon instead of flashing when refreshing ETA
 - **Enhanced ETA Display for long-waiting trains**: For trains ETA more than 60mins, show the exact time instead of mins

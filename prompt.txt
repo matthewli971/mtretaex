@@ -372,3 +372,33 @@ Please make the green tick bolder, and reserve a fixeded position of the tick to
 
 
 Add aswitch in a settings page named "超闊螢幕行數顯示" between 到站時間預報模式 and 到站時間預報模式 , then re-use the switch updated above, with "2" and "4" options. Default settings is 4. After setting up, for super wide screens (min-width = 1760px), only split to 4 columns of the super wide screen when the switch is on "4" mode, when mode is "2", then keep the behaviour like min-width:1000
+
+Please help to update the app according to following:
+1. Add a button in the line bar to show the train information in table format. Please show in a new Window with max width 700px. Please set the css to add a new settings on min-width: 700px and set the window width = 700px when the screen width exceed 700px. In the table please show the (1)train code 3 digits, (2)td in full form, (3)train location in visualized mode, (4)Train Destination. Please add a refresh button (F5) for refreshing the data, and and an "X" button to close the window. For the new functions implement for this function please create a new js file to save the functions.
+
+For the train list, please retreive all train data of the whole API returned instead of getting the train list of current station. After  Please add train Consist column between td and train location. For train location please follow the row 2 mode and use the same class to create the train location, and align the width of the train location line for train moving and stable states. For the destination please add colour badge with the colour scheme of the station-info-name class.
+
+Please set the refresh button same as the home screen by using the same class as the refresh button in home screen, make the margin of the close button smaller. and remove the border of the clode button
+
+Please update the behaviour of the Train info window according to follows:
+1. When user click F5 in the train info window, please only refresh the UI in the window instead of reloading the whole stop monitor
+2. Please add moving arrow function to the line shown in the window
+3. If there is no train distance data provided in the API response, hide the train icon on the line instead on put it in the middle
+4. The refresh button turns grey after clicking instead of the dark green like the home screen refresh button, please fix it
+5. Please add a row of update timestamp to show the update time data in row data returned in API
+6. For destination badger please make it large and vertical align it in the middle
+
+1. Please help to sort the TD with the ascending order with the numbers without the leading letters e.g. 27,AA28,36,RA37,...AA43, AA45..., and put rows with no numbers in TD at the bottom of the table
+2. Please add date in update time column to show the time as dd/MM/yyyy HH:MM:ss
+
+
+1. Please handle TWL Q train API to show trainId instead if the trainConsist record is null or `-`
+2. For update time please add line break between date and time dd/MM/yyyy [<br> or \n] HH:MM:ss
+3. If the line supports up/down line detection, when train is on down line, please invert the direction to show the direction from right to left instead of from left to right currently.
+
+1. When clicking on the "列車表" button please call the trainload API of the line and show "載入中..." instead of showing nothing
+2. When the trainload is in loading status i.e. no data yet, please align the window to the top with top 100px, to show a gap between the top margin and the top of window
+3. Please show the train type badge with the colour scheme in the home monitor screen
+
+1. Please update the "列車表" button to rounded rectangle button like line button above, and remove the white margin, then add top:1px to make the text slightly lower
+2. In train info window please state the 
