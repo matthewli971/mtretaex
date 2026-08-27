@@ -345,6 +345,7 @@
     }
 
     function loadTableData(lineCode) {
+        if (activeLineCode !== lineCode) return Promise.resolve(false);
         tableLoading = true;
         overlay.classList.add('train-table-loading');
         renderTable();
@@ -364,8 +365,14 @@
     }
 
     function openTable(lineCode) {
+        var lineChanged = activeLineCode !== lineCode;
         activeLineCode = lineCode;
+        if (lineChanged && tableBody) tableBody.innerHTML = '';
         overlay.classList.remove('hidden');
+        if (lineChanged && refreshButton && refreshButton.disabled) {
+            loadTableData(lineCode);
+            return;
+        }
         refreshButtonWithTimeout(refreshButton, function () {
             return loadTableData(lineCode);
         });
@@ -393,6 +400,8 @@
             var section = lineBar.closest('.line-section');
             var lineCode = section ? section.getAttribute('data-line') : '';
             if (!lineCode) return;
+            var lineApi = typeof lineApiConfig !== 'undefined' ? lineApiConfig[lineCode] : null;
+            if (!lineApi || !lineApi.url) return;
 
             var button = document.createElement('button');
             button.type = 'button';

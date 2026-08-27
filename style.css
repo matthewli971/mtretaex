@@ -49,7 +49,7 @@
     /* === Typography === */
     --font-family:            'MyriadMM', 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', Arial, sans-serif;
     --font-size-title:        6.3vw;
-    --font-size-clock:        7.9vw;
+    --font-size-clock:        7.8vw;
     --font-size-last-update:  3.8vw;
     --font-size-refresh:      5vw;
     --font-size-search:       4.3vw;
@@ -97,6 +97,8 @@
 
     /* === Shadows === */
     --shadow-dropdown: 0 4px 16px rgba(0,0,0,0.18);
+
+    --header-gap: var(--spacing-xs);
 
 }
 
@@ -168,7 +170,7 @@ html, body {
 #header-right {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--header-gap);
     width: 100%;
     justify-content: space-between;
 }
@@ -187,7 +189,7 @@ html, body {
     justify-content: center;
     flex: 0 0 auto;
     height: var(--header-button-height);
-    padding: 4px 6px;
+    padding: 4px 4px;
     box-sizing: border-box;
     border: 2px solid currentColor;
     border-radius: var(--radius-sm);
@@ -221,7 +223,7 @@ html, body {
 
 #last-update-times {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: var(--header-gap);
 }
 
 .update-time-col {
@@ -278,10 +280,10 @@ html, body {
     color: var(--color-text-light);
     border: none;
     border-radius: var(--radius-sm);
-    padding: var(--spacing-xs) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--font-size-refresh);
     font-weight: bold;
-    min-width: 50px;
+    min-width: 45px;
     height: var(--header-button-height);
     cursor: pointer;
     transition: background-color 0.2s;
@@ -602,7 +604,7 @@ html, body {
 /* Train information table */
 .train-table-open {
     margin-left: auto;
-    padding: 2px 8px;
+    padding: 1px 8px;
     border: 0px;
     border-radius: 50px;
     background: rgba(0, 0, 0, 0.18);
@@ -708,15 +710,11 @@ html, body {
     overflow: auto;
 }
 .train-table {
-    --train-table-identity-width: 125px;
     --train-table-type-font-size: 20px;
     --train-table-code-size: 24px;
-    --train-table-code-padding: 2px;
-    --train-table-consist-font-size: 0.9em;
-    --train-table-speed-font-size: 0.72em;
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9em;
+    font-size: 0.8rem;
 }
 .train-table th,
 .train-table td {
@@ -735,8 +733,7 @@ html, body {
     white-space: nowrap;
 }
 .train-table td:first-child {
-    width: var(--train-table-identity-width);
-    font-family: monospace;
+    width: 30%;
 }
 .train-table-code {
     display: flex;
@@ -754,7 +751,7 @@ html, body {
     box-sizing: border-box;
     height: var(--train-table-code-size);
     min-width: 0;
-    padding: var(--train-table-code-padding);
+    padding: 2px;
 }
 .train-table-code .seven-seg-digit {
     width: 14px;
@@ -764,7 +761,7 @@ html, body {
 }
 .train-table-consist {
     margin-top: 5px;
-    font-size: var(--train-table-consist-font-size);
+    font-size: 0.8rem;
     white-space: normal;
 }
 .train-table-viz {
@@ -1752,9 +1749,8 @@ body.dark-mode .eta-time-od-supplemented {
     align-items: center;
     justify-content: center;
     font-size: var(--font-size-refresh);
-    width: 1.2em; /* Reserve fixed horizontal space */
+    width: 1em;
     height: 1.2em;
-    margin-right: 2px;
 }
 
 .header-loader-spinner {
@@ -1887,7 +1883,7 @@ body.dark-mode .eta-row-odd {
    Responsive
    ============================================ */
 
-/* Tablet and above (≥480px): fixed text sizes */
+/* Tablet and above (≥460px): fixed text sizes */
 @media (min-width: 460px) {
     :root {
         --font-size-title:        29px;
@@ -1913,6 +1909,8 @@ body.dark-mode .eta-row-odd {
         --car-rect-height: 28px;
         --eta-row-height: 40px;
         --line-bar-height: 8px;
+
+        --header-gap: var(--spacing-sm);
     }
 
     .eta-row .eta-platform-badge {
@@ -1932,9 +1930,9 @@ body.dark-mode .eta-row-odd {
     }
     
     .master-mode-switch-wrap .mode-switch-slider::before {
-    height: 1.3em;
-    width: 1.3em;
-}
+        height: 1.3em;
+        width: 1.3em;
+    }
 }
 
 /* Desktop (≥820px): larger text, 2-column ETA layout */
