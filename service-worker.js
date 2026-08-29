@@ -1,7 +1,7 @@
 /* ============================================
    MTR ETA - Service Worker
    ============================================ */
-const CACHE_NAME = 'mtr-eta-v1';
+const CACHE_NAME = 'mtr-eta-v2';
 
 const PRECACHE_URLS = [
     './',
@@ -9,9 +9,10 @@ const PRECACHE_URLS = [
     './style.css',
     './script.js',
     './data.js',
+    './train-table.js',
+    './line-map.js',
     './logo.svg',
     './manifest.json',
-    './js/jquery-3.5.1.min.js',
     './font/MYRIAD-MM.TTF'
 ];
 

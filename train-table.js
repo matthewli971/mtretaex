@@ -10,6 +10,7 @@
     var tableBody = null;
     var title = null;
     var refreshButton = null;
+    var mapButton = null;
     var etaContainerObserver = null;
     var tableLoading = false;
 
@@ -36,10 +37,7 @@
     }
 
     function getMappedTrainStationCode(lineCode, code) {
-        if (!code || code === 'NA' || code === '-') return '';
-        var map = typeof stationCodeMap !== 'undefined' ? stationCodeMap[lineCode] : null;
-        var mappedCode = map && map[code] ? map[code] : code;
-        return resolveStationCode(mappedCode);
+        return getMappedLineStationCode(lineCode, code);
     }
 
     function getTrainDirection(train, lineCode) {
@@ -171,49 +169,8 @@
         title.textContent = (line ? line.name_chi : activeLineCode || '') + ' 列車資訊';
     }
 
-    function getUpdatedTimeMilliseconds(updatedTime) {
-        if (updatedTime === undefined || updatedTime === null || updatedTime === '') return null;
-
-        var numericTime = Number(updatedTime);
-        if (!isNaN(numericTime) && isFinite(numericTime)) {
-            // Train APIs use both Unix seconds and Unix milliseconds.
-            return numericTime < 100000000000 ? numericTime * 1000 : numericTime;
-        }
-
-        var parsedTime = new Date(updatedTime).getTime();
-        return isNaN(parsedTime) ? null : parsedTime;
-    }
-
-    function getTrainUpdatedTimeValue(train) {
-        if (train.updatedTime !== undefined && train.updatedTime !== null && train.updatedTime !== '') {
-            return train.updatedTime;
-        }
-        if (train.receivedTime !== undefined && train.receivedTime !== null && train.receivedTime !== '') {
-            return train.receivedTime;
-        }
-        if (train.jsonContent) {
-            if (train.jsonContent.updatedTime !== undefined && train.jsonContent.updatedTime !== null && train.jsonContent.updatedTime !== '') {
-                return train.jsonContent.updatedTime;
-            }
-            if (train.jsonContent.timestamp) return train.jsonContent.timestamp;
-        }
-        if (train.lambdaDateTime !== undefined && train.lambdaDateTime !== null && train.lambdaDateTime !== '') {
-            return train.lambdaDateTime;
-        }
-        return null;
-    }
-
     function getNormalizedTrainTd(train, lineCode) {
-        var normalizedTd = getTrainTdDigits(getTrainLookupTd(train), 3);
-        var trainType = String(train && (train.trainType || train.train_type) || '');
-
-        // ISL Q-train TDs are reported without their leading service digit
-        // (for example 20 instead of 120). Keep the table consistent with
-        // the TD shown by the main ETA screen.
-        if (lineCode === 'ISL' && /^q(?:[-\s]?train)?$/i.test(trainType) && normalizedTd.charAt(0) === '0') {
-            normalizedTd = '1' + normalizedTd.slice(1);
-        }
-        return normalizedTd;
+        return getNormalizedTrainloadTd(train, lineCode);
     }
 
     function compareTrainsByTd(a, b) {
@@ -229,79 +186,6 @@
         return String(aTd).localeCompare(String(bTd));
     }
 
-    function hasRecentUpdate(train) {
-        var updatedTimeMs = getUpdatedTimeMilliseconds(getTrainUpdatedTimeValue(train));
-        return updatedTimeMs !== null && Math.abs(Date.now() - updatedTimeMs) <= TRAIN_LOAD_TIME_FILTER_MS;
-    }
-
-    function isExcludedEalTrain(train) {
-        var td = String((train && train.td) || '').toUpperCase();
-        return td.indexOf('TT') === 0 || td.indexOf('VV') === 0 || td.indexOf('DP') === 0 || td === 'UNKNOWN';
-    }
-
-    function isInvalidTrainTd(td) {
-        var rawTd = String(td || '');
-        var normalizedTd = getTrainTdDigits(rawTd, 3);
-        return !/\d/.test(rawTd) || normalizedTd === '000';
-    }
-
-    // Keep all table visibility rules together so line-specific stop cases
-    // do not get mixed into rendering or sorting.
-    function shouldShowTrainTableRecord(train, lineCode) {
-        if (!hasRecentUpdate(train)) return false;
-
-        var rawTd = String((train && train.td) || '');
-        var destination = String((train && train.destinationStationCode) || '').trim();
-        if (!destination || /^(NA|[-—])$/i.test(destination)) return false;
-
-        if (lineCode === 'EAL') {
-            if (isExcludedEalTrain(train)) return false;
-        }
-
-        if (lineCode === 'TWL') {
-            // TWL uses these values when the train is not in passenger service.
-            var twlTd = rawTd.trim().toUpperCase();
-            if (twlTd === 'NA' || twlTd === '**') return false;
-
-            var twlNextStation = String((train && train.nextStationCode) || '').trim();
-            if (twlNextStation === '—') return false;
-        }
-
-        return !isInvalidTrainTd(rawTd);
-    }
-
-    function getTrainTableRecordQuality(train, lineCode) {
-        var currentStation = getMappedTrainStationCode(lineCode, train.currentStationCode);
-        var nextStation = getMappedTrainStationCode(lineCode, train.nextStationCode);
-        var destination = getMappedTrainStationCode(lineCode, train.destinationStationCode);
-
-        // Prefer the record with a complete, usable location. Some line APIs
-        // briefly return a duplicate TD with a missing or conflicting route.
-        return (currentStation ? 4 : 0) + (nextStation ? 2 : 0) + (destination ? 1 : 0);
-    }
-
-    function getUniqueTrainTableRecords(trains, lineCode) {
-        var recordsByTd = {};
-        (trains || []).forEach(function (train) {
-            var normalizedTd = getNormalizedTrainTd(train, lineCode);
-            var existing = recordsByTd[normalizedTd];
-            if (!existing) {
-                recordsByTd[normalizedTd] = train;
-                return;
-            }
-
-            var currentQuality = getTrainTableRecordQuality(train, lineCode);
-            var existingQuality = getTrainTableRecordQuality(existing, lineCode);
-            if (currentQuality > existingQuality ||
-                (currentQuality === existingQuality &&
-                    getUpdatedTimeMilliseconds(getTrainUpdatedTimeValue(train)) >
-                    getUpdatedTimeMilliseconds(getTrainUpdatedTimeValue(existing)))) {
-                recordsByTd[normalizedTd] = train;
-            }
-        });
-        return Object.keys(recordsByTd).map(function (td) { return recordsByTd[td]; });
-    }
-
     function renderTable() {
         if (!tableBody || !activeLineCode) return;
         updateTitle();
@@ -312,14 +196,9 @@
             return;
         }
 
-        var cache = trainInfoCache[activeLineCode];
-        var trains = cache && Array.isArray(cache.data) ? cache.data : [];
         var html = '';
 
-        var visibleTrains = trains.filter(function (train) {
-            return shouldShowTrainTableRecord(train, activeLineCode);
-        });
-        getUniqueTrainTableRecords(visibleTrains, activeLineCode).sort(compareTrainsByTd).forEach(function (train) {
+        getVisibleLineTrainloadRecords(activeLineCode).sort(compareTrainsByTd).forEach(function (train) {
             var td = String(train.td || '');
             var normalizedTd = getNormalizedTrainTd(train, activeLineCode);
             // renderTrainCode() uses the same normalized TD and ISL suffix
@@ -394,22 +273,28 @@
         });
     }
 
+    function switchToLineMap() {
+        var lineCode = activeLineCode;
+        if (!lineCode) return;
+        closeTable();
+        if (typeof window.openLineMapForLine === 'function') {
+            window.openLineMapForLine(lineCode);
+        } else {
+            document.dispatchEvent(new CustomEvent('line-map-open-request', {
+                detail: { lineCode: lineCode }
+            }));
+        }
+    }
+
     function addLineBarButtons() {
         document.querySelectorAll('.line-bar').forEach(function (lineBar) {
-            if (lineBar.querySelector('.train-table-open')) return;
-            var section = lineBar.closest('.line-section');
-            var lineCode = section ? section.getAttribute('data-line') : '';
-            if (!lineCode) return;
-            var lineApi = typeof lineApiConfig !== 'undefined' ? lineApiConfig[lineCode] : null;
-            if (!lineApi || !lineApi.url) return;
-
-            var button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'train-table-open';
-            button.textContent = '車序表';
-            button.setAttribute('aria-label', 'Show ' + lineCode + ' train information table');
-            button.addEventListener('click', function () { openTable(lineCode); });
-            lineBar.appendChild(button);
+            addLineBarActionButton(
+                lineBar,
+                'train-table-open',
+                '車序表',
+                function (lineCode) { return 'Show ' + lineCode + ' train information table'; },
+                openTable
+            );
         });
     }
 
@@ -421,6 +306,7 @@
             '<section id="train-table-window" role="dialog" aria-modal="true" aria-labelledby="train-table-title">' +
                 '<header class="train-table-header">' +
                     '<span id="train-table-title" class="train-table-title"></span>' +
+                    '<button type="button" class="train-table-switch modal-view-switch" aria-label="Show train position map">路線圖</button>' +
                     '<button type="button" class="btn-refresh train-table-refresh" aria-label="Refresh train information">F5</button>' +
                     '<button type="button" class="train-table-close" aria-label="Close train information">&times;</button>' +
                 '</header>' +
@@ -433,8 +319,10 @@
         tableBody = overlay.querySelector('tbody');
         title = overlay.querySelector('#train-table-title');
         refreshButton = overlay.querySelector('.train-table-refresh');
+        mapButton = overlay.querySelector('.train-table-switch');
         overlay.querySelector('.train-table-close').addEventListener('click', closeTable);
         refreshButton.addEventListener('click', refreshTableData);
+        mapButton.addEventListener('click', switchToLineMap);
         overlay.addEventListener('click', function (event) {
             if (event.target === overlay) closeTable();
         });
@@ -455,8 +343,13 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         createWindow();
+        window.openTrainTableForLine = openTable;
         addLineBarButtons();
         observeEtaContainer();
+        document.addEventListener('train-table-open-request', function (event) {
+            var requestedLineCode = event.detail && event.detail.lineCode;
+            if (requestedLineCode) openTable(requestedLineCode);
+        });
         document.addEventListener('train-table-viz-settings-changed', function () {
             if (activeLineCode && !overlay.classList.contains('hidden')) renderTable();
         });

@@ -3,7 +3,7 @@
    地下鐵到站時間關注組
    ============================================ */
 
-const APP_VERSION = "v0.17.1";
+const APP_VERSION = "v0.17.2";
 const HONG_KONG_TIME_ZONE = 'Asia/Hong_Kong';
 const COUNTDOWN_TARGET_DATE = '2026-09-16';
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
@@ -161,6 +161,7 @@ function startClock() {
 function toggleTheme() {
     var isDark = document.body.classList.toggle('dark-mode');
     try { localStorage.setItem('mtreta_theme', isDark ? 'dark' : 'light'); } catch(e) {}
+    document.dispatchEvent(new Event('theme-changed'));
     if (currentStationCode) { fetchETASilent(currentStationCode); }
 }
 
@@ -974,14 +975,49 @@ function stopLineApiFetch() {
 // Determine which lines need the line-specific API call
 function getLineApiLines(station) {
     var lines = [];
-    if (typeof lineApiConfig === "undefined") return lines;
     (station.lines || []).forEach(function (lc) {
-        var cfg = lineApiConfig[lc];
-        if (cfg && cfg.url) {
+        if (hasTrainloadApi(lc)) {
             lines.push(lc);
         }
     });
     return lines;
+}
+
+function hasTrainloadApi(lineCode) {
+    if (!lineCode || typeof lineApiConfig === 'undefined') return false;
+    var config = lineApiConfig[lineCode];
+    return !!(config && config.url);
+}
+
+function addLineBarActionButton(lineBar, actionClass, label, ariaLabel, onClick) {
+    if (!lineBar || !actionClass || typeof onClick !== 'function') return null;
+
+    var section = lineBar.closest ? lineBar.closest('.line-section') : null;
+    var lineCode = section ? section.getAttribute('data-line') : '';
+    if (!hasTrainloadApi(lineCode)) return null;
+
+    var selector = '.' + actionClass;
+    var existingButton = lineBar.querySelector(selector);
+    if (existingButton) return existingButton;
+
+    var actions = lineBar.querySelector('.line-bar-actions');
+    if (!actions) {
+        actions = document.createElement('span');
+        actions.className = 'line-bar-actions';
+        lineBar.appendChild(actions);
+    }
+
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = actionClass;
+    button.textContent = typeof label === 'function' ? label(lineCode) : label;
+    var resolvedAriaLabel = typeof ariaLabel === 'function' ? ariaLabel(lineCode) : ariaLabel;
+    if (resolvedAriaLabel) button.setAttribute('aria-label', resolvedAriaLabel);
+    button.addEventListener('click', function (event) {
+        onClick(lineCode, event);
+    });
+    actions.appendChild(button);
+    return button;
 }
 
 function getDisplayedTrainloadLines() {
@@ -1000,7 +1036,7 @@ function refreshTrainloadLines(lineCodes, options) {
     var uniqueLines = [];
     (lineCodes || []).forEach(function (lineCode) {
         if (uniqueLines.indexOf(lineCode) !== -1) return;
-        if (typeof lineApiConfig === 'undefined' || !lineApiConfig[lineCode]) return;
+        if (!hasTrainloadApi(lineCode)) return;
         uniqueLines.push(lineCode);
     });
 
@@ -1042,13 +1078,22 @@ function refreshDisplayedTrainloads() {
     return refreshTrainloadLines(getDisplayedTrainloadLines(), { updateMainUi: true });
 }
 
+function refreshLineTrainload(lineCode, callback) {
+    var refreshPromise = hasTrainloadApi(lineCode)
+        ? refreshTrainloadLines([lineCode], {
+            updateMainUi: false,
+            refreshTableOnly: true
+        })
+        : Promise.resolve(false);
+
+    if (typeof callback === 'function') {
+        refreshPromise.then(function (success) { callback(success); });
+    }
+    return refreshPromise;
+}
+
 function refreshTrainTableLine(lineCode, callback) {
-    refreshTrainloadLines([lineCode], {
-        updateMainUi: false,
-        refreshTableOnly: true
-    }).then(function (success) {
-        if (typeof callback === 'function') callback(success);
-    });
+    return refreshLineTrainload(lineCode, callback);
 }
 
 function fetchLineApi(lineCode, retryCount, options) {
@@ -1092,6 +1137,9 @@ function fetchLineApi(lineCode, retryCount, options) {
                     data: Array.isArray(trains) ? trains : [],
                     timestamp: new Date()
                 };
+                document.dispatchEvent(new CustomEvent('line-trainload-updated', {
+                    detail: { lineCode: lineCode }
+                }));
                 if (options.updateMainUi !== false) {
                     updateLineApiTime();
                     if (currentStationCode) {
@@ -1364,15 +1412,144 @@ function resetLineApiTimeIfEmpty() {
     if (!hasData) resetLineApiTime();
 }
 
-// ============================================
-// Train Enrichment — map line API data to ETA rows
-// ============================================
-// Normalize a train descriptor to a fixed number of display/lookup digits.
 function getTrainTdDigits(td, digitCount) {
     var count = parseInt(digitCount, 10) || 3;
     var digits = String(td || '').replace(/[^0-9]/g, '');
     while (digits.length < count) digits = '0' + digits;
     return digits.slice(-count);
+}
+
+// Convert the station code returned by a line-specific API into the canonical
+// code used by stationByCode and the line-map geometry.
+function getMappedLineStationCode(lineCode, code) {
+    var rawCode = String(code === undefined || code === null ? '' : code).trim();
+    if (!rawCode || rawCode === 'NA' || rawCode === '-') return '';
+
+    var lineStationMap = typeof stationCodeMap !== 'undefined' ? stationCodeMap[lineCode] : null;
+    var mappedCode = lineStationMap && lineStationMap[rawCode] ? lineStationMap[rawCode] : rawCode;
+    return resolveStationCode(mappedCode);
+}
+
+function getTrainloadUpdatedTimeMilliseconds(updatedTime) {
+    if (updatedTime === undefined || updatedTime === null || updatedTime === '') return null;
+
+    var numericTime = Number(updatedTime);
+    if (!isNaN(numericTime) && isFinite(numericTime)) {
+        // Train APIs use both Unix seconds and Unix milliseconds.
+        return numericTime < 100000000000 ? numericTime * 1000 : numericTime;
+    }
+
+    var parsedTime = new Date(updatedTime).getTime();
+    return isNaN(parsedTime) ? null : parsedTime;
+}
+
+function getTrainloadUpdatedTimeValue(train) {
+    if (train && train.updatedTime !== undefined && train.updatedTime !== null && train.updatedTime !== '') {
+        return train.updatedTime;
+    }
+    if (train && train.receivedTime !== undefined && train.receivedTime !== null && train.receivedTime !== '') {
+        return train.receivedTime;
+    }
+    if (train && train.jsonContent) {
+        if (train.jsonContent.updatedTime !== undefined && train.jsonContent.updatedTime !== null && train.jsonContent.updatedTime !== '') {
+            return train.jsonContent.updatedTime;
+        }
+        if (train.jsonContent.timestamp) return train.jsonContent.timestamp;
+    }
+    if (train && train.lambdaDateTime !== undefined && train.lambdaDateTime !== null && train.lambdaDateTime !== '') {
+        return train.lambdaDateTime;
+    }
+    return null;
+}
+
+function getNormalizedTrainloadTd(train, lineCode) {
+    var normalizedTd = getTrainTdDigits(getTrainLookupTd(train || {}), 3);
+    var trainType = String(train && (train.trainType || train.train_type) || '');
+
+    // ISL Q-train TDs omit the 7-series service prefix in the trainload feed
+    // (for example, 17 in trainload data corresponds to ETA TD 717).
+    if (lineCode === 'ISL' && /^q(?:[-\s]?train)?$/i.test(trainType) && normalizedTd.charAt(0) === '0') {
+        normalizedTd = '7' + normalizedTd.slice(1);
+    }
+    return normalizedTd;
+}
+
+function isRecentTrainloadRecord(train) {
+    var updatedTimeMs = getTrainloadUpdatedTimeMilliseconds(getTrainloadUpdatedTimeValue(train));
+    return updatedTimeMs !== null && Math.abs(Date.now() - updatedTimeMs) <= TRAIN_LOAD_TIME_FILTER_MS;
+}
+
+function isInvalidTrainloadTd(td) {
+    var rawTd = String(td || '');
+    var normalizedTd = getTrainTdDigits(rawTd, 3);
+    return !/\d/.test(rawTd) || normalizedTd === '000';
+}
+
+function shouldShowTrainloadRecord(train, lineCode) {
+    if (!isRecentTrainloadRecord(train)) return false;
+
+    var rawTd = String((train && train.td) || '');
+    var destination = String((train && train.destinationStationCode) || '').trim();
+    if (!destination || /^(NA|[-—])$/i.test(destination)) return false;
+
+    if (lineCode === 'EAL') {
+        var ealTd = rawTd.toUpperCase();
+        if (ealTd.indexOf('TT') === 0 || ealTd.indexOf('VV') === 0 ||
+            ealTd.indexOf('DP') === 0 || ealTd === 'UNKNOWN') {
+            return false;
+        }
+    }
+
+    if (lineCode === 'TWL') {
+        // TWL uses these values when the train is not in passenger service.
+        var twlTd = rawTd.trim().toUpperCase();
+        if (twlTd === 'NA' || twlTd === '**') return false;
+
+        var twlNextStation = String((train && train.nextStationCode) || '').trim();
+        if (twlNextStation === '—') return false;
+    }
+
+    return !isInvalidTrainloadTd(rawTd);
+}
+
+function getTrainloadRecordQuality(train, lineCode) {
+    var currentStation = getMappedLineStationCode(lineCode, train && train.currentStationCode);
+    var nextStation = getMappedLineStationCode(lineCode, train && train.nextStationCode);
+    var destination = getMappedLineStationCode(lineCode, train && train.destinationStationCode);
+
+    // Prefer complete locations when an API briefly returns duplicate TDs.
+    return (currentStation ? 4 : 0) + (nextStation ? 2 : 0) + (destination ? 1 : 0);
+}
+
+function getUniqueTrainloadRecords(trains, lineCode) {
+    var recordsByTd = {};
+    (trains || []).forEach(function (train) {
+        var normalizedTd = getNormalizedTrainloadTd(train, lineCode);
+        var existing = recordsByTd[normalizedTd];
+        if (!existing) {
+            recordsByTd[normalizedTd] = train;
+            return;
+        }
+
+        var currentQuality = getTrainloadRecordQuality(train, lineCode);
+        var existingQuality = getTrainloadRecordQuality(existing, lineCode);
+        var currentUpdated = getTrainloadUpdatedTimeMilliseconds(getTrainloadUpdatedTimeValue(train)) || 0;
+        var existingUpdated = getTrainloadUpdatedTimeMilliseconds(getTrainloadUpdatedTimeValue(existing)) || 0;
+        if (currentQuality > existingQuality ||
+            (currentQuality === existingQuality && currentUpdated > existingUpdated)) {
+            recordsByTd[normalizedTd] = train;
+        }
+    });
+    return Object.keys(recordsByTd).map(function (td) { return recordsByTd[td]; });
+}
+
+// Shared, cleaned train list for all trainload-based modal views.
+function getVisibleLineTrainloadRecords(lineCode) {
+    var cache = trainInfoCache[lineCode];
+    var trains = cache && Array.isArray(cache.data) ? cache.data : [];
+    return getUniqueTrainloadRecords(trains.filter(function (train) {
+        return shouldShowTrainloadRecord(train, lineCode);
+    }), lineCode);
 }
 
 function getTrainTdLookupKey(lineCode, td) {
@@ -2266,7 +2443,7 @@ function processETAData(data) {
             }
             var rowClass = (rowIndex % 2 === 0) ? 'eta-row-even' : 'eta-row-odd';
             var isDark = document.body.classList.contains('dark-mode');
-            var evenBg = isDark ? darkenColor(colour, 0.80) : lightenColor(colour, 0.80);
+            var evenBg = populateLineBackgroundColor(colour, isDark);
             var rowStyle = (rowIndex % 2 === 0) ? ' style="background-color:' + evenBg + '"' : '';
 
             var destExtraClass = (isNoop || isUnknownDest || isVVTrain) ? ' eta-dest-noop' : (isDeparted ? ' eta-dest-departed' : '');
@@ -3400,9 +3577,10 @@ function darkenColor(hex, percent) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-// ============================================
-// Countdown timers for ttnt=1 trains
-// ============================================
+function populateLineBackgroundColor(lineColour, isDark) {
+    return isDark ? darkenColor(lineColour, 0.80) : lightenColor(lineColour, 0.80);
+}
+
 function startCountdownTimers() {
     if (countdownTimer) clearInterval(countdownTimer);
     countdownTimer = setInterval(updateCountdowns, 1000);

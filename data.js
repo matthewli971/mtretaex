@@ -142,6 +142,63 @@ var linesData = [
   { "line_id": 10, "line_code": "TML", "name_chi": "屯馬綫",    "name_eng": "Tuen Ma Line",            "colour_code": "#923011", "stations": ["TUM","SIH","TIS","LOP","YUL","KSR","TWW","MEF","NAC","AUS","ETS","HUH","HOM","TKW","SUW","KAT","DIH","HIK","TAW","CKT","STW","CIO","SHM","TSH","HEO","MOS","WKS"] }
 ];
 
+// Map-only route geometry. Keep this separate from linesData.stations because
+// that source order is also used by ETA direction logic. A path is a sequence
+// of connected stations; positions use a shared vertical unit and branch lane.
+var lineMapTopology = {
+  "TKL": {
+    "positions": {
+      "NOP": { "x": 0, "y": 0 },
+      "QUB": { "x": 0, "y": 1 },
+      "YAT": { "x": 0, "y": 2 },
+      "TIK": { "x": 0, "y": 3 },
+      "TKO": { "x": 0, "y": 4 },
+      "HAH": { "x": 0, "y": 5 },
+      "POA": { "x": 0, "y": 6 },
+      "LHP": { "x": 1, "y": 7, "labelSide": "right" }
+    },
+    "paths": [
+      ["NOP", "QUB", "YAT", "TIK", "TKO", "HAH", "POA"],
+      ["TKO", "LHP"]
+    ],
+    "branchRoutes": [
+      { "stations": ["TKO", "LHP"], "lane": 1 }
+    ],
+    "lanePercent": 6
+  },
+  "EAL": {
+    "positions": {
+      "ADM": { "x": 0, "y": 0 },
+      "EXC": { "x": 0, "y": 1 },
+      "HUH": { "x": 0, "y": 2 },
+      "MKK": { "x": 0, "y": 3 },
+      "KOT": { "x": 0, "y": 4 },
+      "TAW": { "x": 0, "y": 5 },
+      "SHT": { "x": 0, "y": 6 },
+      "FOT": { "x": 0, "y": 7 },
+      "RAC": { "x": 1, "y": 8, "labelSide": "right" },
+      "UNI": { "x": 0, "y": 9 },
+      "TAP": { "x": 0, "y": 10 },
+      "TWO": { "x": 0, "y": 11 },
+      "FAN": { "x": 0, "y": 12 },
+      "SHS": { "x": 0, "y": 13 },
+      "LOW": { "x": 0, "y": 14 },
+      "KTU": { "x": 1, "y": 15, "labelSide": "right" },
+      "LMC": { "x": 1, "y": 16, "labelSide": "right" }
+    },
+    "paths": [
+      ["ADM", "EXC", "HUH", "MKK", "KOT", "TAW", "SHT", "FOT", "UNI", "TAP", "TWO", "FAN", "SHS", "LOW"],
+      ["SHT", "RAC", "UNI"],
+      ["SHS", "KTU", "LMC"]
+    ],
+    "branchRoutes": [
+      { "stations": ["SHT", "RAC", "UNI"], "lane": 1 },
+      { "stations": ["SHS", "KTU", "LMC"], "lane": 1 }
+    ],
+    "lanePercent": 6
+  }
+};
+
 var alternativeNames = [
   { "NHUH": "HUH" }
 ];
