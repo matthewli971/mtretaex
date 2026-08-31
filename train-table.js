@@ -14,35 +14,16 @@
     var etaContainerObserver = null;
     var tableLoading = false;
 
-    function escapeHtml(value) {
-        return String(value === undefined || value === null ? '' : value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    function stationName(code) {
-        var resolvedCode = resolveStationCode(code || '');
-        var station = stationByCode[resolvedCode];
-        return station ? station.name_chi : (resolvedCode || '');
-    }
-
     function resolveTrainStation(lineCode, code) {
         if (!code || code === 'NA' || code === '-') return '';
         var map = typeof stationCodeMap !== 'undefined' ? stationCodeMap[lineCode] : null;
         var mappedCode = map && map[code] ? map[code] : code;
-        return stationName(mappedCode);
-    }
-
-    function getMappedTrainStationCode(lineCode, code) {
-        return getMappedLineStationCode(lineCode, code);
+        return getStationName(mappedCode);
     }
 
     function getTrainDirection(train, lineCode) {
-        var currentCode = getMappedTrainStationCode(lineCode, train.currentStationCode);
-        var nextCode = getMappedTrainStationCode(lineCode, train.nextStationCode);
+        var currentCode = getMappedLineStationCode(lineCode, train.currentStationCode);
+        var nextCode = getMappedLineStationCode(lineCode, train.nextStationCode);
         if (!currentCode || !nextCode || currentCode === nextCode) return null;
 
         // TML already provides a normalized direction flag.
@@ -157,7 +138,7 @@
         var map = typeof stationCodeMap !== 'undefined' ? stationCodeMap[lineCode] : null;
         var mappedCode = map && map[destinationCode] ? map[destinationCode] : destinationCode;
         var station = stationByCode[resolveStationCode(mappedCode)];
-        if (!station) return '<span class="train-table-destination-badge">' + escapeHtml(stationName(mappedCode) || '—') + '</span>';
+        if (!station) return '<span class="train-table-destination-badge">' + escapeHtml(getStationName(mappedCode) || '—') + '</span>';
 
         return '<span class="train-table-destination-badge" style="background-color:' + escapeHtml(station.station_colour || '') + ';color:' + escapeHtml(station.station_font_colour || '') + '">' +
             escapeHtml(station.name_chi) +
@@ -168,13 +149,9 @@
         title.innerHTML = renderLineColourBadge(activeLineCode) + ' 車序表';
     }
 
-    function getNormalizedTrainTd(train, lineCode) {
-        return getNormalizedTrainloadTd(train, lineCode);
-    }
-
     function compareTrainsByTd(a, b) {
-        var aTd = getNormalizedTrainTd(a, activeLineCode);
-        var bTd = getNormalizedTrainTd(b, activeLineCode);
+        var aTd = getNormalizedTrainloadTd(a, activeLineCode);
+        var bTd = getNormalizedTrainloadTd(b, activeLineCode);
         var aNumber = getTrainTdFirstNumber(aTd);
         var bNumber = getTrainTdFirstNumber(bTd);
 
@@ -199,7 +176,7 @@
 
         getVisibleLineTrainloadRecords(activeLineCode).sort(compareTrainsByTd).forEach(function (train) {
             var td = String(train.td || '');
-            var normalizedTd = getNormalizedTrainTd(train, activeLineCode);
+            var normalizedTd = getNormalizedTrainloadTd(train, activeLineCode);
             // renderTrainCode() uses the same normalized TD and ISL suffix
             // fallback as the main ETA rows.
             html += '<tr>' +

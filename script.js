@@ -3353,6 +3353,12 @@ function resolveStationCode(code) {
     return altCodeMap[code] || code;
 }
 
+function getStationName(code) {
+    var resolvedCode = resolveStationCode(code || '');
+    var station = stationByCode[resolvedCode];
+    return station ? station.name_chi : resolvedCode;
+}
+
 // ============================================
 // Helper: Map legacy line codes
 // ============================================
@@ -3472,7 +3478,8 @@ function renderLineColourBadge(lineCode) {
 // ============================================
 // Helper: Escape HTML to prevent XSS
 // ============================================
-function escapeHtml(str) {
+function escapeHtml(value) {
+    var str = String(value === undefined || value === null ? '' : value);
     var div = document.createElement("div");
     div.appendChild(document.createTextNode(str));
     return div.innerHTML;

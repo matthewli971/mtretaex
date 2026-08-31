@@ -22,20 +22,6 @@
     var MAP_MARKER_LANE_OFFSET = 10;
     var MAP_MARKER_WIDTH = 108;
 
-    function escapeMapHtml(value) {
-        return String(value === undefined || value === null ? '' : value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    function stationName(code) {
-        var station = stationByCode[code];
-        return station ? station.name_chi : (code || '');
-    }
-
     function makeEdgeKey(firstCode, secondCode) {
         return firstCode < secondCode
             ? firstCode + '|' + secondCode
@@ -454,14 +440,14 @@
     function getStationBandStyle(colour) {
         var darkMode = document.body.classList.contains('dark-mode');
         var stationColour = typeof populateLineBackgroundColor === 'function' ? populateLineBackgroundColor(colour, darkMode) : colour;
-        return '--line-map-station-colour:' + escapeMapHtml(stationColour) + ';--line-map-station-text:' +
-            escapeMapHtml(getReadableTextColour(stationColour));
+        return '--line-map-station-colour:' + escapeHtml(stationColour) + ';--line-map-station-text:' +
+            escapeHtml(getReadableTextColour(stationColour));
     }
 
     function getTrainCardText(train, lineCode, location) {
-        var destination = stationName(location.destinationCode);
-        var next = stationName(location.nextCode);
-        var current = stationName(location.currentCode);
+        var destination = getStationName(location.destinationCode);
+        var next = getStationName(location.nextCode);
+        var current = getStationName(location.currentCode);
         var code = getNormalizedTrainloadTd(train, lineCode);
         var trainType = typeof parseTrainTypeForLine === 'function'
             ? parseTrainTypeForLine(train, lineCode)
@@ -560,7 +546,7 @@
         }).join('');
 
         return '<svg class="line-map-track-svg" viewBox="0 0 ' + MAP_VIEWBOX_WIDTH + ' ' + model.height +
-            '" preserveAspectRatio="none" aria-hidden="true" style="--line-map-colour:' + escapeMapHtml(colour) + '">' +
+            '" preserveAspectRatio="none" aria-hidden="true" style="--line-map-colour:' + escapeHtml(colour) + '">' +
             paths + branchPaths + '</svg>';
     }
 
@@ -588,7 +574,7 @@
             return '<div class="line-map-station-row" style="top:' + (point.y - MAP_STATION_ROW_HEIGHT / 2) + 'px;' +
                 getStationBandStyle(colour) + '">' +
                 '<span class="line-map-station-name">' +
-                    '<span class="line-map-station-chi">' + escapeMapHtml(chineseName) + '</span>' +
+                    '<span class="line-map-station-chi">' + escapeHtml(chineseName) + '</span>' +
                     '<span class="line-map-station-lines">' + lineDots + '</span>' +
                 '</span>' +
             '</div>' +
@@ -608,24 +594,24 @@
         var stoppedClass = marker.location.stopped ? ' line-map-train-stopped' : '';
         var destinationStation = stationByCode[marker.location.destinationCode];
         var destinationStyle = destinationStation
-            ? ' style="background-color:' + escapeMapHtml(destinationStation.station_colour || '') + ';color:' +
-                escapeMapHtml(destinationStation.station_font_colour || '') + '"'
+            ? ' style="background-color:' + escapeHtml(destinationStation.station_colour || '') + ';color:' +
+                escapeHtml(destinationStation.station_font_colour || '') + '"'
             : '';
         var readableColour = getReadableTextColour(colour);
         return '<span class="line-map-train' + directionClass + stoppedClass + '" role="img" title="' +
-            escapeMapHtml(cardText.code + ' ' + cardText.direction) + '" aria-label="' +
-            escapeMapHtml(cardText.code + ' ' + cardText.direction) + '" style="left:' + marker.location.left +
+            escapeHtml(cardText.code + ' ' + cardText.direction) + '" aria-label="' +
+            escapeHtml(cardText.code + ' ' + cardText.direction) + '" style="left:' + marker.location.left +
             '%;top:' + marker.location.y + 'px;margin-left:' + marker.offset + 'px;--line-map-train-colour:' +
-            escapeMapHtml(colour) + ';--line-map-train-text:' + readableColour + '">' +
+            escapeHtml(colour) + ';--line-map-train-text:' + readableColour + '">' +
             '<span class="line-map-train-card">' +
-                '<span class="line-map-train-band"><span>' + escapeMapHtml(cardText.code) + '</span>' +
+                '<span class="line-map-train-band"><span>' + escapeHtml(cardText.code) + '</span>' +
                     (cardText.trainType ? '<span class="line-map-train-type train-type-badge train-type-' +
-                        escapeMapHtml(cardText.trainType.toLowerCase()) + '">' + escapeMapHtml(cardText.trainType) + '</span>' : '') +
+                        escapeHtml(cardText.trainType.toLowerCase()) + '">' + escapeHtml(cardText.trainType) + '</span>' : '') +
                 '</span>' +
                 '<span class="line-map-train-body">' +
                     getTrainLoadDots(marker.train, lineCode, isUpLine) +
                     '<span class="line-map-train-destination">往 <span class="line-map-train-destination-badge"' + destinationStyle + '>' +
-                        escapeMapHtml(cardText.destination) + '</span></span>' +
+                        escapeHtml(cardText.destination) + '</span></span>' +
                 '</span>' +
             '</span>' +
         '</span>';
@@ -673,7 +659,7 @@
         mapContent.setAttribute('aria-busy', mapLoading ? 'true' : 'false');
         mapContent.innerHTML =
             '<div class="line-map-summary" aria-live="polite">' +
-                '<span class="line-map-status">' + escapeMapHtml(status) + '</span>' +
+                '<span class="line-map-status">' + escapeHtml(status) + '</span>' +
             '</div>' +
             '<div class="line-map-route" style="height:' + model.height + 'px">' +
                 renderInternalRows(model) +
