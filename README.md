@@ -3,6 +3,9 @@ MTR Trains ETA Web-app
 
 ## Changelog
 
+### v0.18
+- **Train position line map**: Route map window showing real-time train positions
+
 ### v0.17
 - **Train information table**: Show train list in operation, with information including train consist, train current location and train type
 

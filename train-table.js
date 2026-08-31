@@ -165,8 +165,7 @@
     }
 
     function updateTitle() {
-        var line = lineByCode[activeLineCode];
-        title.textContent = (line ? line.name_chi : activeLineCode || '') + ' 列車資訊';
+        title.innerHTML = renderLineColourBadge(activeLineCode) + ' 車序表';
     }
 
     function getNormalizedTrainTd(train, lineCode) {

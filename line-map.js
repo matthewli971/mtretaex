@@ -463,32 +463,43 @@
         var next = stationName(location.nextCode);
         var current = stationName(location.currentCode);
         var code = getNormalizedTrainloadTd(train, lineCode);
+        var trainType = typeof parseTrainTypeForLine === 'function'
+            ? parseTrainTypeForLine(train, lineCode)
+            : '';
         var directionText = location.stopped
             ? '停站中 · ' + (current || next || '未知車站')
             : '往 ' + (next || destination || '下一站');
-        return { code: code, direction: directionText };
+        return {
+            code: code,
+            trainType: trainType,
+            destination: destination || next || '—',
+            direction: directionText
+        };
     }
 
-    function getTrainLoadDots(train) {
+    function getTrainLoadDots(train, lineCode, isUpLine) {
         var cars = Array.isArray(train.carLoads) ? train.carLoads : [];
         if (!cars.length) return '<span class="line-map-load-unknown">—</span>';
-        var total = 0;
-        var count = 0;
-        cars.forEach(function (car) {
-            var value = Number(car.passengerLoad);
-            if (!isFinite(value)) value = Number(car.passengerCount);
-            if (!isFinite(value) || value < 0) return;
-            total += value;
-            count++;
-        });
-        if (!count) return '<span class="line-map-load-unknown">—</span>';
-        var average = total / count;
-        var dots = average >= 230 ? 5 : (average >= 120 ? 3 : 1);
-        var html = '';
-        for (var index = 0; index < 5; index++) {
-            html += '<span class="line-map-load-dot' + (index < dots ? ' is-filled' : '') + '"></span>';
+        var orderedCars = cars.slice();
+
+        // The APIs order carriage data from opposite ends on these lines.
+        // Reverse only when needed so the leftmost dot always represents car 1.
+        if ((lineCode === 'EAL' && !isUpLine) ||
+            ((lineCode === 'KTL' || lineCode === 'TWL' || lineCode === 'ISL' || lineCode === 'TCL') && isUpLine)) {
+            orderedCars.reverse();
         }
-        return '<span class="line-map-load-dots" aria-label="平均載客量 ' + Math.round(average) + '">' + html + '</span>';
+
+        var html = '';
+        orderedCars.forEach(function (car, index) {
+            var load = Number(car.passengerCount);
+            if (!isFinite(load)) load = Number(car.passengerLoad);
+            var loadClass = !isFinite(load) || load < 0 ? ' is-unknown' :
+                (lineCode === 'EAL' || lineCode === 'TML'
+                    ? (load < 120 ? ' is-low' : (load < 230 ? ' is-medium' : ' is-high'))
+                    : (load <= 0 ? ' is-unknown' : (load === 1 ? ' is-low' : (load === 2 ? ' is-medium' : ' is-high'))));
+            html += '<span class="line-map-load-dot' + loadClass + '" aria-label="第 ' + (index + 1) + ' 卡"></span>';
+        });
+        return '<span class="line-map-load-dots" aria-label="列車載客量，由左至右為第 1 卡起">' + html + '</span>';
     }
 
     function getMapMarkers(lineCode, model) {
@@ -590,8 +601,16 @@
 
     function renderTrainCard(marker, lineCode, colour) {
         var cardText = marker.cardText;
-        var directionClass = marker.location.side === 'left' ? ' line-map-train-left' : ' line-map-train-right';
+        var isUpLine = lineCode === 'EAL'
+            ? marker.location.side === 'right'
+            : marker.location.side === 'left';
+        var directionClass = isUpLine ? ' line-map-train-up' : ' line-map-train-down';
         var stoppedClass = marker.location.stopped ? ' line-map-train-stopped' : '';
+        var destinationStation = stationByCode[marker.location.destinationCode];
+        var destinationStyle = destinationStation
+            ? ' style="background-color:' + escapeMapHtml(destinationStation.station_colour || '') + ';color:' +
+                escapeMapHtml(destinationStation.station_font_colour || '') + '"'
+            : '';
         var readableColour = getReadableTextColour(colour);
         return '<span class="line-map-train' + directionClass + stoppedClass + '" role="img" title="' +
             escapeMapHtml(cardText.code + ' ' + cardText.direction) + '" aria-label="' +
@@ -599,12 +618,14 @@
             '%;top:' + marker.location.y + 'px;margin-left:' + marker.offset + 'px;--line-map-train-colour:' +
             escapeMapHtml(colour) + ';--line-map-train-text:' + readableColour + '">' +
             '<span class="line-map-train-card">' +
-                '<span class="line-map-train-band">' + escapeMapHtml(cardText.code) + '</span>' +
+                '<span class="line-map-train-band"><span>' + escapeMapHtml(cardText.code) + '</span>' +
+                    (cardText.trainType ? '<span class="line-map-train-type train-type-badge train-type-' +
+                        escapeMapHtml(cardText.trainType.toLowerCase()) + '">' + escapeMapHtml(cardText.trainType) + '</span>' : '') +
+                '</span>' +
                 '<span class="line-map-train-body">' +
-                    '<span class="line-map-train-cab" aria-hidden="true"><span class="line-map-train-window"></span>' +
-                        '<span class="line-map-train-lamp"></span><span class="line-map-train-lamp"></span></span>' +
-                    getTrainLoadDots(marker.train) +
-                    '<span class="line-map-train-direction">' + escapeMapHtml(cardText.direction) + '</span>' +
+                    getTrainLoadDots(marker.train, lineCode, isUpLine) +
+                    '<span class="line-map-train-destination">往 <span class="line-map-train-destination-badge"' + destinationStyle + '>' +
+                        escapeMapHtml(cardText.destination) + '</span></span>' +
                 '</span>' +
             '</span>' +
         '</span>';
@@ -617,8 +638,7 @@
     }
 
     function updateTitle() {
-        var line = lineByCode[activeLineCode];
-        title.textContent = (line ? line.name_chi : activeLineCode || '') + ' 列車位置';
+        title.innerHTML = renderLineColourBadge(activeLineCode) + ' 列車位置';
     }
 
     function renderMap() {
@@ -643,7 +663,7 @@
         } else if (!cache) {
             status = '正在載入列車位置…';
         } else if (!visibleTrains.length) {
-            status = '沒有可顯示的列車資料';
+            status = '沒有列車資料';
         } else if (markers.length !== visibleTrains.length) {
             status = '顯示 ' + markers.length + ' / ' + visibleTrains.length + ' 班列車位置';
         } else {
