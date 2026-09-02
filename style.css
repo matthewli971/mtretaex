@@ -1031,6 +1031,32 @@ html, body {
     font-weight: 700;
     white-space: nowrap;
 }
+.line-map-station-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-left: 4px;
+    padding: 0;
+    border: 2px solid var(--color-text-muted);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: auto;
+    cursor: pointer;
+    transform: translateY(-3px);
+}
+.line-map-station-link:hover,
+.line-map-station-link:focus-visible {
+    background: var(--line-map-station-text);
+    color: var(--line-map-station-colour);
+    border: 2px solid var(--line-map-station-text);
+}
 .line-map-station-lines {
     display: flex;
     align-items: center;
@@ -1047,12 +1073,23 @@ html, body {
     z-index: 6;
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: var(--line-map-train-card-width, 74px);
+    width: 0;
     height: 64px;
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
     filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
     transition: left 0.5s linear, top 0.5s linear;
+}
+.line-map-train-down {
+    justify-content: flex-start;
+}
+.line-map-train-down .line-map-train-card {
+    margin-left: 8px;
+}
+.line-map-train-up {
+    justify-content: flex-end;
+}
+.line-map-train-up .line-map-train-card {
+    margin-right: 8px;
 }
 .line-map-train-card {
     position: relative;
@@ -1065,6 +1102,7 @@ html, body {
     border-radius: var(--radius-sm);
     background: #f6f7f8;
     color: #18212d;
+    flex: 0 0 var(--line-map-train-card-width, 74px);
 }
 .line-map-train-down .line-map-train-card {
     clip-path: polygon(0 0, 100% 0, 100% 84%, 50% 100%, 0 84%);
@@ -1080,8 +1118,7 @@ html, body {
     padding: 2px 4px;
     background: var(--line-map-train-colour);
     color: var(--line-map-train-text);
-    font-family: 'Segoe UI', Arial, sans-serif;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 800;
     line-height: 1;
     white-space: nowrap;
@@ -1090,13 +1127,19 @@ html, body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 14px;
+    min-width: 10px;
     height: 14px;
     margin-left: 4px;
     padding: 0 3px;
     border-radius: 4px;
-    font-size: 0.65rem;
+    font-size: 0.8rem;
     line-height: 1;
+}
+.line-map-train-up .line-map-train-band > span:first-child {
+    order: 2;
+}
+.line-map-train-up .line-map-train-band > .line-map-train-type {
+    order: 1;
 }
 .line-map-train-body {
     display: flex;

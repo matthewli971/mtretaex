@@ -15,11 +15,11 @@
     var mapLoading = false;
 
     var MAP_VIEWBOX_WIDTH = 1000;
-    var MAP_TOP_PADDING = 46;
-    var MAP_BOTTOM_PADDING = 52;
-    var MAP_STATION_GAP = 124;
     var MAP_STATION_ROW_HEIGHT = 64;
-    var MAP_MARKER_LANE_OFFSET = 10;
+    var MAP_TOP_PADDING = MAP_STATION_ROW_HEIGHT / 2;
+    var MAP_BOTTOM_PADDING = MAP_STATION_ROW_HEIGHT / 2;
+    var MAP_STATION_GAP = 124;
+    var MAP_MARKER_LANE_OFFSET = 2;
     var MAP_MARKER_WIDTH = 108;
 
     function makeEdgeKey(firstCode, secondCode) {
@@ -511,7 +511,8 @@
         Object.keys(markerGroups).forEach(function (key) {
             var group = markerGroups[key];
             group.forEach(function (marker, index) {
-                marker.offset = (index - (group.length - 1) / 2) * Math.min(42, MAP_MARKER_WIDTH * 0.38);
+                var offset = index * Math.min(40, MAP_MARKER_WIDTH * 0.38);
+                marker.offset = marker.location.side === 'right' ? offset : -offset;
             });
         });
         return markers;
@@ -574,7 +575,7 @@
             return '<div class="line-map-station-row" style="top:' + (point.y - MAP_STATION_ROW_HEIGHT / 2) + 'px;' +
                 getStationBandStyle(colour) + '">' +
                 '<span class="line-map-station-name">' +
-                    '<span class="line-map-station-chi">' + escapeHtml(chineseName) + '</span>' +
+                    '<span class="line-map-station-chi">' + escapeHtml(chineseName) + '<button type="button" class="line-map-station-link" onclick="openStationFromMap(\'' + escapeHtml(code) + '\')" aria-label="' + escapeHtml(chineseName) + '站">&gt;</button></span>' +
                     '<span class="line-map-station-lines">' + lineDots + '</span>' +
                 '</span>' +
             '</div>' +
@@ -590,7 +591,7 @@
         var isUpLine = lineCode === 'EAL'
             ? marker.location.side === 'right'
             : marker.location.side === 'left';
-        var directionClass = isUpLine ? ' line-map-train-up' : ' line-map-train-down';
+        var directionClass = marker.location.side === 'left' ? ' line-map-train-up' : ' line-map-train-down';
         var stoppedClass = marker.location.stopped ? ' line-map-train-stopped' : '';
         var destinationStation = stationByCode[marker.location.destinationCode];
         var destinationStyle = destinationStation
@@ -753,6 +754,11 @@
         }
     }
 
+    function openStationFromMap(stationCode) {
+        selectStation(stationCode);
+        closeMap();
+    }
+
     function addLineBarButtons() {
         document.querySelectorAll('.line-bar').forEach(function (lineBar) {
             addLineBarActionButton(
@@ -807,6 +813,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         createWindow();
         window.openLineMapForLine = openMap;
+        window.openStationFromMap = openStationFromMap;
         addLineBarButtons();
         observeEtaContainer();
         document.addEventListener('line-map-open-request', function (event) {
