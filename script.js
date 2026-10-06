@@ -4,8 +4,8 @@
    ============================================ */
 
 const APP_VERSION = "v0.18.1";
-const HONG_KONG_TIME_ZONE = 'Asia/Hong_Kong';
-const COUNTDOWN_TARGET_DATE = '2026-09-16';
+const COUNTUP_START_DATE = '2026-09-27T00:00:00+02:00';
+const DISPLAY_TIME_ZONE = 'Asia/Hong_Kong';
 const API_URL = "https://408tq84duh.execute-api.ap-east-1.amazonaws.com/api/service/GetNextTrainData";
 const MAX_TRAINS_PER_GROUP = 8;
 const STORAGE_KEY_STATION = "mtreta_last_station";
@@ -166,43 +166,25 @@ function toggleTheme() {
 }
 
 function updateClock() {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    const ss = String(now.getSeconds()).padStart(2, "0");
+    const timeParts = formatTimeHHMMSSInTimeZone(new Date()).split(':');
     document.getElementById("clock").innerHTML =
-        hh + ": " + mm + '<span class="clock-sec">: ' + ss + "</span>";
+        timeParts[0] + ": " + timeParts[1] + '<span class="clock-sec">: ' + timeParts[2] + "</span>";
 }
 
 function updateDayCountdown() {
     const countdown = document.getElementById('day-countdown');
     if (!countdown) return;
 
-    const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: HONG_KONG_TIME_ZONE,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }).formatToParts(new Date());
-    const values = Object.fromEntries(
-        parts
-            .filter(part => part.type !== 'literal')
-            .map(part => [part.type, part.value])
-    );
-    const todayUtc = Date.UTC(
-        Number(values.year),
-        Number(values.month) - 1,
-        Number(values.day)
-    );
-    const targetUtc = Date.parse(`${COUNTDOWN_TARGET_DATE}T00:00:00Z`);
+    const now = Date.now();
+    const startTime = Date.parse(COUNTUP_START_DATE);
 
-    if (!Number.isFinite(targetUtc) || !Number.isFinite(todayUtc)) {
-        countdown.textContent = '';
+    if (!Number.isFinite(startTime) || !Number.isFinite(now)) {
+        countdown.textContent = '0';
         return;
     }
 
-    const daysUntil = Math.ceil((targetUtc - todayUtc) / (24 * 60 * 60 * 1000));
-    countdown.textContent = daysUntil > 0 ? String(daysUntil) : '';
+    const daysElapsed = Math.floor((now - startTime) / (24 * 60 * 60 * 1000));
+    countdown.textContent = String(Math.max(0, daysElapsed));
 }
 
 // ============================================
@@ -611,7 +593,7 @@ function fetchETAInternal(stationCode, withLoader) {
                     const data = JSON.parse(xhr.responseText);
                     // Check staleness: if gen_time is >15s old, supplement with OpenData
                     var genTime = data.gen_time || data.sys_time;
-                    var staleMs = genTime ? (Date.now() - new Date(genTime).getTime()) : 0;
+                    var staleMs = genTime ? (Date.now() - parseTimeInDisplayTimeZone(genTime).getTime()) : 0;
                     var openDataLinesToMerge = getOpenDataLinesForStation(stationCode);
                     var needsOdFetch = (staleMs > 15000) || (openDataLinesToMerge.length > 0);
                     if (needsOdFetch) {
@@ -926,12 +908,9 @@ function fetchOpenDataLines(stationCode, linesToFetch, callback) {
 function calculateTtntFromTime(timeStr) {
     if (!timeStr) return "";
     // timeStr format: "2026-05-22 18:05:00"
-    var parts = timeStr.split(" ");
-    if (parts.length < 2) return "";
-    var timeParts = parts[1].split(":");
-    if (timeParts.length < 3) return "";
-    var arrivalDate = new Date(parts[0] + "T" + parts[1]);
-    var now = new Date();
+    var arrivalDate = parseTimeInDisplayTimeZone(timeStr);
+    if (isNaN(arrivalDate.getTime())) return "";
+    var now = Date.now();
     var diffMs = arrivalDate - now;
     var diffMin = Math.round(diffMs / 60000);
     if (diffMin < 0) diffMin = 0;
@@ -1393,7 +1372,7 @@ function updateLineApiTime() {
     });
     var el = document.getElementById("line-api-time");
     if (el && latestTime) {
-        el.textContent = formatTimeHHMMSS(latestTime);
+        el.textContent = formatTimeHHMMSSInTimeZone(latestTime);
     } else if (el) {
         el.textContent = "-- : -- : --";
     }
@@ -2162,7 +2141,7 @@ function processETAData(data) {
     var updateEl = document.getElementById("last-update-time");
     if (data._hasOdSupplement && data._odSysTime) {
         // Stale internal data — show OpenData sys_time in yellow
-        var t = new Date(data._odSysTime);
+        var t = parseTimeInDisplayTimeZone(data._odSysTime);
         if (!isNaN(t.getTime())) {
             lastUpdateTime = t;
             updateEl.textContent = formatTimeHHMMSS(t);
@@ -2173,7 +2152,7 @@ function processETAData(data) {
     } else {
         var timeSource = data.gen_time || data.sys_time;
         if (timeSource) {
-            var t = new Date(timeSource);
+            var t = parseTimeInDisplayTimeZone(timeSource);
             if (!isNaN(t.getTime())) {
                 lastUpdateTime = t;
                 updateEl.textContent = formatTimeHHMMSS(t);
@@ -3347,6 +3326,34 @@ function formatTimeHHMMSS(date) {
     var mm = String(date.getMinutes()).padStart(2, "0");
     var ss = String(date.getSeconds()).padStart(2, "0");
     return hh + ":" + mm + ":" + ss;
+}
+
+function parseTimeInDisplayTimeZone(timeValue) {
+    if (timeValue instanceof Date) return new Date(timeValue.getTime());
+    if (typeof timeValue !== 'string') return new Date(timeValue);
+
+    var normalized = timeValue.trim().replace(' ', 'T');
+    if (/^\d{4}-\d{2}-\d{2}T/.test(normalized) &&
+        !/(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(normalized)) {
+        normalized += '+08:00';
+    }
+    return new Date(normalized);
+}
+
+function formatTimeHHMMSSInTimeZone(date) {
+    if (!date || isNaN(date.getTime())) return "--:--:--";
+    var parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: DISPLAY_TIME_ZONE,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23'
+    }).formatToParts(date);
+    var values = {};
+    parts.forEach(function (part) {
+        if (part.type !== 'literal') values[part.type] = part.value;
+    });
+    return values.hour + ":" + values.minute + ":" + values.second;
 }
 
 function resolveStationCode(code) {
